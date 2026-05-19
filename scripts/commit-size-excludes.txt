@@ -6,3 +6,8 @@
 pnpm-lock\.yaml$
 package-lock\.json$
 yarn\.lock$
+# Documentation files — no compile-time impact; large rewrites are expected
+^docs/
+CHANGELOG\.md$
+README\.md$
+ROADMAP\.md$
