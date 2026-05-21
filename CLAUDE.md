@@ -245,7 +245,6 @@ New commands should follow the inline pattern unless the logic is substantial en
 - Generator services (`enumGeneratorService`, `envFileGeneratorService`, `cronJobTimerGeneratorService`) are **not** registered in the container at startup — they are dynamically imported in `ContextMenuManager` on first use
 - `codeAnalysisService` is registered in the DI container but loads lazily: the `registerSingleton` factory calls `require(dist/lazy/codeAnalysisService.js)` on first invocation, deferring the TypeScript compiler load until the first Copy/Move Function command
 - Child containers (`container.createChild()`) are supported for test isolation
-- **Lifecycle**: `disposeContainer()` (exported from `src/di/container.ts`) is called from `extension.deactivate()`. It calls `DIContainer.dispose()` (disposes all instantiated services with `dispose()` methods, Logger last) then resets all module-level static `instance` fields via each service's `resetInstance()` static — so reactivation builds fresh instances. Do not add service singletons without also wiring `resetInstance()` and registering in `initializeContainer`'s singleton-reset block.
 
 ### Lazy Loading
 

@@ -35,8 +35,6 @@ Pull requests should include a clear description, linked issues when applicable,
 
 ## Architecture
 
-For runtime architecture and codebase module diagrams, see [CLAUDE.md — Architecture Diagrams](CLAUDE.md#architecture-diagrams).
-
 ### Runtime Architecture
 
 ```mermaid

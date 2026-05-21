@@ -17,10 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Single source of truth established**: `package.json` `contributes` is canonical for command/setting/keybinding metadata; `README.md` is canonical for user-facing narrative; `CLAUDE.md` is canonical for architecture and dev conventions.
 - **package.json scripts**: Removed `docs:serve` and `docs:live`; simplified `system:verify` to `husky` only (docs/Jekyll bundle setup removed).
 
-### Fixed
-
-- **Memory leaks on deactivate/reactivate**: `ProjectDetectionService` and `FileDiscoveryService` `Cache` cleanup `setInterval` timers, plus the `AccessibilityService` config-change listener, were never cleared on extension deactivation. Each disable→enable cycle or window reload left orphaned timers and listeners. Added `ProjectDetectionService.dispose()`, `DIContainer.dispose()`, and a new `disposeContainer()` function called from `extension.deactivate()`. Module-level service singletons are now reset after disposal so reactivation creates fresh instances.
-
 ## [2.1.0]
 
 ### Added

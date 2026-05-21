@@ -93,7 +93,7 @@ _\* Import merging applies to **Copy/Move Selection to File**. Copy/Move Functio
 
 ---
 
-## 📚 Features Overview
+## 📚 Features Summary
 
 13 user-facing features grouped by category.
 
