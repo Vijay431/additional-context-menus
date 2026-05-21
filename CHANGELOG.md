@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Marketplace SEO metadata**: Optimized `package.json` `keywords` for higher search intent — dropped low-value generics (`copy`, `extract`, `menu`, `function`, `time-saver`) and added feature/intent terms (`enum-generator`, `cron`, `dotenv`, `env-file`, `duplicate-file`, `code-snippets`), front-loading the highest-value terms while staying within the marketplace 30-keyword cap.
 - **README restructure for discoverability**: Added a keyword-rich hero intro, surfaced the Marketplace/Open VSX install call-to-action near the top, merged redundant feature/keyboard-shortcut sections, and added descriptive alt text to all screenshots and demo GIFs.
 - **Self-contained README**: Removed links to the GitHub Pages documentation site (being retired) and folded the essential per-feature reference inline so the README stands alone as the marketplace landing page.
+- **Consistent project-gating wording in README**: Aligned Quick Start, Usage Guide, Requirements, and FAQ to state that context menus appear in any workspace and that `autoDetectProjects` framework detection is informational only — not a hard gate requiring a Node.js project or `package.json`.
+- **Dev toolchain**: Bumped `lint-staged` from `^16.4.0` to `^17.0.5` (dev-only; pre-commit hook). Requires Node `>=22.22.1`, satisfied by the supported dev/CI Node range.
 
 ## [2.1.0]
 

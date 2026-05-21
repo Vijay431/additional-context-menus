@@ -26,7 +26,7 @@ _Extract functions in one click with intelligent import handling_
 **New to Additional Context Menus?** Get productive in 2 minutes:
 
 1. **Install** the extension from VS Code Marketplace
-2. **Open** any Node.js project with `package.json`
+2. **Open** any TypeScript/JavaScript workspace (Node.js project detection is informational)
 3. **Right-click** in any file → look for **Additional Context Menus ▶** in the context menu
 4. **Try it out:** Select some code → Right-click → Additional Context Menus → "Copy Selection to File"
 
@@ -234,7 +234,7 @@ Pre-release tags carry a suffix (e.g. `v2.1.0-beta.1`, `v2.1.0-rc.1`). Stable re
 
 ## 📖 Usage Guide
 
-The extension automatically detects Node.js projects and enhances right-click context menus for supported file types.
+The extension auto-detects supported frameworks for informational context and shows right-click menus for supported file types in any workspace.
 
 <details>
 <summary>🎬 Feature Demonstrations (before & after examples)</summary>
@@ -400,7 +400,7 @@ Access management and utility features via Command Palette (`Ctrl+Shift+P` / `Cm
 - **VS Code**: Version 1.111.0 or higher (last 10 minor versions supported)
 - **Node.js**: Version 22+ runtime (Node 24 LTS recommended for development)
 - **PNPM**: Package manager for dependency management (install with `npm install -g pnpm`)
-- **Project Type**: Node.js project with `package.json` (for smart detection)
+- **Project Type**: Any workspace (Node.js/framework detection is informational only)
 - **File Types**: TypeScript/JavaScript files (`.ts`, `.tsx`, `.js`, `.jsx`)
 - **Optional**: Framework dependencies (React, Angular, Express, Next.js) for enhanced features
 
@@ -617,7 +617,7 @@ The extension auto-detects React, Angular, Express, and Next.js projects for inf
 A: Yes. Context menus appear in any workspace — no `package.json` required. The `autoDetectProjects` setting identifies frameworks for informational purposes, but does not gate the menus.
 
 **Q: Does this work with other frameworks like Vue or Svelte?**
-A: The extension currently detects React, Angular, Express, and Next.js projects. Basic file operations work in any Node.js project, but framework-specific features are limited to supported frameworks.
+A: The extension currently detects React, Angular, Express, and Next.js projects. Basic file operations work in any workspace, but framework-specific features are limited to supported frameworks.
 
 **Q: How does the extension handle large files?**
 A: The extension is optimized for performance and can handle large files. Progress indicators appear for operations with 5+ files.
