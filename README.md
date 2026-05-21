@@ -4,9 +4,17 @@
 
 [![CI](https://github.com/Vijay431/additional-context-menus/actions/workflows/ci.yml/badge.svg)](https://github.com/Vijay431/additional-context-menus/actions/workflows/ci.yml) [![VS Code Marketplace](https://vsmarketplacebadges.dev/version-short/VijayGangatharan.additional-context-menus.svg)](https://marketplace.visualstudio.com/items?itemName=VijayGangatharan.additional-context-menus) [![Open VSX Registry](https://img.shields.io/open-vsx/v/VijayGangatharan/additional-context-menus)](https://open-vsx.org/extension/VijayGangatharan/additional-context-menus) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Installs](https://vsmarketplacebadges.dev/installs-short/VijayGangatharan.additional-context-menus.svg)](https://marketplace.visualstudio.com/items?itemName=VijayGangatharan.additional-context-menus) [![Downloads](https://vsmarketplacebadges.dev/downloads-short/VijayGangatharan.additional-context-menus.svg)](https://marketplace.visualstudio.com/items?itemName=VijayGangatharan.additional-context-menus) [![Rating](https://vsmarketplacebadges.dev/rating-short/VijayGangatharan.additional-context-menus.svg)](https://marketplace.visualstudio.com/items?itemName=VijayGangatharan.additional-context-menus&ssr=false#review-details)
 
+**Additional Context Menus** is a free, open-source VS Code extension that adds powerful right-click actions for everyday TypeScript and JavaScript work. Extract and move functions with AST-based precision, copy or move selections between files with automatic import merging, generate TypeScript enums, `.env` files, and cron expressions, and run file operations such as duplicate, rename-to-convention, and copy-contents — all without leaving the editor. Built for React, Angular, Express, and Next.js developers who want to refactor faster and stay in flow.
+
+## ⬇️ Install in 30 seconds
+
+- **VS Code Marketplace** — [Install Additional Context Menus](https://marketplace.visualstudio.com/items?itemName=VijayGangatharan.additional-context-menus), or run `ext install VijayGangatharan.additional-context-menus` from Quick Open (`Ctrl+P` / `Cmd+P`)
+- **Open VSX Registry** (VSCodium, Cursor, Gitpod, Windsurf) — [view the Open VSX listing](https://open-vsx.org/extension/VijayGangatharan/additional-context-menus)
+- **Command line** — `code --install-extension VijayGangatharan.additional-context-menus`
+
 <div align="center">
 
-![Copy Function Demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/copy-function.gif)
+![Copy Function demo: with the cursor inside a TypeScript function, choosing Copy Function from the right-click menu copies the entire function in one click](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/copy-function.gif)
 _Extract functions in one click with intelligent import handling_
 
 </div>
@@ -18,7 +26,7 @@ _Extract functions in one click with intelligent import handling_
 **New to Additional Context Menus?** Get productive in 2 minutes:
 
 1. **Install** the extension from VS Code Marketplace
-2. **Open** any Node.js project with `package.json`
+2. **Open** any TypeScript/JavaScript workspace (Node.js project detection is informational)
 3. **Right-click** in any file → look for **Additional Context Menus ▶** in the context menu
 4. **Try it out:** Select some code → Right-click → Additional Context Menus → "Copy Selection to File"
 
@@ -42,35 +50,35 @@ _Extract functions in one click with intelligent import handling_
 
 ### Copy Function
 
-![Copy Function Demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/copy-function.gif)
+![Copy Function demo: copying a whole function to the clipboard from the editor right-click menu](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/copy-function.gif)
 
 ### Copy Function to File
 
-![Copy Function to File Demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/copy-function-to-file.gif)
+![Copy Function to File demo: picking a target file and inserting the function at a smart location](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/copy-function-to-file.gif)
 
 ### Move Function to File
 
-![Move Function to File Demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/move-function-to-file.gif)
+![Move Function to File demo: moving a function into another file and removing it from the source](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/move-function-to-file.gif)
 
 ### Copy Selection to File
 
-![Copy Selection to File Demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/copy-selection-to-file.gif)
+![Copy Selection to File demo: copying selected code into another file with imports merged automatically](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/copy-selection-to-file.gif)
 
 ### Move Selection to File
 
-![Move Selection to File Demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/move-selection-to-file.gif)
+![Move Selection to File demo: moving a selected code block to another file with automatic import handling](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/move-selection-to-file.gif)
 
 ### Save All
 
-![Save All Demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/save-all.gif)
+![Save All demo: saving every modified editor at once with a progress summary](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/save-all.gif)
 
 ### Open in Terminal
 
-![Open in Terminal Demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/open-in-terminal.gif)
+![Open in Terminal demo: opening an integrated terminal at the right-clicked file's directory](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/open-in-terminal.gif)
 
 ### Rename File to Convention
 
-![Rename File to Convention Demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/rename-file-convention.gif)
+![Rename File to Convention demo: renaming a file to kebab-case from the Explorer right-click menu](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/rename-file-convention.gif)
 
 </details>
 
@@ -93,31 +101,25 @@ _\* Import merging applies to **Copy/Move Selection to File**. Copy/Move Functio
 
 ---
 
-## 📚 Features Documentation
+## ✨ Features
 
-Detailed documentation for all 13 features with usage guides and examples.
+All 13 user-facing commands at a glance:
 
-| Feature                | Documentation                                                                                               | Purpose                                                                               |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Copy Function          | [View Docs](https://vijay431.github.io/additional-context-menus/services/copyFunction.html)                 | Copy function at cursor                                                               |
-| Copy Function to File  | [View Docs](https://vijay431.github.io/additional-context-menus/services/copyFunctionToFile.html)           | Copy function to target file                                                          |
-| Move Function to File  | [View Docs](https://vijay431.github.io/additional-context-menus/services/moveFunctionToFile.html)           | Move function to target file                                                          |
-| Copy Selection to File | [View Docs](https://vijay431.github.io/additional-context-menus/services/copySelectionToFile.html)          | Copy selected code to file                                                            |
-| Move Selection to File | [View Docs](https://vijay431.github.io/additional-context-menus/services/moveSelectionToFile.html)          | Move selected code to file                                                            |
-| Save All               | [View Docs](https://vijay431.github.io/additional-context-menus/services/fileSaveService.html)              | Enhanced save operations                                                              |
-| Open in Terminal       | [View Docs](https://vijay431.github.io/additional-context-menus/services/terminalService.html)              | Terminal integration                                                                  |
-| Rename File Convention | [View Docs](https://vijay431.github.io/additional-context-menus/services/fileNamingConventionService.html)  | Rename files/folders to kebab-case, camelCase, or PascalCase via Explorer right-click |
-| Generate Enum          | [View Docs](https://vijay431.github.io/additional-context-menus/services/enumGeneratorService.html)         | Union type to enum                                                                    |
-| Generate Cron          | [View Docs](https://vijay431.github.io/additional-context-menus/services/cronJobTimerGeneratorService.html) | Cron expression generation                                                            |
-| Generate .env File     | [View Docs](https://vijay431.github.io/additional-context-menus/services/envFileGeneratorService.html)      | .env file creation                                                                    |
-| Copy File Contents     | [View Docs](https://vijay431.github.io/additional-context-menus/services/copyFileContents.html)             | Copy entire file to clipboard                                                         |
-| Duplicate File         | [View Docs](https://vijay431.github.io/additional-context-menus/services/duplicateFile.html)                | Duplicate file with auto-incremented naming                                           |
-
-[**View All Features** →](https://vijay431.github.io/additional-context-menus/services/)
-
----
-
-## ✨ Features Overview
+| Feature                   | What it does                                                                  |
+| ------------------------- | ----------------------------------------------------------------------------- |
+| Copy Function             | Copy the function at the cursor to the clipboard (AST-based detection)        |
+| Copy Function to File     | Copy the function at the cursor into a target file at a smart insertion point |
+| Move Function to File     | Move the function at the cursor into a target file and remove it from source  |
+| Copy Selection to File    | Copy selected code into another file with imports merged automatically        |
+| Move Selection to File    | Move selected code into another file with automatic import handling           |
+| Save All                  | Save all modified editors with progress feedback and read-only handling       |
+| Open in Terminal          | Open a terminal at the file's directory (Windows, macOS, Linux)               |
+| Rename File to Convention | Rename files/folders to kebab-case, camelCase, or PascalCase via the Explorer |
+| Generate Enum             | Convert a TypeScript union type into an enum                                  |
+| Generate Cron Expression  | Build a cron expression interactively                                         |
+| Generate .env File        | Generate a `.env` file from environment-variable usage in the codebase        |
+| Copy File Contents        | Copy an entire file's contents to the clipboard from the Explorer             |
+| Duplicate File            | Duplicate a file with auto-incremented naming                                 |
 
 ### 🎯 Core Functionality
 
@@ -192,9 +194,7 @@ Detailed documentation for all 13 features with usage guides and examples.
 - `additionalContextMenus.accessibility.screenReaderMode` — enhanced ARIA labels (default: `false`)
 - `additionalContextMenus.accessibility.keyboardNavigation` — keyboard hints in Quick Pick (default: `true`)
 
-Supports NVDA (Windows), VoiceOver (macOS), Orca (Linux). All Quick Pick items include ARIA labels; long-running operations announce progress percentage.
-
-For full details see [Accessibility Guide](https://vijay431.github.io/additional-context-menus/accessibility.html).
+Supports NVDA (Windows), VoiceOver (macOS), Orca (Linux). All Quick Pick items include ARIA labels; long-running operations announce progress percentage. See the [Accessibility](#accessibility) features and the **Extension Settings** section below for full details.
 
 </details>
 
@@ -232,9 +232,9 @@ Pre-release tags carry a suffix (e.g. `v2.1.0-beta.1`, `v2.1.0-rc.1`). Stable re
 
 ---
 
-## 🚀 Usage Guide
+## 📖 Usage Guide
 
-The extension automatically detects Node.js projects and enhances right-click context menus for supported file types.
+The extension auto-detects supported frameworks for informational context and shows right-click menus for supported file types in any workspace.
 
 <details>
 <summary>🎬 Feature Demonstrations (before & after examples)</summary>
@@ -355,7 +355,7 @@ const UserProfile = () => {
 - 🐧 **Linux**: gnome-terminal, konsole, xfce4-terminal, xterm
 - ⚙️ **Custom**: Configure any terminal with command templates
 
-#---
+---
 
 ## 🎮 Commands & Shortcuts
 
@@ -391,15 +391,7 @@ Access management and utility features via Command Palette (`Ctrl+Shift+P` / `Cm
 
 - `Additional Context Menus: Rename File to Convention` - Right-click a file or folder in the Explorer to rename to a naming convention
 
-**Keyboard Shortcuts** (active when extension is enabled):
-
-- `Ctrl+Alt+Shift+F` (`Cmd+Alt+Shift+F` on Mac) - Copy Function
-- `Ctrl+Alt+Shift+E` (`Cmd+Alt+Shift+E` on Mac) - Copy Function to File
-- `Ctrl+Alt+Shift+C` (`Cmd+Alt+Shift+C` on Mac) - Copy Selection to File
-- `Ctrl+Alt+Shift+R` (`Cmd+Alt+Shift+R` on Mac) - Move Function to File
-- `Ctrl+Alt+Shift+M` (`Cmd+Alt+Shift+M` on Mac) - Move Selection to File
-- `Ctrl+Alt+Shift+A` (`Cmd+Alt+Shift+A` on Mac) - Save All
-- `Ctrl+Alt+Shift+T` (`Cmd+Alt+Shift+T` on Mac) - Open in Terminal
+**Keyboard Shortcuts** (active when extension is enabled): see the [Keyboard Shortcuts](#keyboard-shortcuts) table above for the full Windows/Linux and macOS bindings.
 
 ---
 
@@ -408,14 +400,9 @@ Access management and utility features via Command Palette (`Ctrl+Shift+P` / `Cm
 - **VS Code**: Version 1.111.0 or higher (last 10 minor versions supported)
 - **Node.js**: Version 22+ runtime (Node 24 LTS recommended for development)
 - **PNPM**: Package manager for dependency management (install with `npm install -g pnpm`)
-- **Project Type**: Node.js project with `package.json` (for smart detection)
+- **Project Type**: Any workspace (Node.js/framework detection is informational only)
 - **File Types**: TypeScript/JavaScript files (`.ts`, `.tsx`, `.js`, `.jsx`)
 - **Optional**: Framework dependencies (React, Angular, Express, Next.js) for enhanced features
-
-### Site Development (GitHub Pages only)
-
-- **Ruby**: >= 3.1 — [ruby-lang.org](https://www.ruby-lang.org/en/downloads/)
-- **Bundler**: `gem install bundler` — run `pnpm run system:verify` after install to set up Husky and site dependencies
 
 ---
 
@@ -428,7 +415,7 @@ Additional Context Menus provides extensive configuration options:
 ### Core Settings
 
 - `additionalContextMenus.enabled` (boolean, default: `true`) - Enable or disable the extension
-- `additionalContextMenus.autoDetectProjects` (boolean, default: `true`) - Automatically detect Node.js projects
+- `additionalContextMenus.autoDetectProjects` (boolean, default: `true`) - Automatically detect frameworks (informational)
 - `additionalContextMenus.supportedExtensions` (array, default: `[".ts", ".tsx", ".js", ".jsx"]`) - File extensions where context menus will be shown
 
 ### Code Copy Settings
@@ -508,7 +495,7 @@ Additional Context Menus provides extensive configuration options:
 
 ---
 
-## 🚀 Supported Frameworks
+## 🧩 Supported Frameworks
 
 The extension auto-detects React, Angular, Express, and Next.js projects for informational purposes; all core operations work in any TypeScript/JavaScript workspace.
 
@@ -630,7 +617,7 @@ The extension auto-detects React, Angular, Express, and Next.js projects for inf
 A: Yes. Context menus appear in any workspace — no `package.json` required. The `autoDetectProjects` setting identifies frameworks for informational purposes, but does not gate the menus.
 
 **Q: Does this work with other frameworks like Vue or Svelte?**
-A: The extension currently detects React, Angular, Express, and Next.js projects. Basic file operations work in any Node.js project, but framework-specific features are limited to supported frameworks.
+A: The extension currently detects React, Angular, Express, and Next.js projects. Basic file operations work in any workspace, but framework-specific features are limited to supported frameworks.
 
 **Q: How does the extension handle large files?**
 A: The extension is optimized for performance and can handle large files. Progress indicators appear for operations with 5+ files.
@@ -696,28 +683,34 @@ For older versions, see [CHANGELOG.md](CHANGELOG.md).
 
 </details>
 
-<details>
-<summary>🏗️ Technical Architecture</summary>
+## 🏗️ Architecture
 
-Service-oriented design with singleton pattern and DI container (`src/di/container.ts`):
+### Runtime Architecture
 
-**Core Managers**
+```mermaid
+flowchart TD
+    A["extension"] --> B["ExtensionManager"]
+    B --> C["ContextMenuManager"]
+    C --> D["FileSaveService\nSave All"]
+    C --> E["TerminalService\nOpen in Terminal"]
+    C --> F["FileNamingConventionService\nRename to Convention"]
+    C --> G["Copy, Move, Duplicate handlers\nFunction, Selection, File"]
+    C -.->|"lazy load"| H["EnumGeneratorService\nGenerate Enum"]
+    C -.->|"lazy load"| I["EnvFileGeneratorService\nGenerate .env File"]
+    C -.->|"lazy load"| J["CronJobTimerGeneratorService\nGenerate Cron"]
+```
 
-- `ExtensionManager` — lifecycle coordinator
-- `ContextMenuManager` — command registration and handler dispatch
+### Codebase Structure
 
-**Specialized Services**
-
-- `ProjectDetectionService` — framework detection (informational)
-- `ConfigurationService` — settings and change events
-- `FileDiscoveryService` — workspace file scanning, compatible-file filtering
-- `FileSaveService` — bulk save with progress feedback
-- `CodeAnalysisService` — AST-based function detection (TypeScript Compiler API, lazy-loaded)
-- `TerminalService` — cross-platform terminal (integrated / external / system-default)
-
-**Lazy-loaded** (loaded from `dist/lazy/` on first use): `codeAnalysisService`, `enumGeneratorService`, `envFileGeneratorService`, `cronJobTimerGeneratorService`
-
-</details>
+```mermaid
+flowchart TD
+    A["extension"] --> B["managers"]
+    B --> C["di\ncontainer, interfaces"]
+    C --> D["Feature Services\nFileSaveService\nTerminalService\nFileNamingConventionService"]
+    C -.->|"lazy load"| L["Lazy Services\nEnumGeneratorService\nEnvFileGeneratorService\nCronJobTimerGeneratorService"]
+    D --> E["utils, types"]
+    L --> E
+```
 
 ---
 
