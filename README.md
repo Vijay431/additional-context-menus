@@ -6,7 +6,7 @@
 
 **Additional Context Menus** is a free, open-source VS Code extension that adds powerful right-click actions for everyday TypeScript and JavaScript work. Extract and move functions with AST-based precision, copy or move selections between files with automatic import merging, generate TypeScript enums, `.env` files, and cron expressions, and run file operations such as duplicate, rename-to-convention, and copy-contents — all without leaving the editor. Built for React, Angular, Express, and Next.js developers who want to refactor faster and stay in flow.
 
-### ⬇️ Install in 30 seconds
+## ⬇️ Install in 30 seconds
 
 - **VS Code Marketplace** — [Install Additional Context Menus](https://marketplace.visualstudio.com/items?itemName=VijayGangatharan.additional-context-menus), or run `ext install VijayGangatharan.additional-context-menus` from Quick Open (`Ctrl+P` / `Cmd+P`)
 - **Open VSX Registry** (VSCodium, Cursor, Gitpod, Windsurf) — [view the Open VSX listing](https://open-vsx.org/extension/VijayGangatharan/additional-context-menus)
