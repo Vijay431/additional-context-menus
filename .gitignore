@@ -29,16 +29,6 @@ debug.log
 .DS_Store
 Thumbs.db
 
-# Jekyll site build artifacts
-docs/_site/
-docs/.bundle/
-docs/vendor/
-docs/Gemfile.lock
-docs/.jekyll-cache/
-
-# Legacy site/ directory (renamed to docs/)
-site/
-
 # Local-only docs
 TODO.md
 CHANGELOG_RELEASE.md

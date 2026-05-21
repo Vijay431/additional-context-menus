@@ -37,8 +37,6 @@ pnpm run test:unit:coverage # run unit tests with LCOV coverage
 pnpm run test:integration # run integration tests (Mocha + VS Code, requires display)
 pnpm run publish          # publish to VS Code Marketplace
 pnpm run publish:openvsx  # publish to Open VSX Registry
-pnpm run docs:serve       # serve Jekyll GitHub Pages site locally
-pnpm run docs:live        # serve with live reload
 ```
 
 Run a single unit test file: `pnpm run test:unit -- test/unit/cache.test.ts`
@@ -92,7 +90,6 @@ src/
     metrics.ts
     pathValidator.ts
 public/                         # packaged extension assets (images, screenshots)
-docs/                           # Jekyll GitHub Pages site (vijay431.github.io/additional-context-menus)
 test/
   __mocks__/vscode.ts           # minimal vscode mock for Vitest unit tests
   unit/                         # Vitest unit tests (infrastructure, no VS Code API)
@@ -103,40 +100,68 @@ vitest.config.ts                # Vitest config (aliases vscode to mock)
 tsconfig.test.json              # TypeScript config for compiling integration tests
 ```
 
-### GitHub Pages site (`docs/`)
-
-- **Styles:** [`docs/assets/css/main.css`](docs/assets/css/main.css) (global layout, design tokens, `prefers-color-scheme: dark`, responsive nav), [`docs/assets/css/pages.css`](docs/assets/css/pages.css) (page-specific grids/cards, installation/download/docs grids, **`code-operations.md`** operation/example/workflow/best-practices blocks).
-- **Scripts:** [`docs/assets/js/main.js`](docs/assets/js/main.js) — mobile nav, scroll reveal, code-block copy buttons, tabs. Exposes `window.AdditionalContextMenusSite` (legacy alias `window.FileInsights`).
-- **Documentation page:** [`docs/documentation.md`](docs/documentation.md) Commands API uses `.commands-api` … `.command-item` markup; styles are scoped under `.commands-api` in [`docs/assets/css/pages.css`](docs/assets/css/pages.css) so generic class names do not affect e.g. installation’s `.command-list` UL wrapper.
-- **Layout:** [`docs/_layouts/default.html`](docs/_layouts/default.html). Markdown-only pages (e.g. `developer.md`) get a readable column via `.main-content > :not(section)`; section-based marketing pages stay full width with inner `.container`.
-
 ---
 
 ## Services
 
+### Canonical Sources
+
+- **`package.json` `contributes`** — canonical source for all command IDs, settings, and keybindings (VS Code loads it directly).
+- **`README.md`** — canonical user-facing narrative.
+- **`CLAUDE.md`** — canonical architecture and dev conventions.
+
+### Architecture Diagrams
+
+**Runtime Architecture**
+
+```mermaid
+flowchart TD
+    A["extension"] --> B["ExtensionManager"]
+    B --> C["ContextMenuManager"]
+    C --> D["FileSaveService\nSave All"]
+    C --> E["TerminalService\nOpen in Terminal"]
+    C --> F["FileNamingConventionService\nRename to Convention"]
+    C --> G["Copy, Move, Duplicate handlers\nFunction, Selection, File"]
+    C -.->|"lazy load"| H["EnumGeneratorService\nGenerate Enum"]
+    C -.->|"lazy load"| I["EnvFileGeneratorService\nGenerate .env File"]
+    C -.->|"lazy load"| J["CronJobTimerGeneratorService\nGenerate Cron"]
+```
+
+**Codebase Structure**
+
+```mermaid
+flowchart TD
+    A["extension"] --> B["managers"]
+    B --> C["di\ncontainer, interfaces"]
+    C --> D["Feature Services\nFileSaveService\nTerminalService\nFileNamingConventionService"]
+    C -.->|"lazy load"| L["Lazy Services\nEnumGeneratorService\nEnvFileGeneratorService\nCronJobTimerGeneratorService"]
+    D --> E["utils, types"]
+    L --> E
+```
+
 ### User-Facing Features (13)
 
-These are the commands users interact with. Each has a site service doc in `docs/services/`.
+These are the commands users interact with. `package.json` `contributes.commands` is the canonical command-ID list.
 
-| Feature                   | Command ID                                    | `docs/services/` doc              |
-| ------------------------- | --------------------------------------------- | --------------------------------- |
-| Copy Function             | `additionalContextMenus.copyFunction`         | `copyFunction.md`                 |
-| Copy Function to File     | `additionalContextMenus.copyFunctionToFile`   | `copyFunctionToFile.md`           |
-| Move Function to File     | `additionalContextMenus.moveFunctionToFile`   | `moveFunctionToFile.md`           |
-| Copy Selection to File    | `additionalContextMenus.copySelectionToFile`  | `copySelectionToFile.md`          |
-| Move Selection to File    | `additionalContextMenus.moveSelectionToFile`  | `moveSelectionToFile.md`          |
-| Save All                  | `additionalContextMenus.saveAll`              | `fileSaveService.md`              |
-| Open in Terminal          | `additionalContextMenus.openInTerminal`       | `terminalService.md`              |
-| Rename File to Convention | `additionalContextMenus.renameFileConvention` | `fileNamingConventionService.md`  |
-| Generate Enum             | `additionalContextMenus.generateEnum`         | `enumGeneratorService.md`         |
-| Generate Cron Expression  | `additionalContextMenus.generateCronTimer`    | `cronJobTimerGeneratorService.md` |
-| Generate .env File        | `additionalContextMenus.generateEnvFile`      | `envFileGeneratorService.md`      |
-| Copy File Contents        | `additionalContextMenus.copyFileContents`     | `copyFileContents.md`             |
-| Duplicate File            | `additionalContextMenus.duplicateFile`        | `duplicateFile.md`                |
+| Feature                   | Command ID                                    |
+| ------------------------- | --------------------------------------------- |
+| Copy Function             | `additionalContextMenus.copyFunction`         |
+| Copy Function to File     | `additionalContextMenus.copyFunctionToFile`   |
+| Move Function to File     | `additionalContextMenus.moveFunctionToFile`   |
+| Copy Selection to File    | `additionalContextMenus.copySelectionToFile`  |
+| Move Selection to File    | `additionalContextMenus.moveSelectionToFile`  |
+| Save All                  | `additionalContextMenus.saveAll`              |
+| Open in Terminal          | `additionalContextMenus.openInTerminal`       |
+| Rename File to Convention | `additionalContextMenus.renameFileConvention` |
+| Generate Enum             | `additionalContextMenus.generateEnum`         |
+| Generate Cron Expression  | `additionalContextMenus.generateCronTimer`    |
+| Generate .env File        | `additionalContextMenus.generateEnvFile`      |
+| Copy File Contents        | `additionalContextMenus.copyFileContents`     |
+| Duplicate File            | `additionalContextMenus.duplicateFile`        |
 
 ### Infrastructure Services (5)
 
-These power the features internally. They have **no standalone user-facing docs** — do not create `docs/services/` pages for them.
+These power the features internally.
 
 | Service                 | Source File                               | Purpose                                                  |
 | ----------------------- | ----------------------------------------- | -------------------------------------------------------- |
@@ -260,7 +285,6 @@ This project follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html). Pre-re
 
 - `.github/workflows/ci.yml` runs PR/main quality gates: lint, unit coverage, integration tests, build matrix, audit, and dependency review.
 - `.github/workflows/release.yml` runs only on `v*` tag pushes: package, verify, publish to VS Code Marketplace and Open VSX, and create a GitHub Release.
-- GitHub Pages auto-deploys from `main` via the built-in `pages build and deployment` workflow on every push.
 - Community automation lives in `.github/workflows/stale.yml`, `.github/workflows/labels-sync.yml`, and `.github/workflows/all-contributors.yml`.
 - Release publishing requires `VSCE_PAT` and `OVSX_PAT`.
 
@@ -275,7 +299,7 @@ fi
 ```
 
 - Pre-release tags → both marketplaces publish with `--pre-release`
-- Stable tags → both marketplaces publish as stable; GitHub Pages auto-updates from main
+- Stable tags → both marketplaces publish as stable
 
 ### Release Checklist
 
@@ -283,26 +307,26 @@ fi
 
 1. Ensure `package.json` version is `2.0.2`
 2. Push tag: `git tag v2.0.2 && git push origin v2.0.2`
-3. Release workflow publishes to VS Code Marketplace + Open VSX, deploys GitHub Pages, creates GitHub Release
+3. Release workflow publishes to VS Code Marketplace + Open VSX, creates GitHub Release
 
 **Pre-release (`v2.1.0-beta.1`):**
 
 1. Bump `package.json` version to `2.1.0`
 2. Push tag: `git tag v2.1.0-beta.1 && git push origin v2.1.0-beta.1`
-3. Release workflow publishes with `--pre-release` to both marketplaces; GitHub Pages is NOT updated
+3. Release workflow publishes with `--pre-release` to both marketplaces
 
 **Graduating pre-release to stable (`v2.1.0`):**
 
 1. `package.json` already says `2.1.0` — no change needed
 2. Push tag: `git tag v2.1.0 && git push origin v2.1.0`
-3. Release workflow publishes stable to both marketplaces and deploys GitHub Pages
+3. Release workflow publishes stable to both marketplaces
 
 ---
 
 ## Steps to follow:
 
 - All new changes should be added to the `CLAUDE.md` file
-- All new changes that user viewable should be added to the `docs/`, `public/`, and `README.md` files
+- All new changes that are user viewable should be added to `public/` and `README.md`
 - All new changes should be logged in the `CHANGELOG.md` file under unreleased section
 - Community automation changes should update `AGENTS.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md`, and `THIRDPARTY.md` when commands, workflow ownership, or dependency notices change.
 - Configuration or command behavior changes must update `package.json`, related types in `src/types/`, tests, and docs together.

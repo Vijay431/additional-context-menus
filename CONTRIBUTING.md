@@ -25,8 +25,7 @@ By participating in this project, you are expected to uphold our [Code of Conduc
 - [PNPM](https://pnpm.io/) (install with `npm install -g pnpm`)
 - [Visual Studio Code](https://code.visualstudio.com/) (for development and testing)
 - [Git](https://git-scm.com/)
-- [Ruby](https://www.ruby-lang.org/en/downloads/) >= 3.1 — required for local GitHub Pages preview (`pnpm run docs:serve`)
-- [Bundler](https://bundler.io/) — Ruby gem manager, install with `gem install bundler`, then run `pnpm run system:verify` to set up Husky and site dependencies
+- Run `pnpm run system:verify` after install to set up Husky
 
 ### Types of Contributions
 
@@ -227,7 +226,6 @@ The repository separates quality gates, release publishing, and community automa
 - `verifier` — validates VSIX contents (no source files, no node_modules, correct bundle)
 - `publish-vscode` — publishes to VS Code Marketplace (stable or `--pre-release`)
 - `publish-openvsx` — publishes to Open VSX Registry (stable or `--pre-release`)
-- `deploy-pages` — deploys docs to GitHub Pages (stable releases only, runs after both publishes succeed)
 - `create-release` — creates a GitHub Release with the VSIX attached
 
 **Community automation:**
@@ -235,7 +233,6 @@ The repository separates quality gates, release publishing, and community automa
 - `stale.yml` marks inactive issues and PRs stale.
 - `labels-sync.yml` syncs labels from `.github/labels.yml`.
 - `all-contributors.yml` refreshes the README contributors table.
-- `deploy-pages.yml` manually redeploys the Jekyll site when maintainers need a docs-only rerun.
 
 ### Code Architecture
 

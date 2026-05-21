@@ -512,9 +512,7 @@
     "lint:fix": "eslint src --fix",
     "lint-staged": "lint-staged",
     "format": "prettier --write .",
-    "docs:serve": "cd docs && bundle exec jekyll serve --baseurl ''",
-    "docs:live": "cd docs && bundle exec jekyll serve --baseurl '' --livereload",
-    "system:verify": "concurrently \"husky\" \"cd docs && bundle config set --local path vendor/bundle && bundle install\""
+    "system:verify": "husky"
   },
   "prettier": {
     "printWidth": 100,

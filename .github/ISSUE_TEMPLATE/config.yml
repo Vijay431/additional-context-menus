@@ -3,9 +3,6 @@ contact_links:
   - name: GitHub Discussions
     url: https://github.com/Vijay431/additional-context-menus/discussions
     about: Ask questions and discuss ideas with the community
-  - name: Documentation
-    url: https://vijay431.github.io/additional-context-menus/
-    about: Read the official documentation
-  - name: Troubleshooting Guide
-    url: https://vijay431.github.io/additional-context-menus/troubleshooting.html
-    about: Common issues and solutions
+  - name: Repository
+    url: https://github.com/Vijay431/additional-context-menus
+    about: Source code, README, and contributing guide

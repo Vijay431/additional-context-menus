@@ -93,27 +93,25 @@ _\* Import merging applies to **Copy/Move Selection to File**. Copy/Move Functio
 
 ---
 
-## 📚 Features Documentation
+## 📚 Features Summary
 
-Detailed documentation for all 13 features with usage guides and examples.
+13 user-facing features grouped by category.
 
-| Feature                | Documentation                                                                                               | Purpose                                                                               |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Copy Function          | [View Docs](https://vijay431.github.io/additional-context-menus/services/copyFunction.html)                 | Copy function at cursor                                                               |
-| Copy Function to File  | [View Docs](https://vijay431.github.io/additional-context-menus/services/copyFunctionToFile.html)           | Copy function to target file                                                          |
-| Move Function to File  | [View Docs](https://vijay431.github.io/additional-context-menus/services/moveFunctionToFile.html)           | Move function to target file                                                          |
-| Copy Selection to File | [View Docs](https://vijay431.github.io/additional-context-menus/services/copySelectionToFile.html)          | Copy selected code to file                                                            |
-| Move Selection to File | [View Docs](https://vijay431.github.io/additional-context-menus/services/moveSelectionToFile.html)          | Move selected code to file                                                            |
-| Save All               | [View Docs](https://vijay431.github.io/additional-context-menus/services/fileSaveService.html)              | Enhanced save operations                                                              |
-| Open in Terminal       | [View Docs](https://vijay431.github.io/additional-context-menus/services/terminalService.html)              | Terminal integration                                                                  |
-| Rename File Convention | [View Docs](https://vijay431.github.io/additional-context-menus/services/fileNamingConventionService.html)  | Rename files/folders to kebab-case, camelCase, or PascalCase via Explorer right-click |
-| Generate Enum          | [View Docs](https://vijay431.github.io/additional-context-menus/services/enumGeneratorService.html)         | Union type to enum                                                                    |
-| Generate Cron          | [View Docs](https://vijay431.github.io/additional-context-menus/services/cronJobTimerGeneratorService.html) | Cron expression generation                                                            |
-| Generate .env File     | [View Docs](https://vijay431.github.io/additional-context-menus/services/envFileGeneratorService.html)      | .env file creation                                                                    |
-| Copy File Contents     | [View Docs](https://vijay431.github.io/additional-context-menus/services/copyFileContents.html)             | Copy entire file to clipboard                                                         |
-| Duplicate File         | [View Docs](https://vijay431.github.io/additional-context-menus/services/duplicateFile.html)                | Duplicate file with auto-incremented naming                                           |
-
-[**View All Features** →](https://vijay431.github.io/additional-context-menus/services/)
+| Feature                | Purpose                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------- |
+| Copy Function          | Copy function at cursor                                                               |
+| Copy Function to File  | Copy function to target file                                                          |
+| Move Function to File  | Move function to target file                                                          |
+| Copy Selection to File | Copy selected code to file                                                            |
+| Move Selection to File | Move selected code to file                                                            |
+| Save All               | Enhanced save operations                                                              |
+| Open in Terminal       | Terminal integration                                                                  |
+| Rename File Convention | Rename files/folders to kebab-case, camelCase, or PascalCase via Explorer right-click |
+| Generate Enum          | Union type to enum                                                                    |
+| Generate Cron          | Cron expression generation                                                            |
+| Generate .env File     | .env file creation                                                                    |
+| Copy File Contents     | Copy entire file to clipboard                                                         |
+| Duplicate File         | Duplicate file with auto-incremented naming                                           |
 
 ---
 
@@ -193,8 +191,6 @@ Detailed documentation for all 13 features with usage guides and examples.
 - `additionalContextMenus.accessibility.keyboardNavigation` — keyboard hints in Quick Pick (default: `true`)
 
 Supports NVDA (Windows), VoiceOver (macOS), Orca (Linux). All Quick Pick items include ARIA labels; long-running operations announce progress percentage.
-
-For full details see [Accessibility Guide](https://vijay431.github.io/additional-context-menus/accessibility.html).
 
 </details>
 
@@ -412,11 +408,6 @@ Access management and utility features via Command Palette (`Ctrl+Shift+P` / `Cm
 - **File Types**: TypeScript/JavaScript files (`.ts`, `.tsx`, `.js`, `.jsx`)
 - **Optional**: Framework dependencies (React, Angular, Express, Next.js) for enhanced features
 
-### Site Development (GitHub Pages only)
-
-- **Ruby**: >= 3.1 — [ruby-lang.org](https://www.ruby-lang.org/en/downloads/)
-- **Bundler**: `gem install bundler` — run `pnpm run system:verify` after install to set up Husky and site dependencies
-
 ---
 
 ## ⚙️ Extension Settings
@@ -428,7 +419,7 @@ Additional Context Menus provides extensive configuration options:
 ### Core Settings
 
 - `additionalContextMenus.enabled` (boolean, default: `true`) - Enable or disable the extension
-- `additionalContextMenus.autoDetectProjects` (boolean, default: `true`) - Automatically detect Node.js projects
+- `additionalContextMenus.autoDetectProjects` (boolean, default: `true`) - Automatically detect frameworks (informational)
 - `additionalContextMenus.supportedExtensions` (array, default: `[".ts", ".tsx", ".js", ".jsx"]`) - File extensions where context menus will be shown
 
 ### Code Copy Settings
@@ -696,28 +687,34 @@ For older versions, see [CHANGELOG.md](CHANGELOG.md).
 
 </details>
 
-<details>
-<summary>🏗️ Technical Architecture</summary>
+## 🏗️ Architecture
 
-Service-oriented design with singleton pattern and DI container (`src/di/container.ts`):
+### Runtime Architecture
 
-**Core Managers**
+```mermaid
+flowchart TD
+    A["extension"] --> B["ExtensionManager"]
+    B --> C["ContextMenuManager"]
+    C --> D["FileSaveService\nSave All"]
+    C --> E["TerminalService\nOpen in Terminal"]
+    C --> F["FileNamingConventionService\nRename to Convention"]
+    C --> G["Copy, Move, Duplicate handlers\nFunction, Selection, File"]
+    C -.->|"lazy load"| H["EnumGeneratorService\nGenerate Enum"]
+    C -.->|"lazy load"| I["EnvFileGeneratorService\nGenerate .env File"]
+    C -.->|"lazy load"| J["CronJobTimerGeneratorService\nGenerate Cron"]
+```
 
-- `ExtensionManager` — lifecycle coordinator
-- `ContextMenuManager` — command registration and handler dispatch
+### Codebase Structure
 
-**Specialized Services**
-
-- `ProjectDetectionService` — framework detection (informational)
-- `ConfigurationService` — settings and change events
-- `FileDiscoveryService` — workspace file scanning, compatible-file filtering
-- `FileSaveService` — bulk save with progress feedback
-- `CodeAnalysisService` — AST-based function detection (TypeScript Compiler API, lazy-loaded)
-- `TerminalService` — cross-platform terminal (integrated / external / system-default)
-
-**Lazy-loaded** (loaded from `dist/lazy/` on first use): `codeAnalysisService`, `enumGeneratorService`, `envFileGeneratorService`, `cronJobTimerGeneratorService`
-
-</details>
+```mermaid
+flowchart TD
+    A["extension"] --> B["managers"]
+    B --> C["di\ncontainer, interfaces"]
+    C --> D["Feature Services\nFileSaveService\nTerminalService\nFileNamingConventionService"]
+    C -.->|"lazy load"| L["Lazy Services\nEnumGeneratorService\nEnvFileGeneratorService\nCronJobTimerGeneratorService"]
+    D --> E["utils, types"]
+    L --> E
+```
 
 ---
 
