@@ -10,12 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Architecture diagrams**: Mermaid runtime architecture and codebase structure diagrams added to `README.md`, `CLAUDE.md`, and `AGENTS.md`. Diagrams show the core user-facing feature services only.
+- **`pricing` and `qna` marketplace fields**: Declared `"pricing": "Free"` and `"qna": "marketplace"` in `package.json` for a clearer, more complete marketplace listing.
 
 ### Changed
 
 - **Removed GitHub Pages site**: Deleted the `docs/` Jekyll site in favour of `README.md` as the single user-facing source. All `vijay431.github.io` links removed across the codebase.
 - **Single source of truth established**: `package.json` `contributes` is canonical for command/setting/keybinding metadata; `README.md` is canonical for user-facing narrative; `CLAUDE.md` is canonical for architecture and dev conventions.
 - **package.json scripts**: Removed `docs:serve` and `docs:live`; simplified `system:verify` to `husky` only (docs/Jekyll bundle setup removed).
+- **Marketplace SEO metadata**: Optimized `package.json` `keywords` for higher search intent — dropped low-value generics (`copy`, `extract`, `menu`, `function`, `time-saver`) and added feature/intent terms (`enum-generator`, `cron`, `dotenv`, `env-file`, `duplicate-file`, `code-snippets`), front-loading the highest-value terms while staying within the marketplace 30-keyword cap.
+- **README restructure for discoverability**: Added a keyword-rich hero intro, surfaced the Marketplace/Open VSX install call-to-action near the top, merged redundant feature/keyboard-shortcut sections, and added descriptive alt text to all screenshots and demo GIFs.
+- **Self-contained README**: Removed links to the GitHub Pages documentation site (being retired) and folded the essential per-feature reference inline so the README stands alone as the marketplace landing page.
 
 ## [2.1.0]
 
