@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a TypeScript VS Code extension. Source code lives in `src/`: command handlers in `src/commands/`, services in `src/services/`, dependency injection in `src/di/`, managers in `src/managers/`, shared types in `src/types/`, and helpers in `src/utils/`. Unit tests are in `test/unit/`, integration tests in `test/suite/`, mocks in `test/__mocks__/`, and fixtures in `test/fixtures/`. Documentation and site pages are under `docs/` (Jekyll GitHub Pages source) and `public/` (packaged extension assets). Do not edit generated output in `dist/` or `out-test/`.
+This is a TypeScript VS Code extension. Source code lives in `src/`: command handlers in `src/commands/`, services in `src/services/`, dependency injection in `src/di/`, managers in `src/managers/`, shared types in `src/types/`, and helpers in `src/utils/`. Unit tests are in `test/unit/`, integration tests in `test/suite/`, mocks in `test/__mocks__/`, and fixtures in `test/fixtures/`. Packaged extension assets are in `public/`. Do not edit generated output in `dist/` or `out-test/`.
 
 ## Build, Test, and Development Commands
 
@@ -32,6 +32,37 @@ Add unit tests in `test/unit/*.test.ts` for services, utilities, and validators.
 Use Conventional Commits, for example `feat(copy): add file contents command`, `fix(fileDiscovery): respect cache ttl`, or `test(unit): cover enum generation`. Hooks and CI enforce a maximum of 10 files and 400 changed lines per commit. Sweeping refactors may add the `size/override` label to the PR to bypass the CI hard-fail. Branch from `main` using prefixes such as `feature/`, `fix/`, `docs/`, or `refactor/`.
 
 Pull requests should include a clear description, linked issues when applicable, and screenshots or recordings for visible VS Code UI changes. Before opening a PR, run `pnpm run lint`, `pnpm run build`, and relevant tests. Workflow or community automation changes should also update `README.md`, `CHANGELOG.md`, `CLAUDE.md`, `CONTRIBUTING.md`, and `.github/copilot-instructions.md` when commands or maintainer procedures change.
+
+## Architecture
+
+For runtime architecture and codebase module diagrams, see [CLAUDE.md — Architecture Diagrams](CLAUDE.md#architecture-diagrams).
+
+### Runtime Architecture
+
+```mermaid
+flowchart TD
+    A["extension.ts"] --> B["ExtensionManager"]
+    B --> C["ContextMenuManager"]
+    C --> D["FileSaveService\nSave All"]
+    C --> E["TerminalService\nOpen in Terminal"]
+    C --> F["FileNamingConventionService\nRename to Convention"]
+    C --> G["Copy, Move, Duplicate handlers\nFunction, Selection, File"]
+    C -.->|"lazy load"| H["EnumGeneratorService\nGenerate Enum"]
+    C -.->|"lazy load"| I["EnvFileGeneratorService\nGenerate .env File"]
+    C -.->|"lazy load"| J["CronJobTimerGeneratorService\nGenerate Cron"]
+```
+
+### Codebase Structure
+
+```mermaid
+flowchart TD
+    A["src/extension.ts"] --> B["src/managers/"]
+    B --> C["src/di/\ncontainer, interfaces"]
+    C --> D["Feature Services\nFileSaveService\nTerminalService\nFileNamingConventionService"]
+    C -.->|"dist/lazy/"| L["Lazy Services\nEnumGeneratorService\nEnvFileGeneratorService\nCronJobTimerGeneratorService"]
+    D --> E["src/utils/, src/types/"]
+    L --> E
+```
 
 ## Security & Configuration Tips
 
