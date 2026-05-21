@@ -116,7 +116,7 @@ tsconfig.test.json              # TypeScript config for compiling integration te
 
 ```mermaid
 flowchart TD
-    A["extension.ts"] --> B["ExtensionManager"]
+    A["extension"] --> B["ExtensionManager"]
     B --> C["ContextMenuManager"]
     C --> D["FileSaveService\nSave All"]
     C --> E["TerminalService\nOpen in Terminal"]
@@ -131,11 +131,11 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["src/extension.ts"] --> B["src/managers/"]
-    B --> C["src/di/\ncontainer, interfaces"]
+    A["extension"] --> B["managers"]
+    B --> C["di\ncontainer, interfaces"]
     C --> D["Feature Services\nFileSaveService\nTerminalService\nFileNamingConventionService"]
-    C -.->|"dist/lazy/"| L["Lazy Services\nEnumGeneratorService\nEnvFileGeneratorService\nCronJobTimerGeneratorService"]
-    D --> E["src/utils/, src/types/"]
+    C -.->|"lazy load"| L["Lazy Services\nEnumGeneratorService\nEnvFileGeneratorService\nCronJobTimerGeneratorService"]
+    D --> E["utils, types"]
     L --> E
 ```
 
