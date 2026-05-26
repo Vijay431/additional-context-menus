@@ -109,6 +109,7 @@ tsconfig.test.json              # TypeScript config for compiling integration te
 - **`package.json` `contributes`** — canonical source for all command IDs, settings, and keybindings (VS Code loads it directly).
 - **`README.md`** — canonical user-facing narrative.
 - **`CLAUDE.md`** — canonical architecture and dev conventions.
+- **`ARCHITECTURE.md`** — technical documentation and architectural decisions.
 
 ### Architecture Diagrams
 
