@@ -1,7 +1,7 @@
 {
   "name": "additional-context-menus",
   "displayName": "Additional Context Menus",
-  "description": "Supercharge your Node.js development with intelligent right-click menus. Extract functions, generate enums/env/cron, and refactor React/Angular/Express/Next.js code in seconds. Features AST-based detection, smart imports, and an optimized bundle.",
+  "description": "Supercharge your development with intelligent right-click menus. Extract functions, move code blocks, and refactor your TypeScript and JavaScript codebase in seconds. Features AST-based detection, smart imports, and an optimized bundle.",
   "version": "2.1.0",
   "license": "MIT",
   "packageManager": "pnpm@11.2.2",

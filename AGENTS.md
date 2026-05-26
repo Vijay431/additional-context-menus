@@ -35,6 +35,8 @@ Pull requests should include a clear description, linked issues when applicable,
 
 ## Architecture
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for full technical documentation.
+
 ### Runtime Architecture
 
 ```mermaid
