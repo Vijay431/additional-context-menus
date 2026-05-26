@@ -176,3 +176,5 @@ jobs:
 
       - name: Build Extension
         run: pnpm run build
+        env:
+          VSCODE_VERSION: stable
