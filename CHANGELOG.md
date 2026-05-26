@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **CI build matrix simplified**: Build job now runs Ubuntu-only with VS Code stable across Node 22/24/26. Removed Windows, macOS, and VS Code Insiders matrix dimensions to reduce CI cost and noise.
 - **Removed GitHub Pages site**: Deleted the `docs/` Jekyll site in favour of `README.md` as the single user-facing source. All `vijay431.github.io` links removed across the codebase.
 - **Single source of truth established**: `package.json` `contributes` is canonical for command/setting/keybinding metadata; `README.md` is canonical for user-facing narrative; `CLAUDE.md` is canonical for architecture and dev conventions.
 - **package.json scripts**: Removed `docs:serve` and `docs:live`; simplified `system:verify` to `husky` only (docs/Jekyll bundle setup removed).

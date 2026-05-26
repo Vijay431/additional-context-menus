@@ -215,7 +215,7 @@ The repository separates quality gates, release publishing, and community automa
 - `lint` — runs `pnpm run lint`
 - `test-unit` — runs `pnpm run test:unit:coverage`
 - `test-integration` — runs `pnpm run test:integration` (Mocha + VS Code, Ubuntu, after `lint`, parallel with `test-unit`)
-- `build` — builds on Ubuntu, Windows, macOS × Node 20/22/24 × VS Code stable/insiders (after both test jobs pass)
+- `build` — builds on Ubuntu × Node 22/24/26 × VS Code stable (after both test jobs pass)
 - `audit` — runs `pnpm audit --audit-level=high`
 - `dependency-review` — reviews dependency changes on PRs
 
