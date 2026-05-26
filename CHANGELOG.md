@@ -11,9 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Architecture diagrams**: Mermaid runtime architecture and codebase structure diagrams added to `README.md`, `CLAUDE.md`, and `AGENTS.md`. Diagrams show the core user-facing feature services only.
 - **`pricing` and `qna` marketplace fields**: Declared `"pricing": "Free"` and `"qna": "marketplace"` in `package.json` for a clearer, more complete marketplace listing.
+- **Security workflows**: Added separate PR and daily security workflows. PRs run high-severity `pnpm audit` plus dependency review; daily/manual/package-change runs summarize audit and outdated-package status, upload artifacts, and open triage issues for critical/high findings or workflow failure.
 
 ### Changed
 
+- **CI dependency caching**: CI now warms and restores `node_modules` caches for Node 22/24/26, runs lint/unit/integration checks from the shared Node 22 cache, and keeps the build matrix across the supported Node range.
 - **CI build matrix simplified**: Build job now runs Ubuntu-only with VS Code stable across Node 22/24/26. Removed Windows, macOS, and VS Code Insiders matrix dimensions to reduce CI cost and noise.
 - **Removed GitHub Pages site**: Deleted the `docs/` Jekyll site in favour of `README.md` as the single user-facing source. All `vijay431.github.io` links removed across the codebase.
 - **Single source of truth established**: `package.json` `contributes` is canonical for command/setting/keybinding metadata; `README.md` is canonical for user-facing narrative; `CLAUDE.md` is canonical for architecture and dev conventions.

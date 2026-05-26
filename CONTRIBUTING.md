@@ -202,7 +202,7 @@ Commits before `v2.0.0` predate this enforcement and are not subject to these ru
 2. Make your changes with conventional commits
 3. Run `pnpm run lint && pnpm run build` to verify everything passes
 4. Open a PR against `main` with a clear title and description
-5. The CI workflow will automatically run lint and build checks
+5. The CI and security workflows will automatically run lint, tests, build, audit, and dependency review checks
 6. At least one maintainer review is required before merging
 7. PRs are squash-merged to keep the history clean
 
@@ -212,12 +212,20 @@ The repository separates quality gates, release publishing, and community automa
 
 **CI (`.github/workflows/ci.yml`, on PRs and pushes to `main`):**
 
+- `setup` — warms `node_modules` caches for Node 22/24/26
 - `lint` — runs `pnpm run lint`
 - `test-unit` — runs `pnpm run test:unit:coverage`
-- `test-integration` — runs `pnpm run test:integration` (Mocha + VS Code, Ubuntu, after `lint`, parallel with `test-unit`)
+- `test-integration` — runs `pnpm run test:integration` (Mocha + VS Code, Ubuntu, parallel with `lint` and `test-unit`)
 - `build` — builds on Ubuntu × Node 22/24/26 × VS Code stable (after both test jobs pass)
+
+**Security (`.github/workflows/security-pr.yml`, on PRs and pushes to `main`):**
+
 - `audit` — runs `pnpm audit --audit-level=high`
-- `dependency-review` — reviews dependency changes on PRs
+- `dependency-review` — reviews dependency changes on PRs and fails on high severity findings
+
+**Daily security (`.github/workflows/security-daily.yml`, daily/manual/package changes):**
+
+- `security-audit` — runs `pnpm audit --json`, checks outdated packages, uploads audit artifacts, and opens triage issues for critical/high findings or workflow failures
 
 **Release (`.github/workflows/release.yml`, on `v*` tag push):**
 
