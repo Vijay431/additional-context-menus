@@ -754,6 +754,15 @@ You can also open the project in GitHub Codespaces or a VS Code Dev Container. T
 
 </details>
 
+<details>
+<summary>🔒 Repository Automation</summary>
+
+- CI warms Node 22/24/26 dependency caches, then runs lint, unit coverage, integration tests, and the supported Node build matrix.
+- PR security checks run high-severity `pnpm audit` and dependency review.
+- Daily security checks summarize audit and outdated-package status, upload artifacts, and open triage issues for critical/high findings or workflow failures.
+
+</details>
+
 ---
 
 ## Contributors

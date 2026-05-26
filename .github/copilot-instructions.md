@@ -29,6 +29,12 @@ Additional Context Menus is a TypeScript VS Code extension using pnpm, esbuild, 
 
 Run integration tests before user-facing context menu, command, file operation, or editor interaction changes.
 
+## Automation
+
+- CI warms `node_modules` caches for Node 22/24/26, then runs lint, unit coverage, integration tests, and build.
+- PR security runs `pnpm audit --audit-level=high` plus dependency review.
+- Daily security runs audit/outdated-package summaries, uploads artifacts, and opens triage issues for critical/high findings or workflow failure.
+
 ## Assistant Conventions
 
 ### Communication

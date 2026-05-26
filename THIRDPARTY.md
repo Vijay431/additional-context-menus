@@ -26,3 +26,7 @@ pnpm licenses list --json
 | `vitest`                | 3.1.1                   | MIT        | https://github.com/vitest-dev/vitest#readme                                |
 
 This file is informational and does not replace individual package license texts.
+
+## GitHub Actions Tooling
+
+Repository automation also uses GitHub Actions maintained by GitHub and pnpm, including checkout, setup-node, cache, upload-artifact, dependency-review-action, github-script, and pnpm/action-setup.

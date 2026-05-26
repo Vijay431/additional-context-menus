@@ -67,6 +67,12 @@ Security updates will be released through:
 - VS Code Marketplace updates
 - GitHub releases with security tags
 
+## Automated Security Checks
+
+- Pull requests and pushes to `main` run `pnpm audit --audit-level=high`.
+- Pull requests run dependency review and fail on high severity dependency findings.
+- A daily security workflow also runs on schedule, manual dispatch, and package manifest or lockfile changes. It uploads audit artifacts and opens a triage issue for critical/high findings or workflow failures.
+
 ## Node.js Compatibility & Security
 
 This extension supports Node.js 22, 24, and 26, and VS Code 1.111 and later (last 10 minor versions). Security updates maintain compatibility across this range. If you're using an unsupported version, please upgrade to receive security updates.
