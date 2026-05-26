@@ -283,7 +283,7 @@ This project follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html). Pre-re
 
 ### Automation Layout
 
-- `.github/workflows/ci.yml` runs PR/main quality gates: lint, unit coverage, integration tests, build matrix, audit, and dependency review.
+- `.github/workflows/ci.yml` runs PR/main quality gates: lint, unit coverage, integration tests, build (Ubuntu × Node 22/24/26 × VS Code stable), audit, and dependency review.
 - `.github/workflows/release.yml` runs only on `v*` tag pushes: package, verify, publish to VS Code Marketplace and Open VSX, and create a GitHub Release.
 - Community automation lives in `.github/workflows/stale.yml`, `.github/workflows/labels-sync.yml`, and `.github/workflows/all-contributors.yml`.
 - Release publishing requires `VSCE_PAT` and `OVSX_PAT`.
