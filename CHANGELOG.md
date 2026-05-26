@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Self-contained README**: Removed links to the GitHub Pages documentation site (being retired) and folded the essential per-feature reference inline so the README stands alone as the marketplace landing page.
 - **Consistent project-gating wording in README**: Aligned Quick Start, Usage Guide, Requirements, and FAQ to state that context menus appear in any workspace and that `autoDetectProjects` framework detection is informational only — not a hard gate requiring a Node.js project or `package.json`.
 - **Dev toolchain**: Bumped `lint-staged` from `^16.4.0` to `^17.0.5` (dev-only; pre-commit hook). Requires Node `>=22.22.1`, satisfied by the supported dev/CI Node range.
+- **Security audit remediation**: Added pnpm overrides for vulnerable dev-only transitive dependencies (`uuid` via `@azure/msal-node`, `qs` via `typed-rest-client`) and refreshed Vitest, Mocha, tsx, and TypeScript ESLint tooling so `pnpm audit` reports zero vulnerabilities.
+- **Open VSX packaging script**: Fixed `pnpm run package:openvsx` to build a VSIX with `vsce package`, matching the artifact consumed by `ovsx publish`.
 
 ## [2.1.0]
 
