@@ -4,9 +4,11 @@
 src/
 test/
 scripts/
+.out-test/
 out-test/
 dist/src/
 dist/test/
+dist/meta.json
 coverage/
 
 # ============================================
@@ -14,6 +16,7 @@ coverage/
 # ============================================
 node_modules/
 pnpm-lock.yaml
+pnpm-workspace.yaml
 
 # ============================================
 # Development & CI/CD Configuration
@@ -35,7 +38,8 @@ tsconfig.test.json
 .lintstagedrc
 .devcontainer/
 .cursorignore
-.code-review-graph
+.code-review-graph/
+.antigravitycli/
 
 # ============================================
 # VS Code Configuration & Workspaces
@@ -73,3 +77,6 @@ opencode.json
 .auto-claude-security.json
 DEVELOPER.md
 AGENTS.md
+ARCHITECTURE.md
+CONTRIBUTORS.md
+SECURITY.md
