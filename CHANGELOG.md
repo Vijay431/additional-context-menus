@@ -5,6 +5,12 @@ All notable changes to the "Additional Context Menus" extension will be document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2]
+
+### Changed
+
+- Disabled npm audit and funding messages in `.npmrc`.
+
 ## [2.1.1]
 
 ### Added
