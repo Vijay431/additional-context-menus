@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'fs';
 import path from 'path';
 
-type MenuContribution = {
+interface MenuContribution {
   command?: string;
   when?: string;
-};
+}
 
 const packageJson = JSON.parse(
   readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'),

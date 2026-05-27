@@ -506,7 +506,7 @@
     "rebuild": "pnpm run clean && pnpm run build && vsce package",
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage --coverage.reporter=text --coverage.reporter=lcov",
-    "test:integration": "npx tsc -p tsconfig.test.json && xvfb-run -a node ./.out-test/test/runTests.js",
+    "test:integration": "pnpm exec tsc -p tsconfig.test.json && xvfb-run -a node ./.out-test/test/runTests.js",
     "package": "vsce package",
     "package:openvsx": "vsce package",
     "publish": "vsce publish",

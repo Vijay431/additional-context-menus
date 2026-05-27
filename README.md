@@ -26,7 +26,7 @@ Additional Context Menus brings those workflows to your right-click menu. With a
 
 ### Features
 
-- **AST-Based Function Extraction**: Copy or move functions precisely using the TypeScript Compiler API — no regex, no guessing.
+- **AST-Based Function Extraction**: Copy or move functions precisely using the Babel parser (`@babel/parser`) and `@babel/types` — no regex, no guessing.
 - **Smart Import Management**: When copying or moving selected code, existing imports are automatically merged into the target file.
 - **Save All & Terminal Integration**: Bulk-save all open files securely, or open an integrated/external terminal pointed at any file's directory.
 - **Generators**: Generate TypeScript Enums, interactive Cron expressions, and `.env` template files from the context menu.
@@ -37,7 +37,7 @@ Additional Context Menus brings those workflows to your right-click menu. With a
 - TypeScript
 - VS Code Extension API
 - Node.js
-- TypeScript Compiler API (AST parsing)
+- Babel parser (AST parsing)
 
 ### Visuals
 

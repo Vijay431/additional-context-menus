@@ -207,6 +207,16 @@ export class CodeAnalysisService implements ICodeAnalysisService {
       }
     }
 
+    // If the textNode is wrapped in an export declaration, capture the export declaration
+    // statement to preserve the export keyword.
+    const textNodeParent = parents.get(textNode) ?? null;
+    if (
+      textNodeParent?.type === 'ExportNamedDeclaration' ||
+      textNodeParent?.type === 'ExportDefaultDeclaration'
+    ) {
+      textNode = textNodeParent;
+    }
+
     const startOffset = textNode.start ?? 0;
     const endOffset = textNode.end ?? 0;
     const startPos = offsetToLineCol(source, startOffset);
