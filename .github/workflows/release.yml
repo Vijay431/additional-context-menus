@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g., v2.1.2)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -17,11 +23,31 @@ jobs:
       tag: ${{ steps.version.outputs.tag }}
       is_prerelease: ${{ steps.version.outputs.is_prerelease }}
     steps:
+      - name: Check Authorized Actor
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          WHITELIST=$(echo "${{ secrets.RELEASE_WHITELIST_ACTORS }}" | tr -d ' ')
+          ACTOR="${{ github.actor }}"
+          if [[ -z "$WHITELIST" ]]; then
+            echo "Error: RELEASE_WHITELIST_ACTORS secret is not configured or is empty."
+            exit 1
+          fi
+          if [[ ",$WHITELIST," != *",$ACTOR,"* ]]; then
+            echo "Error: User $ACTOR is not authorized to manually trigger this workflow."
+            exit 1
+          fi
+          echo "User $ACTOR is authorized."
+
       - name: Extract Version and Tag
         id: version
         shell: bash
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
           VERSION="${TAG#v}"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
