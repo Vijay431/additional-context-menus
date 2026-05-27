@@ -18,12 +18,27 @@ jobs:
   setup:
     name: Setup Release
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.actor == 'Vijay431'
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
       is_prerelease: ${{ steps.version.outputs.is_prerelease }}
     steps:
+      - name: Check Authorized Actor
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          WHITELIST=$(echo "${{ secrets.RELEASE_WHITELIST_ACTORS }}" | tr -d ' ')
+          ACTOR="${{ github.actor }}"
+          if [[ -z "$WHITELIST" ]]; then
+            echo "Error: RELEASE_WHITELIST_ACTORS secret is not configured or is empty."
+            exit 1
+          fi
+          if [[ ",$WHITELIST," != *",$ACTOR,"* ]]; then
+            echo "Error: User $ACTOR is not authorized to manually trigger this workflow."
+            exit 1
+          fi
+          echo "User $ACTOR is authorized."
+
       - name: Extract Version and Tag
         id: version
         shell: bash
