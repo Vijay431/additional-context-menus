@@ -146,7 +146,7 @@ async function build(production = false): Promise<void> {
             `✨ Main bundle is ${(coreTargetKB - parseFloat(sizeKB)).toFixed(2)}KB under ${coreTargetKB}KB target!`,
           );
         }
-        // codeAnalysisService.js bundles the TypeScript compiler (~3.4MB) by design; lazy total is informational only
+        // codeAnalysisService.js bundles @babel/parser (~300KB) instead of the full TypeScript compiler; lazy total is informational only
       }
 
       // Bundle analysis summary

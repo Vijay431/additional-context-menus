@@ -2,7 +2,7 @@
   "name": "additional-context-menus",
   "displayName": "Additional Context Menus",
   "description": "Supercharge your development with intelligent right-click menus. Extract functions, move code blocks, and refactor your TypeScript and JavaScript codebase in seconds. Features AST-based detection, smart imports, and an optimized bundle.",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "license": "MIT",
   "packageManager": "pnpm@11.2.2",
   "publisher": "VijayGangatharan",
@@ -369,7 +369,7 @@
       ],
       "additionalContextMenus.submenu": [
         {
-          "when": "editorTextFocus && additionalContextMenus.enabled && resourceExtname =~ /\\.(ts|tsx|js|jsx)$/",
+          "when": "editorTextFocus && additionalContextMenus.enabled && additionalContextMenus.isInFunction && resourceExtname =~ /\\.(ts|tsx|js|jsx)$/",
           "command": "additionalContextMenus.copyFunction",
           "group": "1_function@1"
         },
@@ -502,11 +502,11 @@
     "vscode:prepublish": "tsx esbuild.config.ts --production",
     "build": "tsx esbuild.config.ts",
     "watch": "tsx esbuild.config.ts --watch",
-    "clean": "rimraf dist *.vsix",
+    "clean": "rimraf dist .out-test out-test *.vsix",
     "rebuild": "pnpm run clean && pnpm run build && vsce package",
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage --coverage.reporter=text --coverage.reporter=lcov",
-    "test:integration": "npx tsc -p tsconfig.test.json && xvfb-run -a node ./out-test/test/runTests.js",
+    "test:integration": "pnpm exec tsc -p tsconfig.test.json && xvfb-run -a node ./.out-test/test/runTests.js",
     "package": "vsce package",
     "package:openvsx": "vsce package",
     "publish": "vsce publish",
@@ -615,6 +615,8 @@
     ]
   },
   "devDependencies": {
+    "@babel/parser": "^7.29.7",
+    "@babel/types": "^7.29.7",
     "@commitlint/cli": "^21.0.1",
     "@commitlint/config-conventional": "^21.0.1",
     "@eslint/js": "^10.0.1",

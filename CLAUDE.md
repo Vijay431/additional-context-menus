@@ -353,7 +353,7 @@ Branch naming: `feature/`, `fix/`, `docs/`, or `refactor/` prefix from `main`.
 - **Coverage** (`pnpm run test:unit:coverage`): Vitest coverage output is written to `coverage/lcov.info`.
 - **Integration tests** (`test/suite/`, run with `pnpm run test:integration`): feature-level tests that exercise the 13 user-facing commands end-to-end in a real VS Code Extension Development Host.
 - **No separate E2E layer**: The integration suite already drives a real VS Code Extension Development Host, which is the canonical end-to-end layer for a VS Code extension. A separate `@vscode/test-web` layer is not warranted unless vscode.dev certification is required (out of scope for v2.0.x). Do not add a separate e2e folder.
-- Integration test build output goes to `out-test/` (not `dist/`). The script is `pnpm run test:integration`. Compile errors fail the build — `|| true` is not used in CI.
+- Integration test build output goes to `.out-test/` (not `dist/`). The script is `pnpm run test:integration`. Compile errors fail the build — `|| true` is not used in CI.
 - Never add VS Code API-dependent logic to unit tests; never add pure-logic tests to the integration suite.
 - On Linux CI, integration tests run under `xvfb-run -a`.
 - All test descriptions must start with `"should "` (e.g. `it('should detect React', ...)`).

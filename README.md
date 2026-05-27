@@ -1,5 +1,5 @@
 <div align="center">
-<img src="./logo.png" alt="Logo" width="100"/>
+  <img src="./logo.png" alt="Additional Context Menus" width="128" />
 </div>
 
 # Additional Context Menus
@@ -14,153 +14,229 @@
 
 > Supercharge your development with intelligent right-click menus for file operations and code refactoring.
 
-## 1. About the Project
+---
 
-**Why it was built:**
-Developers often waste time doing repetitive, manual code refactoring—like extracting a function from one file, pasting it into another, and cleaning up missing imports. This extension was built to automate these repetitive file and code operations directly from the VS Code context menu, so developers can stay in flow.
+## About the Project
 
-**Key Features:**
+### The "Why"
 
-- **AST-Based Function Extraction:** Extract and move functions precisely in one click.
-- **Smart Import Management:** Automatically merge or duplicate existing imports when copying/moving selected code to a new file.
-- **Save All & Terminal Integration:** Execute bulk save operations securely or launch terminals at any file's specific directory.
-- **Generators:** Generate TypeScript Enums, interactive Cron expressions, and `.env` template files.
-- **File System Workflows:** Rename files to common naming conventions, duplicate them, or copy their contents from the Explorer.
+Developers constantly lose time to repetitive, manual code refactoring — extracting a function from one file, switching to another, pasting it in, then hunting down every missing import. There's no built-in shortcut for that in VS Code. The same friction shows up with file operations: bulk-saving, opening a terminal at the right directory, renaming to a project convention — all small tasks that add up to a real drag on flow.
 
-**Tech Stack:**
+Additional Context Menus brings those workflows to your right-click menu. With a single click you can move a function, carry its imports along, rename a file to convention, generate boilerplate, or launch a terminal — without ever leaving the editor.
+
+### Features
+
+- **AST-Based Function Extraction**: Copy or move functions precisely using the Babel parser (`@babel/parser`) and `@babel/types` — no regex, no guessing.
+- **Smart Import Management**: When copying or moving selected code, existing imports are automatically merged into the target file.
+- **Save All & Terminal Integration**: Bulk-save all open files securely, or open an integrated/external terminal pointed at any file's directory.
+- **Generators**: Generate TypeScript Enums, interactive Cron expressions, and `.env` template files from the context menu.
+- **File System Workflows**: Rename files to common naming conventions, duplicate them, or copy their contents directly from the Explorer.
+
+### Tech Stack
 
 - TypeScript
 - VS Code Extension API
 - Node.js
-- TypeScript Compiler API (for AST parsing)
+- Babel parser (AST parsing)
 
-**Visuals & Feature Showcase:**
+### Visuals
 
 <details>
 <summary>Click to view feature demos (GIFs)</summary>
 
-### Copy Function
+**Copy Function**
 
-![Copy Function demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/copy-function.gif)
+![Copy Function demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/copy-function.gif)
 
-### Copy Function to File
+**Copy Function to File**
 
-![Copy Function to File demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/copy-function-to-file.gif)
+![Copy Function to File demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/copy-function-to-file.gif)
 
-### Move Function to File
+**Move Function to File**
 
-![Move Function to File demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/move-function-to-file.gif)
+![Move Function to File demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/move-function-to-file.gif)
 
-### Copy Selection to File
+**Copy Selection to File**
 
-![Copy Selection to File demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/copy-selection-to-file.gif)
+![Copy Selection to File demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/copy-selection-to-file.gif)
 
-### Save All
+**Save All**
 
-![Save All demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/save-all.gif)
+![Save All demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/save-all.gif)
 
-### Open in Terminal
+**Open in Terminal**
 
-![Open in Terminal demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/open-in-terminal.gif)
+![Open in Terminal demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/open-in-terminal.gif)
 
-### Rename File to Convention
+**Rename File to Convention**
 
-![Rename File to Convention demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/images/screenshots/rename-file-convention.gif)
+![Rename File to Convention demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/rename-file-convention.gif)
 
 </details>
 
-## 2. Setup & Installation
+---
 
-**Prerequisites:**
+## Setup & Installation
 
-- **VS Code**: Version 1.111.0 or higher.
-- A workspace containing source code files (supports Node.js, React, Angular, Next.js, and general TS/JS).
+### Prerequisites
 
-**Installation Steps:**
+- **VS Code**: Version `1.111.0` or later.
+- A workspace with source code files (Node.js, React, Angular, Next.js, or any TS/JS project).
 
-1. Open Visual Studio Code.
-2. Open **Quick Open** (`Ctrl+P` on Windows/Linux or `Cmd+P` on macOS).
-3. Type the following command and press Enter:
-   ```text
-   ext install VijayGangatharan.additional-context-menus
-   ```
-   Alternatively, search for **Additional Context Menus** in the VS Code Extensions View and click **Install**.
+### Install Commands
 
-## 3. Usage & Configuration
+**VS Code Marketplace** (recommended):
 
-The extension exposes a number of new options via the right-click context menu.
+```bash
+ext install VijayGangatharan.additional-context-menus
+```
 
-**Example 1: Extracting a Function**
+Or search **"Additional Context Menus"** in the Extensions view (`Ctrl+Shift+X`).
 
-1. Position your cursor inside any function in a `.ts` or `.js` file.
-2. Right-click to open the context menu.
-3. Select **Additional Context Menus** ▶ **Move Function to File**.
-4. Choose the target destination. The function will be relocated instantly.
+**Open VSX** (VS Codium / other open-source VS Code builds):
+[open-vsx.org/extension/VijayGangatharan/additional-context-menus](https://open-vsx.org/extension/VijayGangatharan/additional-context-menus)
 
-**Example 2: Moving Selected Code with Imports**
+**Command line:**
+
+```bash
+code --install-extension VijayGangatharan.additional-context-menus
+```
+
+---
+
+## Usage
+
+### Quick Start
+
+1. **Install** from VS Code Marketplace.
+2. **Open** any `.ts`, `.tsx`, `.js`, or `.jsx` file in VS Code.
+3. **Right-click** inside the editor or on a file in the Explorer.
+4. **Select** an action from the **Additional Context Menus** submenu.
+
+### Examples
+
+**Extracting a Function**
+
+1. Place your cursor inside any function in a `.ts` or `.js` file.
+2. Right-click → **Additional Context Menus** ▶ **Move Function to File**.
+3. Choose the target file. The function is relocated instantly.
+
+**Moving Selected Code with Imports**
 
 1. Highlight a block of code spanning multiple lines.
-2. Right-click and choose **Additional Context Menus** ▶ **Move Selection to File**.
-3. Select the target file. Existing relevant imports from the source file will automatically be merged into the target file.
+2. Right-click → **Additional Context Menus** ▶ **Move Selection to File**.
+3. Pick the target file. Relevant imports from the source are automatically merged.
+
+### Configuration
+
+All settings live under the `additionalContextMenus.*` namespace in your VS Code `settings.json`:
+
+**Core**
+
+| Setting               | Type     | Default                          | Description                                      |
+| --------------------- | -------- | -------------------------------- | ------------------------------------------------ |
+| `enabled`             | boolean  | `true`                           | Enable or disable the extension                  |
+| `autoDetectProjects`  | boolean  | `true`                           | Automatically detect frameworks in the workspace |
+| `supportedExtensions` | string[] | `[".ts", ".tsx", ".js", ".jsx"]` | File extensions where context menus will appear  |
+
+**Code Copy**
+
+| Setting                     | Type    | Default   | Description                                                    |
+| --------------------------- | ------- | --------- | -------------------------------------------------------------- |
+| `copyCode.insertionPoint`   | string  | `"smart"` | Where to insert copied code: `"smart"`, `"end"`, `"beginning"` |
+| `copyCode.preserveComments` | boolean | `true`    | Preserve comments when copying code                            |
+
+**Save All**
+
+| Setting                    | Type    | Default | Description                                |
+| -------------------------- | ------- | ------- | ------------------------------------------ |
+| `saveAll.showNotification` | boolean | `true`  | Show a notification after saving all files |
+| `saveAll.skipReadOnly`     | boolean | `true`  | Skip read-only files when saving all       |
+
+**Terminal**
+
+| Setting                            | Type   | Default              | Description                                                                        |
+| ---------------------------------- | ------ | -------------------- | ---------------------------------------------------------------------------------- |
+| `terminal.type`                    | string | `"integrated"`       | Terminal to open: `"integrated"`, `"external"`, `"system-default"`                 |
+| `terminal.externalTerminalCommand` | string | `""`                 | Custom command for external terminal. Use `{{directory}}` as a placeholder.        |
+| `terminal.openBehavior`            | string | `"parent-directory"` | Directory to open: `"parent-directory"`, `"workspace-root"`, `"current-directory"` |
+
+---
+
+## Getting Help & Contributing
+
+### Troubleshooting
 
 <details>
-<summary>⚙️ Configuration Reference</summary>
+<summary>Context menus aren't showing up</summary>
 
-### Core Settings
+Make sure you are right-clicking inside an active editor tab with a supported file type (`.ts`, `.tsx`, `.js`, `.jsx`). Check that `additionalContextMenus.enabled` is `true` in your settings.
 
-- `additionalContextMenus.enabled` (boolean, default: `true`) - Enable or disable the extension
-- `additionalContextMenus.autoDetectProjects` (boolean, default: `true`) - Automatically detect frameworks
-- `additionalContextMenus.supportedExtensions` (array, default: `[".ts", ".tsx", ".js", ".jsx"]`) - File extensions where context menus will be shown
-
-### Code Copy Settings
-
-- `additionalContextMenus.copyCode.insertionPoint` (string, default: `"smart"`) - Where to insert copied code (`"smart"`, `"end"`, `"beginning"`)
-- `additionalContextMenus.copyCode.preserveComments` (boolean, default: `true`) - Preserve comments when copying code
-
-### Save All Settings
-
-- `additionalContextMenus.saveAll.showNotification` (boolean, default: `true`) - Show notification after saving all files
-- `additionalContextMenus.saveAll.skipReadOnly` (boolean, default: `true`) - Skip read-only files when saving all
-
-### Terminal Settings
-
-- `additionalContextMenus.terminal.type` (string, default: `"integrated"`) - Type of terminal to open (`"integrated"`, `"external"`, `"system-default"`)
-- `additionalContextMenus.terminal.externalTerminalCommand` (string, default: `""`) - Custom command for external terminal. Use `{{directory}}` as placeholder.
-- `additionalContextMenus.terminal.openBehavior` (string, default: `"parent-directory"`) - Which directory to open (`"parent-directory"`, `"workspace-root"`, `"current-directory"`)
 </details>
-
-## 4. Getting Help & Contributing
 
 <details>
-<summary>❓ Troubleshooting / FAQs</summary>
+<summary>Function extraction isn't precise</summary>
 
-- **Context Menus aren't showing up?** Make sure you are right-clicking inside an active editor tab with a supported file type (e.g., `.ts`, `.tsx`, `.js`, `.jsx`).
-- **Function extraction isn't precise?** Make sure the file has valid syntax, as the AST parser requires compileable code.
-- **Can I use this extension in non-Node.js projects?** Yes. Context menus appear in any workspace. The `autoDetectProjects` setting identifies frameworks for informational purposes, but does not gate the menus.
-- **Does this work with other frameworks like Vue or Svelte?** The extension currently detects React, Angular, Express, and Next.js projects. Basic file operations work in any workspace.
-- **Imports not merged when using Copy/Move Selection to File?** Only **Copy/Move Selection to File** merges imports. **Copy/Move Function to File** transfers the function body only.
+The AST parser requires syntactically valid code. Ensure the file has no compile errors before extracting.
+
 </details>
 
-**Contributing:**
-We welcome contributions! Please review our [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. You can submit bug reports and feature requests by opening an issue on GitHub.
+<details>
+<summary>Imports not merged when using Copy / Move</summary>
 
-**Contact:**
-Maintainer: Vijay Gangatharan (vijayanand431@gmail.com)
+Import merging only applies to **Copy Selection to File** and **Move Selection to File**. The **Copy / Move Function to File** commands transfer the function body only.
 
-## 5. Additional Sections
+</details>
 
-**Roadmap:**
-Future updates will focus on extending language support beyond the JavaScript/TypeScript ecosystem. Planned support includes:
+<details>
+<summary>Using the extension in non-Node.js projects</summary>
 
-- [ ] Go language
-- [ ] Python language
-- [ ] .NET language
-- [ ] Java language
-- [ ] Dart language
-- [ ] Rust language
+Yes — context menus appear in any workspace. `autoDetectProjects` identifies frameworks for informational purposes only and does not gate the menus. Basic file operations work everywhere.
 
-**Credits:**
-Special thanks to the [VS Code Extension API Documentation](https://code.visualstudio.com/api) and the community for providing excellent feedback.
+</details>
 
-**License:**
+<details>
+<summary>Framework support (Vue, Svelte, etc.)</summary>
+
+The extension currently detects React, Angular, Express, and Next.js projects. Support for additional frameworks is on the roadmap.
+
+</details>
+
+### Contribution Guidelines
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines, including how to set up the local development environment. Please open an issue to discuss significant changes before submitting a Pull Request.
+
+### Contact
+
+**Vijay Gangatharan**
+
+- 📧 Email: <vijayanand431@gmail.com>
+- 🐙 [GitHub Repository](https://github.com/Vijay431/additional-context-menus)
+
+---
+
+## Additional Sections
+
+### Roadmap
+
+Future updates will focus on extending language support beyond the JavaScript/TypeScript ecosystem:
+
+- [ ] Go
+- [ ] Python
+- [ ] .NET
+- [ ] Java
+- [ ] Dart
+- [ ] Rust
+
+### Credits / Acknowledgments
+
+Thanks goes to these wonderful people (and AI assistants) for their contributions:
+
+- Vijay Gangatharan
+- Claude (Anthropic)
+- The [VS Code Extension API](https://code.visualstudio.com/api) team for excellent documentation.
+- All contributors and users who provide feedback.
+
+### License
+
 This project is licensed under the [MIT License](LICENSE).

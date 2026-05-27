@@ -1,4 +1,5 @@
-import * as ts from 'typescript';
+import { parse } from '@babel/parser';
+import type { Node, File } from '@babel/types';
 import * as vscode from 'vscode';
 
 import type {
@@ -8,6 +9,102 @@ import type {
 } from '../di/interfaces/ICodeAnalysisService';
 import type { ILogger } from '../di/interfaces/ILogger';
 import { Logger } from '../utils/logger';
+
+// ---------------------------------------------------------------------------
+// ESTree / Babel AST node type aliases used in this file
+// ---------------------------------------------------------------------------
+
+type BabelNode = Node;
+
+/** Node types we treat as "function-like" */
+type FunctionLikeType =
+  | 'FunctionDeclaration'
+  | 'FunctionExpression'
+  | 'ArrowFunctionExpression'
+  | 'ClassMethod'
+  | 'ObjectMethod';
+
+// ---------------------------------------------------------------------------
+// Lightweight private helpers (replace the TypeScript compiler API surface)
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse TS/TSX/JS/JSX source into a Babel AST File node.
+ * Errors are intentionally allowed to propagate so callers can catch them.
+ */
+function parseSource(code: string): File {
+  return parse(code, {
+    sourceType: 'module',
+    strictMode: false,
+    plugins: ['typescript', 'jsx', 'decorators', 'classProperties'],
+    errorRecovery: true,
+  });
+}
+
+/**
+ * Walk every child of `node` recursively, building a WeakMap of child→parent.
+ * The visitor callback receives each node plus its parent (or null for root).
+ */
+function walkWithParents(
+  root: BabelNode,
+  visitor: (node: BabelNode, parent: BabelNode | null) => void,
+): WeakMap<BabelNode, BabelNode | null> {
+  const parents = new WeakMap<BabelNode, BabelNode | null>();
+
+  function walk(node: BabelNode, parent: BabelNode | null): void {
+    if (node === null || typeof node !== 'object') return;
+    parents.set(node, parent);
+    visitor(node, parent);
+
+    for (const key of Object.keys(node) as (keyof typeof node)[]) {
+      if (key === 'type' || key === 'loc' || key === 'start' || key === 'end') continue;
+      const child = node[key] as unknown;
+      if (Array.isArray(child)) {
+        for (const item of child) {
+          if (item && typeof item === 'object' && 'type' in item) {
+            walk(item as BabelNode, node);
+          }
+        }
+      } else if (child && typeof child === 'object' && 'type' in child) {
+        walk(child as BabelNode, node);
+      }
+    }
+  }
+
+  walk(root, null);
+  return parents;
+}
+
+/**
+ * Convert a byte offset in `source` to a 0-based { line, column } pair.
+ * Replaces `sourceFile.getLineAndCharacterOfPosition()`.
+ */
+function offsetToLineCol(source: string, offset: number): { line: number; column: number } {
+  let line = 0;
+  let lastNewline = -1;
+  for (let i = 0; i < offset && i < source.length; i++) {
+    if (source[i] === '\n') {
+      line++;
+      lastNewline = i;
+    }
+  }
+  return { line, column: offset - lastNewline - 1 };
+}
+
+/** Returns true if the node type is one of the function-like kinds. */
+function isFunctionLike(node: BabelNode): node is BabelNode & { type: FunctionLikeType } {
+  return (
+    node.type === 'FunctionDeclaration' ||
+    node.type === 'FunctionExpression' ||
+    node.type === 'ArrowFunctionExpression' ||
+    node.type === 'ClassMethod' ||
+    node.type === 'ObjectMethod'
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Service
+// ---------------------------------------------------------------------------
 
 export class CodeAnalysisService implements ICodeAnalysisService {
   private static instance: CodeAnalysisService | undefined = undefined;
@@ -45,21 +142,40 @@ export class CodeAnalysisService implements ICodeAnalysisService {
   ): Promise<FunctionInfo | undefined> {
     try {
       const text = document.getText();
-      const sourceFile = this.parseSourceFile(text, document.fileName);
       const offset = document.offsetAt(position);
+      const ast = parseSource(text);
 
-      const containingNode = this.findFunctionNodeContainingPosition(sourceFile, offset);
+      let bestNode: BabelNode | null = null;
+      let bestParent: BabelNode | null = null;
+      let bestRange = Infinity;
 
-      if (containingNode) {
-        const functionInfo = this.extractFunctionInfo(containingNode, sourceFile);
+      // First pass: build the full parent map
+      const parents = walkWithParents(ast.program, () => {});
 
+      // Second pass: find the innermost function at offset
+      walkWithParents(ast.program, (node, parent) => {
+        if (!isFunctionLike(node)) return;
+        const start = node.start ?? 0;
+        const end = node.end ?? 0;
+        if (offset >= start && offset <= end) {
+          const range = end - start;
+          // prefer innermost (smallest range)
+          if (range < bestRange) {
+            bestRange = range;
+            bestNode = node;
+            bestParent = parent;
+          }
+        }
+      });
+
+      if (bestNode) {
+        const info = this.extractFunctionInfo(bestNode, bestParent, parents, text);
         this.logger.debug('Function found at position', {
-          name: functionInfo.name,
-          type: functionInfo.type,
-          line: functionInfo.startLine,
+          name: info.name,
+          type: info.type,
+          line: info.startLine,
         });
-
-        return functionInfo;
+        return info;
       }
 
       return undefined;
@@ -69,133 +185,111 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     }
   }
 
-  private parseSourceFile(code: string, fileName: string): ts.SourceFile {
-    return ts.createSourceFile(fileName, code, ts.ScriptTarget.Latest, true);
-  }
+  private extractFunctionInfo(
+    node: BabelNode,
+    parent: BabelNode | null,
+    parents: WeakMap<BabelNode, BabelNode | null>,
+    source: string,
+  ): FunctionInfo {
+    const name = this.getFunctionName(node, parent, source);
+    const type = this.getFunctionType(node, name);
 
-  private findFunctionNodeContainingPosition(
-    sourceFile: ts.SourceFile,
-    position: number,
-  ): ts.FunctionLike | null {
-    let result: ts.FunctionLike | null = null;
-
-    const visit = (node: ts.Node) => {
-      if (position >= node.pos && position <= node.end) {
-        if (
-          ts.isFunctionDeclaration(node) ||
-          ts.isArrowFunction(node) ||
-          ts.isMethodDeclaration(node) ||
-          ts.isFunctionExpression(node)
-        ) {
-          // Allow overwriting to find the innermost (most deeply nested) function
-          if (!result || (node.pos >= result.pos && node.end <= result.end)) {
-            result = node as ts.FunctionLike;
-          }
-        } else if (ts.isVariableStatement(node)) {
-          const declaration = node.declarationList.declarations[0];
-          if (
-            declaration?.initializer &&
-            (ts.isArrowFunction(declaration.initializer) ||
-              ts.isFunctionExpression(declaration.initializer))
-          ) {
-            const initializer = declaration.initializer as ts.FunctionLike;
-            if (!result || (initializer.pos >= result.pos && initializer.end <= result.end)) {
-              result = initializer;
-            }
-          }
-        }
-        ts.forEachChild(node, visit);
+    // For arrow/function expressions assigned to a variable, capture the full
+    // `const foo = () => {}` VariableDeclaration statement.
+    let textNode: BabelNode = node;
+    if (
+      (node.type === 'ArrowFunctionExpression' || node.type === 'FunctionExpression') &&
+      parent?.type === 'VariableDeclarator'
+    ) {
+      const grandParent = parents.get(parent) ?? null;
+      if (grandParent?.type === 'VariableDeclaration') {
+        textNode = grandParent;
       }
-    };
+    }
 
-    visit(sourceFile);
-    return result;
-  }
+    // If the textNode is wrapped in an export declaration, capture the export declaration
+    // statement to preserve the export keyword.
+    const textNodeParent = parents.get(textNode) ?? null;
+    if (
+      textNodeParent?.type === 'ExportNamedDeclaration' ||
+      textNodeParent?.type === 'ExportDefaultDeclaration'
+    ) {
+      textNode = textNodeParent;
+    }
 
-  private extractFunctionInfo(node: ts.FunctionLike, sourceFile: ts.SourceFile): FunctionInfo {
-    const name = this.getFunctionName(node, sourceFile);
-    const type = this.getFunctionType(node, sourceFile);
+    const startOffset = textNode.start ?? 0;
+    const endOffset = textNode.end ?? 0;
+    const startPos = offsetToLineCol(source, startOffset);
+    const endPos = offsetToLineCol(source, endOffset);
 
-    // For arrow/function expressions assigned to a variable, capture the full `const foo = () => {}` statement
-    const textNode =
-      (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) &&
-      ts.isVariableDeclaration(node.parent) &&
-      ts.isVariableDeclarationList(node.parent.parent) &&
-      ts.isVariableStatement(node.parent.parent.parent)
-        ? node.parent.parent.parent
-        : node;
-
-    const startPos = sourceFile.getLineAndCharacterOfPosition(textNode.getStart());
-    const endPos = sourceFile.getLineAndCharacterOfPosition(textNode.end);
+    const isAsync =
+      'async' in node && typeof (node as unknown as Record<string, unknown>)['async'] === 'boolean'
+        ? (node as unknown as Record<string, unknown>)['async'] === true
+        : false;
 
     return {
       name,
       type,
       startLine: startPos.line + 1,
       endLine: endPos.line + 1,
-      fullText: sourceFile.text.substring(textNode.pos, textNode.end).trimStart(),
-      isAsync:
-        ts.canHaveModifiers(node) &&
-        ((node.modifiers as ts.ModifiersArray | undefined)?.some(
-          (m) => m.kind === ts.SyntaxKind.AsyncKeyword,
-        ) ??
-          false),
+      fullText: source.slice(startOffset, endOffset).trimStart(),
+      isAsync,
     };
   }
 
-  private getFunctionName(node: ts.Node, sourceFile: ts.SourceFile): string {
-    if (ts.isFunctionDeclaration(node) && node.name) {
-      return node.name.text;
+  private getFunctionName(node: BabelNode, parent: BabelNode | null, source: string): string {
+    // `function foo() {}`
+    if (node.type === 'FunctionDeclaration') {
+      const id = (node as unknown as Record<string, unknown>)['id'] as BabelNode | null;
+      if (id && 'start' in id && 'end' in id) {
+        return source.slice(id.start ?? 0, id.end ?? 0);
+      }
     }
 
-    // Arrow/function expression assigned to a variable: `const foo = () => {}`
+    // `const foo = () => {}` or `const foo = function() {}`
     if (
-      (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) &&
-      ts.isVariableDeclaration(node.parent) &&
-      ts.isIdentifier(node.parent.name)
+      (node.type === 'ArrowFunctionExpression' || node.type === 'FunctionExpression') &&
+      parent?.type === 'VariableDeclarator'
     ) {
-      return node.parent.name.getText(sourceFile);
+      const idNode = (parent as unknown as Record<string, unknown>)['id'] as BabelNode | null;
+      if (idNode && 'start' in idNode && 'end' in idNode) {
+        return source.slice(idNode.start ?? 0, idNode.end ?? 0);
+      }
     }
 
-    if (ts.isMethodDeclaration(node)) {
-      return node.name.getText(sourceFile);
+    // `class Foo { bar() {} }` — ClassMethod
+    if (node.type === 'ClassMethod' || node.type === 'ObjectMethod') {
+      const key = (node as unknown as Record<string, unknown>)['key'] as BabelNode | null;
+      if (key && 'start' in key && 'end' in key) {
+        return source.slice(key.start ?? 0, key.end ?? 0);
+      }
     }
 
-    if (ts.isFunctionExpression(node) && node.name) {
-      return node.name.text;
+    // named function expression: `const x = function namedFn() {}`
+    if (node.type === 'FunctionExpression') {
+      const id = (node as unknown as Record<string, unknown>)['id'] as BabelNode | null;
+      if (id && 'start' in id && 'end' in id) {
+        return source.slice(id.start ?? 0, id.end ?? 0);
+      }
     }
 
     return 'anonymous';
   }
 
-  private getFunctionType(node: ts.Node, sourceFile: ts.SourceFile): FunctionInfo['type'] {
-    const name = this.getFunctionName(node, sourceFile);
-
-    if (name.length === 0) {
-      return 'function';
-    }
-
-    const firstChar = name[0]!;
+  private getFunctionType(node: BabelNode, name: string): FunctionInfo['type'] {
+    if (name.length === 0 || name === 'anonymous') return 'function';
 
     // React hook detection
-    if (name.startsWith('use')) {
-      return 'hook';
-    }
+    if (name.startsWith('use')) return 'hook';
 
-    // React component detection (capital letter start)
+    // React component detection (PascalCase)
+    const firstChar = name[0]!;
     if (firstChar === firstChar.toUpperCase() && firstChar >= 'A' && firstChar <= 'Z') {
       return 'component';
     }
 
-    // Arrow function
-    if (ts.isArrowFunction(node)) {
-      return 'arrow';
-    }
-
-    // Method
-    if (ts.isMethodDeclaration(node)) {
-      return 'method';
-    }
+    if (node.type === 'ArrowFunctionExpression') return 'arrow';
+    if (node.type === 'ClassMethod' || node.type === 'ObjectMethod') return 'method';
 
     return 'function';
   }
@@ -203,57 +297,50 @@ export class CodeAnalysisService implements ICodeAnalysisService {
   public extractImports(code: string, _languageId: string): ImportInfo[] {
     const imports: ImportInfo[] = [];
 
-    function extractImportNames(namedBindings: ts.NamedImportBindings | undefined): string[] {
-      if (!namedBindings) return [];
-      if (ts.isNamedImports(namedBindings)) {
-        return namedBindings.elements.map((s) => s.name.getText());
-      }
-      return [];
-    }
-
     try {
-      const sourceFile = this.parseSourceFile(code, 'temp.ts');
+      const ast = parseSource(code);
 
-      sourceFile.statements.forEach((statement) => {
-        if (ts.isImportDeclaration(statement)) {
-          const fullText = sourceFile.text.substring(statement.getStart(sourceFile), statement.end);
+      for (const statement of ast.program.body) {
+        if (statement.type !== 'ImportDeclaration') continue;
 
-          // Determine import type
-          let type: ImportInfo['type'] = 'side-effect';
-          const moduleLiteral = statement.moduleSpecifier.getText();
+        const startOffset = statement.start ?? 0;
+        const endOffset = statement.end ?? 0;
+        const fullText = code.slice(startOffset, endOffset).trim();
 
-          if (statement.importClause) {
-            if (
-              statement.importClause.namedBindings &&
-              ts.isNamespaceImport(statement.importClause.namedBindings)
-            ) {
-              type = 'namespace';
-            } else if (statement.importClause.name) {
-              type = 'default';
-            } else if (
-              statement.importClause.namedBindings &&
-              ts.isNamedImports(statement.importClause.namedBindings)
-            ) {
-              type = 'named';
+        const moduleSource = (statement as unknown as { source: { value: string } }).source.value;
+
+        const specifiers = (statement as unknown as { specifiers: { type: string }[] }).specifiers;
+
+        let type: ImportInfo['type'] = 'side-effect';
+        const names: string[] = [];
+
+        if (specifiers.length > 0) {
+          if (specifiers.some((s) => s.type === 'ImportNamespaceSpecifier')) {
+            type = 'namespace';
+            for (const s of specifiers) {
+              if (s.type === 'ImportNamespaceSpecifier') {
+                const local = (s as unknown as { local: { start: number; end: number } }).local;
+                names.push(code.slice(local.start, local.end));
+              }
+            }
+          } else if (specifiers.some((s) => s.type === 'ImportDefaultSpecifier')) {
+            type = 'default';
+          } else {
+            type = 'named';
+            for (const s of specifiers) {
+              if (s.type === 'ImportSpecifier') {
+                const imported = (s as unknown as { imported: { start: number; end: number } })
+                  .imported;
+                names.push(code.slice(imported.start, imported.end));
+              }
             }
           }
-
-          const names =
-            type === 'named' || type === 'namespace'
-              ? extractImportNames(statement.importClause?.namedBindings)
-              : undefined;
-
-          const importInfo: ImportInfo = {
-            fullText: fullText.trim(),
-            type,
-            module: moduleLiteral.replace(/['"]/g, ''),
-          };
-          if (names !== undefined) {
-            importInfo.names = names;
-          }
-          imports.push(importInfo);
         }
-      });
+
+        const importInfo: ImportInfo = { fullText, type, module: moduleSource };
+        if (names.length > 0) importInfo.names = names;
+        imports.push(importInfo);
+      }
     } catch (error) {
       this.logger.warn('Error extracting imports', error);
     }
@@ -268,37 +355,35 @@ export class CodeAnalysisService implements ICodeAnalysisService {
   public extractAllFunctions(document: vscode.TextDocument): FunctionInfo[] {
     const functions: FunctionInfo[] = [];
     const text = document.getText();
-    const sourceFile = this.parseSourceFile(text, document.fileName);
 
-    const visit = (node: ts.Node) => {
-      // Handle variable-assigned functions at the statement level to avoid duplicates
-      if (ts.isVariableStatement(node)) {
-        const declaration = node.declarationList.declarations[0];
+    try {
+      const ast = parseSource(text);
+
+      // First pass: build the full parent map
+      const parents = walkWithParents(ast.program, () => {});
+
+      // Second pass: collect functions (parent map is now complete)
+      const handledDeclarators = new WeakSet<BabelNode>();
+      walkWithParents(ast.program, (node, parent) => {
+        if (!isFunctionLike(node)) return;
+
+        // Arrow/function expression inside a VariableDeclarator — capture once at
+        // the VariableDeclaration level to avoid emitting both the declarator and
+        // the function node separately.
         if (
-          declaration?.initializer &&
-          (ts.isArrowFunction(declaration.initializer) ||
-            ts.isFunctionExpression(declaration.initializer))
+          (node.type === 'ArrowFunctionExpression' || node.type === 'FunctionExpression') &&
+          parent?.type === 'VariableDeclarator'
         ) {
-          functions.push(
-            this.extractFunctionInfo(declaration.initializer as ts.FunctionLike, sourceFile),
-          );
-          ts.forEachChild(node, visit);
-          return; // Skip children to avoid duplicate extraction of the initializer
+          if (handledDeclarators.has(parent)) return;
+          handledDeclarators.add(parent);
         }
-      }
-      if (
-        ts.isFunctionDeclaration(node) ||
-        ts.isMethodDeclaration(node) ||
-        // Only match standalone arrow/function expressions (not in variable declarations)
-        ((ts.isArrowFunction(node) || ts.isFunctionExpression(node)) &&
-          !ts.isVariableDeclaration(node.parent))
-      ) {
-        functions.push(this.extractFunctionInfo(node as ts.FunctionLike, sourceFile));
-      }
-      ts.forEachChild(node, visit);
-    };
 
-    visit(sourceFile);
+        functions.push(this.extractFunctionInfo(node, parent, parents, text));
+      });
+    } catch (error) {
+      this.logger.error('Error extracting all functions', error);
+    }
+
     return functions;
   }
 

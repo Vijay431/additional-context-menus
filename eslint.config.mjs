@@ -51,6 +51,7 @@ export default tseslint.config(
       '.vscode-test/**', // VS Code test environment
       '.vscode-test-web/**', // VS Code web test environment
       'out/**', // TypeScript compiled output
+      '.out-test/**', // TypeScript compiled test output
       'out-test/**', // TypeScript compiled test output
       'dist/**', // Distribution build output
 

@@ -1,5 +1,6 @@
 # Generated / build
 dist/
+.out-test/
 out-test/
 coverage/
 *.vsix

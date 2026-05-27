@@ -1,5 +1,6 @@
 # Build output
 dist/
+.out-test/
 out-test/
 coverage/
 *.vsix
