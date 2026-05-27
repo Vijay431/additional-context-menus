@@ -2,7 +2,7 @@
   "name": "additional-context-menus",
   "displayName": "Additional Context Menus",
   "description": "Supercharge your development with intelligent right-click menus. Extract functions, move code blocks, and refactor your TypeScript and JavaScript codebase in seconds. Features AST-based detection, smart imports, and an optimized bundle.",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "license": "MIT",
   "packageManager": "pnpm@11.2.2",
   "publisher": "VijayGangatharan",
