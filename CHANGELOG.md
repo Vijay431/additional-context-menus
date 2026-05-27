@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.2]
 
+### Changed
+
+- Disabled npm audit and funding messages in `.npmrc`.
+
+## [2.1.1]
+
 ### Added
 
 - **Architecture diagrams**: Mermaid runtime architecture and codebase structure diagrams added to `README.md`, `CLAUDE.md`, and `AGENTS.md`. Diagrams show the core user-facing feature services only.
