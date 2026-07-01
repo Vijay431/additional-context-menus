@@ -63,7 +63,7 @@ jobs:
     needs: [setup]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.setup.outputs.tag }}
 
@@ -184,7 +184,7 @@ jobs:
     needs: [setup, verifier]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.setup.outputs.tag }}
 
@@ -219,7 +219,7 @@ jobs:
     needs: [setup, verifier]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.setup.outputs.tag }}
 
