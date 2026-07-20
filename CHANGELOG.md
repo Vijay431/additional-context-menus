@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Security audit remediation**: Added pnpm overrides for vulnerable dev-only transitive dependencies (`shell-quote`, `tmp`, `form-data`, `undici`, `linkify-it`, `markdown-it`, `js-yaml`, `vite`) and regenerated `pnpm-lock.yaml` so `pnpm audit` reports zero vulnerabilities. `esbuild` is bumped directly in `package.json` since it's a direct devDependency.
+- **Security audit remediation**: Added pnpm overrides for vulnerable dev-only transitive dependencies (`shell-quote`, `tmp`, `form-data`, `undici`, `js-yaml`, `vite`) and regenerated `pnpm-lock.yaml` so `pnpm audit` reports zero vulnerabilities. `esbuild` is bumped directly in `package.json` since it's a direct devDependency.
 
 ### Fixed
 
 - Removed a redundant type assertion in `ProjectDetectionService.getFrameworks()`.
+- **vsce packaging**: Removed `linkify-it` and `markdown-it` pnpm overrides that forced ESM-only `linkify-it@6` into `vsce`'s CommonJS dependency tree, causing `linkify_it.default is not a constructor` at `vsce package` time. These packages are dev-only transitive dependencies of `@vscode/vsce` and are not included in the published VSIX bundle.
 
 ## [2.1.2]
 
