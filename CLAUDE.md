@@ -62,14 +62,13 @@ src/
     SaveAllCommand.ts
     OpenInTerminalCommand.ts
   services/
-    codeAnalysisService.ts      # AST-based function detection (@babel/parser)
+    codeAnalysisService.ts      # AST-based function detection (@babel/parser) - lazy-loaded
     configurationService.ts
     fileDiscoveryService.ts
     fileSaveService.ts
     terminalService.ts
     projectDetectionService.ts
     accessibilityService.ts
-    codeAnalysisService.ts      # lazy-loaded (bundles @babel/parser)
     enumGeneratorService.ts     # lazy-loaded
     envFileGeneratorService.ts  # lazy-loaded
     cronJobTimerGeneratorService.ts  # lazy-loaded
@@ -251,7 +250,7 @@ New commands should follow the inline pattern unless the logic is substantial en
 
 - `codeAnalysisService`, `enumGeneratorService`, `envFileGeneratorService`, `cronJobTimerGeneratorService` are loaded at runtime from `dist/lazy/` via `require()` — not bundled in the core bundle
 - esbuild treats them as externals during the main bundle and builds them as separate entry points under `dist/lazy/`
-- **Bundle size targets (production only):** core bundle ≤ 100KB — enforced with a warning in `esbuild.config.ts`. `codeAnalysisService.js` alone is ~3.4MB (bundles @babel/parser + @babel/types); lazy total target is advisory only.
+- **Bundle size targets (production only):** core bundle <= 100KB — enforced with a warning in esbuild.config.ts. codeAnalysisService.js bundles @babel/parser + @babel/types; lazy total target is advisory only.
 
 ### Context Variable
 

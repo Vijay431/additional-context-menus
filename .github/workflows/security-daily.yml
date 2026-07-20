@@ -108,10 +108,16 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const criticalCount = parseInt(process.env.CRITICAL_COUNT || '0');
-            const highCount = parseInt(process.env.HIGH_COUNT || '0');
-            const moderateCount = parseInt(process.env.MODERATE_COUNT || '0');
-            const lowCount = parseInt(process.env.LOW_COUNT || '0');
+            const criticalCount = parseInt(process.env.CRITICAL_COUNT ?? '');
+            const highCount = parseInt(process.env.HIGH_COUNT ?? '');
+            const moderateCount = parseInt(process.env.MODERATE_COUNT ?? '');
+            const lowCount = parseInt(process.env.LOW_COUNT ?? '');
+
+            if ([criticalCount, highCount, moderateCount, lowCount].some(isNaN)) {
+              core.setFailed('Audit counts contain NaN — audit output may be malformed. Refusing to close security issues.');
+              return;
+            }
+
             const hasVulns = criticalCount > 0 || highCount > 0;
 
             // Find existing open security alert issues created by this bot
@@ -133,7 +139,7 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issue.number,
-                  body: '✅ The security audit is now clean. No vulnerabilities detected. Closing this issue automatically.'
+                  body: '✅ No critical or high severity vulnerabilities detected. Closing this issue automatically.'
                 });
                 await github.rest.issues.update({
                   owner: context.repo.owner,
@@ -150,7 +156,7 @@ jobs:
             // Vulnerabilities found
             const auditSummary = fs.existsSync('audit-summary.md') ? fs.readFileSync('audit-summary.md', 'utf8') : '';
             const issueTitle = `Security Alert: ${criticalCount} Critical, ${highCount} High Vulnerabilities`;
-            const issueBody = `## Security Vulnerability Alert\n\nThe daily security audit has detected **critical** or **high** severity vulnerabilities that require immediate attention.\n\n## Security Audit Results\n| Severity | Count |\n|----------|-------|\n| Critical | ${criticalCount}     |\n| High     | ${highCount}     |\n| Moderate | ${moderateCount}     |\n| Low      | ${lowCount}     |\n| **Total**| **${criticalCount + highCount + moderateCount + lowCount}**|\n\n${auditSummary}\n\n## Next Steps\n\n1. **Immediate Action Required**: Review and address critical and high-severity vulnerabilities\n2. **Update Dependencies**: Run \`pnpm update\` and \`pnpm audit\` manually\n3. **Check Overrides**: Verify \`pnpm-workspace.yaml\` overrides cannot pin the safe version\n4. **Test Thoroughly**: Ensure all functionality works after updates\n\n---\n\n*This issue was automatically created by the Daily Security Audit workflow.*\n*Audit Date: ${{ github.run_id }} | Run: ${{ github.run_number }}*`;
+            const issueBody = `## Security Vulnerability Alert\n\nThe daily security audit has detected **critical** or **high** severity vulnerabilities that require immediate attention.\n\n## Security Audit Results\n| Severity | Count |\n|----------|-------|\n| Critical | ${criticalCount}     |\n| High     | ${highCount}     |\n| Moderate | ${moderateCount}     |\n| Low      | ${lowCount}     |\n| **Total**| **${criticalCount + highCount + moderateCount + lowCount}**|\n\n${auditSummary}\n\n## Next Steps\n\n1. **Immediate Action Required**: Review and address critical and high-severity vulnerabilities\n2. **Update Dependencies**: Run \`pnpm update\` and \`pnpm audit\` manually\n3. **Check Overrides**: Verify \`pnpm-workspace.yaml\` overrides cannot pin the safe version\n4. **Test Thoroughly**: Ensure all functionality works after updates\n\n---\n\n*This issue was automatically created by the Daily Security Audit workflow.*\n*Run ID: ${{ github.run_id }} | Run Number: ${{ github.run_number }}*`;
 
             if (securityAlertIssues.length === 0) {
               // No existing issue - create one
