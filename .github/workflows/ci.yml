@@ -38,7 +38,7 @@ jobs:
 
       - name: Cache node_modules
         id: cache-node-modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('pnpm-lock.yaml') }}
@@ -68,7 +68,7 @@ jobs:
           node-version: '22.x'
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
           key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
@@ -98,7 +98,7 @@ jobs:
           node-version: '22.x'
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
           key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
@@ -131,7 +131,7 @@ jobs:
         run: sudo apt-get install -y xvfb
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
           key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
@@ -168,7 +168,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
           key: node-modules-${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('pnpm-lock.yaml') }}
