@@ -62,14 +62,14 @@ src/
     SaveAllCommand.ts
     OpenInTerminalCommand.ts
   services/
-    codeAnalysisService.ts      # AST-based function detection (TypeScript Compiler API)
+    codeAnalysisService.ts      # AST-based function detection (@babel/parser)
     configurationService.ts
     fileDiscoveryService.ts
     fileSaveService.ts
     terminalService.ts
     projectDetectionService.ts
     accessibilityService.ts
-    codeAnalysisService.ts      # lazy-loaded (bundles TypeScript compiler)
+    codeAnalysisService.ts      # lazy-loaded (bundles @babel/parser)
     enumGeneratorService.ts     # lazy-loaded
     envFileGeneratorService.ts  # lazy-loaded
     cronJobTimerGeneratorService.ts  # lazy-loaded
@@ -166,7 +166,7 @@ These power the features internally.
 
 | Service                 | Source File                               | Purpose                                                  |
 | ----------------------- | ----------------------------------------- | -------------------------------------------------------- |
-| CodeAnalysisService     | `src/services/codeAnalysisService.ts`     | AST-based function detection via TypeScript Compiler API |
+| CodeAnalysisService     | `src/services/codeAnalysisService.ts`     | AST-based function detection via @babel/parser           |
 | FileDiscoveryService    | `src/services/fileDiscoveryService.ts`    | Workspace file scanning and compatible-file filtering    |
 | ConfigurationService    | `src/services/configurationService.ts`    | VS Code settings access and change events                |
 | ProjectDetectionService | `src/services/projectDetectionService.ts` | Framework detection and context variable updates         |
@@ -244,14 +244,14 @@ New commands should follow the inline pattern unless the logic is substantial en
 - Services are instantiated via static factory methods (`ServiceName.create(...)`) or `ServiceName.getInstance()` — not `new ServiceName()`
 - DI tokens are `symbol` constants defined in `src/di/types.ts`; interfaces live in `src/di/interfaces/`
 - Generator services (`enumGeneratorService`, `envFileGeneratorService`, `cronJobTimerGeneratorService`) are **not** registered in the container at startup — they are dynamically imported in `ContextMenuManager` on first use
-- `codeAnalysisService` is registered in the DI container but loads lazily: the `registerSingleton` factory calls `require(dist/lazy/codeAnalysisService.js)` on first invocation, deferring the TypeScript compiler load until the first Copy/Move Function command
+- `codeAnalysisService` is registered in the DI container but loads lazily: the `registerSingleton` factory calls `require(dist/lazy/codeAnalysisService.js)` on first invocation, deferring the @babel/parser load until the first Copy/Move Function command
 - Child containers (`container.createChild()`) are supported for test isolation
 
 ### Lazy Loading
 
 - `codeAnalysisService`, `enumGeneratorService`, `envFileGeneratorService`, `cronJobTimerGeneratorService` are loaded at runtime from `dist/lazy/` via `require()` — not bundled in the core bundle
 - esbuild treats them as externals during the main bundle and builds them as separate entry points under `dist/lazy/`
-- **Bundle size targets (production only):** core bundle ≤ 100KB — enforced with a warning in `esbuild.config.ts`. `codeAnalysisService.js` alone is ~3.4MB (bundles the TypeScript compiler); lazy total target is advisory only.
+- **Bundle size targets (production only):** core bundle ≤ 100KB — enforced with a warning in `esbuild.config.ts`. `codeAnalysisService.js` alone is ~3.4MB (bundles @babel/parser + @babel/types); lazy total target is advisory only.
 
 ### Context Variable
 

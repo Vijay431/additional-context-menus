@@ -67,6 +67,11 @@ jobs:
           echo "low=$LOW" >> "$GITHUB_OUTPUT"
           echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
 
+          echo "CRITICAL_COUNT=$CRITICAL" >> "$GITHUB_ENV"
+          echo "HIGH_COUNT=$HIGH" >> "$GITHUB_ENV"
+          echo "MODERATE_COUNT=$MODERATE" >> "$GITHUB_ENV"
+          echo "LOW_COUNT=$LOW" >> "$GITHUB_ENV"
+
           {
             echo "## Security Audit Results"
             echo "| Severity | Count |"
@@ -97,40 +102,90 @@ jobs:
             } >> audit-summary.md
           fi
 
-      - name: Create Security Issue for Manual Review
-        if: steps.audit.outputs.critical > 0 || steps.audit.outputs.high > 0
-        uses: actions/github-script@v9
+      - name: Manage Security Alert Issue
+        uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const auditSummary = fs.readFileSync('audit-summary.md', 'utf8');
+            const criticalCount = parseInt(process.env.CRITICAL_COUNT || '0');
+            const highCount = parseInt(process.env.HIGH_COUNT || '0');
+            const moderateCount = parseInt(process.env.MODERATE_COUNT || '0');
+            const lowCount = parseInt(process.env.LOW_COUNT || '0');
+            const hasVulns = criticalCount > 0 || highCount > 0;
 
-            const title = `Security Alert: ${{ steps.audit.outputs.critical }} Critical, ${{ steps.audit.outputs.high }} High Vulnerabilities`;
-            const body = `## Security Vulnerability Alert
-
-            The daily security audit has detected **critical** or **high** severity vulnerabilities that require immediate attention.
-
-            ${auditSummary}
-
-            ## Next Steps
-
-            1. **Immediate Action Required**: Review and address critical and high-severity vulnerabilities
-            2. **Update Dependencies**: Run \`pnpm update\` and \`pnpm audit\` manually
-            3. **Check Overrides**: Verify \`pnpm-workspace.yaml\` overrides cannot pin the safe version
-            4. **Test Thoroughly**: Ensure all functionality works after updates
-
-            ---
-
-            *This issue was automatically created by the Daily Security Audit workflow.*
-            *Audit Date: ${{ github.run_id }} | Run: ${{ github.run_number }}*`;
-
-            await github.rest.issues.create({
+            // Find existing open security alert issues created by this bot
+            const { data: existingIssues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title,
-              body,
+              state: 'open',
               labels: ['security', 'needs triage'],
+              per_page: 100
             });
+            const securityAlertIssues = existingIssues
+              .filter(i => i.title.startsWith('Security Alert:'))
+              .sort((a, b) => a.number - b.number);
+
+            if (!hasVulns) {
+              // Audit is clean - close all existing security alert issues
+              for (const issue of securityAlertIssues) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: '✅ The security audit is now clean. No vulnerabilities detected. Closing this issue automatically.'
+                });
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed',
+                  state_reason: 'completed'
+                });
+              }
+              console.log(`Closed ${securityAlertIssues.length} resolved security issue(s).`);
+              return;
+            }
+
+            // Vulnerabilities found
+            const auditSummary = fs.existsSync('audit-summary.md') ? fs.readFileSync('audit-summary.md', 'utf8') : '';
+            const issueTitle = `Security Alert: ${criticalCount} Critical, ${highCount} High Vulnerabilities`;
+            const issueBody = `## Security Vulnerability Alert\n\nThe daily security audit has detected **critical** or **high** severity vulnerabilities that require immediate attention.\n\n## Security Audit Results\n| Severity | Count |\n|----------|-------|\n| Critical | ${criticalCount}     |\n| High     | ${highCount}     |\n| Moderate | ${moderateCount}     |\n| Low      | ${lowCount}     |\n| **Total**| **${criticalCount + highCount + moderateCount + lowCount}**|\n\n${auditSummary}\n\n## Next Steps\n\n1. **Immediate Action Required**: Review and address critical and high-severity vulnerabilities\n2. **Update Dependencies**: Run \`pnpm update\` and \`pnpm audit\` manually\n3. **Check Overrides**: Verify \`pnpm-workspace.yaml\` overrides cannot pin the safe version\n4. **Test Thoroughly**: Ensure all functionality works after updates\n\n---\n\n*This issue was automatically created by the Daily Security Audit workflow.*\n*Audit Date: ${{ github.run_id }} | Run: ${{ github.run_number }}*`;
+
+            if (securityAlertIssues.length === 0) {
+              // No existing issue - create one
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['security', 'needs triage']
+              });
+              console.log('Created new security alert issue.');
+            } else {
+              // Update the most recent existing issue, close all older ones
+              const oldIssues = securityAlertIssues.slice(0, -1);
+              const latestIssue = securityAlertIssues[securityAlertIssues.length - 1];
+
+              for (const issue of oldIssues) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed',
+                  state_reason: 'not_planned'
+                });
+              }
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: latestIssue.number,
+                title: issueTitle,
+                body: issueBody
+              });
+              console.log(`Updated issue #${latestIssue.number}, closed ${oldIssues.length} stale duplicate(s).`);
+            }
 
       - name: Notify on Workflow Failure
         if: failure()
