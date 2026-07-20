@@ -5,6 +5,12 @@ All notable changes to the "Additional Context Menus" extension will be document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Pin `linkify-it` override to `^5.0.2` to fix `vsce package` failing with `linkify_it.default is not a constructor`; linkify-it 6.0.0 dropped the CJS default export required by markdown-it 14.x. ([#327](https://github.com/Vijay431/additional-context-menus/pull/327))
+
 ## [2.1.3]
 
 ### Changed
