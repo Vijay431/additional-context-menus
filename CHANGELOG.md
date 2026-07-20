@@ -5,6 +5,16 @@ All notable changes to the "Additional Context Menus" extension will be document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3]
+
+### Changed
+
+- **Security audit remediation**: Added pnpm overrides for vulnerable dev-only transitive dependencies (`shell-quote`, `tmp`, `form-data`, `undici`, `linkify-it`, `markdown-it`, `js-yaml`, `vite`) and regenerated `pnpm-lock.yaml` so `pnpm audit` reports zero vulnerabilities. `esbuild` is bumped directly in `package.json` since it's a direct devDependency.
+
+### Fixed
+
+- Removed a redundant type assertion in `ProjectDetectionService.getFrameworks()`.
+
 ## [2.1.2]
 
 ### Changed

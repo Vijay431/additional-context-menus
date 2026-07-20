@@ -35,13 +35,7 @@ export interface CronExpression {
  * Common cron schedule presets
  */
 export type CronPreset =
-  | 'every-minute'
-  | 'every-hour'
-  | 'daily'
-  | 'weekly'
-  | 'monthly'
-  | 'yearly'
-  | 'custom';
+  'every-minute' | 'every-hour' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
 
 /**
  * Cron Job Timer Generator Service Interface
