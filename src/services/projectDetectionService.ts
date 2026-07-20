@@ -382,9 +382,7 @@ export class ProjectDetectionService implements IProjectDetectionService {
     ('react' | 'angular' | 'express' | 'next' | 'vue' | 'svelte')[]
   > {
     const projectType = await this.detectProjectType();
-    return projectType.frameworks as (
-      'react' | 'angular' | 'express' | 'next' | 'vue' | 'svelte'
-    )[];
+    return projectType.frameworks;
   }
 
   public async hasFramework(

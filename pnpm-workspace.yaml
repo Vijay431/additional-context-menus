@@ -22,4 +22,3 @@ overrides:
   vite: '>=6.4.3'
   markdown-it: '>=14.1.2'
   js-yaml: '>=4.1.2'
-  esbuild: '>=0.28.1'

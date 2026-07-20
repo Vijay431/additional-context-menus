@@ -630,7 +630,7 @@
     "@vscode/vsce": "^3.9.1",
     "all-contributors-cli": "^6.26.1",
     "concurrently": "^9.1.2",
-    "esbuild": "^0.28.0",
+    "esbuild": "^0.28.1",
     "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
