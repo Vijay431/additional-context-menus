@@ -178,3 +178,6 @@ jobs:
         run: pnpm run build
         env:
           VSCODE_VERSION: stable
+
+      - name: Package Extension (dry-run)
+        run: pnpm run package
