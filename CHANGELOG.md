@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Daily security audit workflow now manages a single tracking issue instead of creating duplicate issues each day; resolves all 41 stale bot-generated security alert issues
+- Updated CLAUDE.md to correctly document that `codeAnalysisService` uses `@babel/parser` (not TypeScript Compiler API)
+
 ## [2.1.3] - 2026-07-20
 
 ### Changed
