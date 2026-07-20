@@ -5,6 +5,14 @@ All notable changes to the "Additional Context Menus" extension will be document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Dependency updates (Dependabot PRs #270, #271, #273, #275, #276, #278, #279, #280, #281, #282, #283, #287, #307, #308)**: Updated dev dependencies and GitHub Actions to latest versions.
+  - npm packages: `@commitlint/cli` ^21.0.2, `@commitlint/config-conventional` ^21.0.2, `@typescript-eslint/eslint-plugin` ^8.60.1, `@typescript-eslint/parser` ^8.60.1, `@vitest/coverage-v8` 4.1.8, `@vscode/vsce` ^3.9.2, `concurrently` ^10.0.3, `eslint` ^10.4.1, `eslint-plugin-prettier` ^5.5.6, `lint-staged` ^17.0.7, `ovsx` ^1.0.0, `typescript-eslint` ^8.60.1, `vitest` 4.1.8.
+  - GitHub Actions: `actions/checkout` v5→v7, `actions/cache` v5→v6, `marocchino/sticky-pull-request-comment` v2→v3, `softprops/action-gh-release` v2→v3.
+
 ## [2.1.3]
 
 ### Changed
