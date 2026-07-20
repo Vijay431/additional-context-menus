@@ -383,12 +383,7 @@ export class ProjectDetectionService implements IProjectDetectionService {
   > {
     const projectType = await this.detectProjectType();
     return projectType.frameworks as (
-      | 'react'
-      | 'angular'
-      | 'express'
-      | 'next'
-      | 'vue'
-      | 'svelte'
+      'react' | 'angular' | 'express' | 'next' | 'vue' | 'svelte'
     )[];
   }
 
