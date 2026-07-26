@@ -5,13 +5,15 @@ All notable changes to the "Additional Context Menus" extension will be document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.1.4] - 2026-07-26
 
 ### Changed
 
 - **CI packaging dry-run**: `build` job now runs `pnpm run package` (`vsce package`) after the build step, across the Node 22/24/26 matrix — validates the VSIX packaging pipeline on every PR/main run instead of only at release time. No upload/publish occurs.
 
 ### Fixed
+
+- **Security audit remediation**: Bumped pnpm overrides for `js-yaml` (`>=4.1.2` → `>=5.2.2`) and `brace-expansion` (`>=5.0.6` → `>=5.0.8`) to close two high-severity dev-only transitive dependency advisories — `js-yaml` exponential-time parsing DoS ([GHSA-pm4m-ph32-ghv5](https://github.com/advisories/GHSA-pm4m-ph32-ghv5)) and `brace-expansion` unbounded expansion DoS ([GHSA-mh99-v99m-4gvg](https://github.com/advisories/GHSA-mh99-v99m-4gvg)). Both packages are dev-only transitive dependencies (commitlint, vsce/secretlint, eslint/typescript-eslint tooling) and are not part of the published VSIX bundle. `pnpm audit` now reports zero vulnerabilities.
 - Daily security audit workflow now manages a single tracking issue instead of creating duplicate issues each day; resolves all 41 stale bot-generated security alert issues
 - Updated CLAUDE.md to correctly document that `codeAnalysisService` uses `@babel/parser` (not TypeScript Compiler API)
 
