@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Daily security audit workflow now manages a single tracking issue instead of creating duplicate issues each day; resolves all 41 stale bot-generated security alert issues
 - Updated CLAUDE.md to correctly document that `codeAnalysisService` uses `@babel/parser` (not TypeScript Compiler API)
 - **Security audit remediation**: Tightened pnpm overrides for `js-yaml` (`>=4.1.2` → `>=5.2.2`) and `brace-expansion` (`>=5.0.6` → `>=5.0.8`) — the prior ranges were resolving to vulnerable versions (`js-yaml@5.2.1`, `brace-expansion@5.0.7`) because they only set a floor without excluding the vulnerable window. `pnpm audit --audit-level=low` now reports zero vulnerabilities.
+- **Security audit remediation**: Tightened pnpm overrides for `undici` (`>=7.28.0` → `>=8.9.0`), `fast-uri` (`>=3.1.2` → `>=4.1.2`), and `postcss` (`>=8.5.10` → `>=8.5.23`) — the prior ranges only set a floor and were still resolving to vulnerable versions (`undici@8.7.0`, `fast-uri@4.1.1`, `postcss@8.5.19`) transitively via `@vscode/vsce`/`ovsx` (undici), `ajv` (fast-uri), and `vite`/`vitest` (postcss). `pnpm audit --audit-level=low` now reports zero vulnerabilities.
 
 ## [2.1.3] - 2026-07-20
 
