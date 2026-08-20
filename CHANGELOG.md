@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI packaging dry-run**: `build` job now runs `pnpm run package` (`vsce package`) after the build step, across the Node 22/24/26 matrix — validates the VSIX packaging pipeline on every PR/main run instead of only at release time. No upload/publish occurs.
 
 ### Fixed
+- **Security audit remediation**: Added a pnpm override for `nanoid` (`>=3.3.18`) — the dev-only transitive dependency (via `postcss` → `vite` → `vitest`) resolved to vulnerable `nanoid@3.3.16` (GHSA-2v37-7h3g-55p8, high severity: custom generators can loop indefinitely when size is zero), now resolves to `nanoid@6.0.1`. `pnpm audit --audit-level=low` now reports zero vulnerabilities.
 - Daily security audit workflow now manages a single tracking issue instead of creating duplicate issues each day; resolves all 41 stale bot-generated security alert issues
 - Updated CLAUDE.md to correctly document that `codeAnalysisService` uses `@babel/parser` (not TypeScript Compiler API)
 - **Security audit remediation**: Tightened pnpm overrides for `js-yaml` (`>=4.1.2` → `>=5.2.2`) and `brace-expansion` (`>=5.0.6` → `>=5.0.8`) — the prior ranges were resolving to vulnerable versions (`js-yaml@5.2.1`, `brace-expansion@5.0.7`) because they only set a floor without excluding the vulnerable window. `pnpm audit --audit-level=low` now reports zero vulnerabilities.
