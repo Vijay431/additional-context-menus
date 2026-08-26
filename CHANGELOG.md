@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated CLAUDE.md to correctly document that `codeAnalysisService` uses `@babel/parser` (not TypeScript Compiler API)
 - **Security audit remediation**: Tightened pnpm overrides for `js-yaml` (`>=4.1.2` → `>=5.2.2`) and `brace-expansion` (`>=5.0.6` → `>=5.0.8`) — the prior ranges were resolving to vulnerable versions (`js-yaml@5.2.1`, `brace-expansion@5.0.7`) because they only set a floor without excluding the vulnerable window. `pnpm audit --audit-level=low` now reports zero vulnerabilities.
 - **Security audit remediation**: Tightened pnpm overrides for `undici` (`>=7.28.0` → `>=8.9.0`), `fast-uri` (`>=3.1.2` → `>=4.1.2`), and `postcss` (`>=8.5.10` → `>=8.5.23`) — the prior ranges were resolving to vulnerable versions (`undici@8.7.0`, `fast-uri@4.1.1`, `postcss@8.5.19`) because they only set a floor without excluding the vulnerable window. `pnpm audit --audit-level=low` now reports zero vulnerabilities.
+- **Security audit remediation**: Added a pnpm override pinning `nanoid` to `^3.3.18` (was resolving transitively to `3.3.16` via `postcss` → `vite` → `vitest`) — fixes [GHSA-2v37-7h3g-55p8](https://github.com/advisories/GHSA-2v37-7h3g-55p8) (custom generators can loop indefinitely when size is zero). The `^3.3.18` range keeps the same major that `postcss` requires (`^3.3.16`), avoiding the CJS/ESM-only `nanoid@6` break. `pnpm audit --audit-level=low` now reports zero vulnerabilities.
 
 ## [2.1.3] - 2026-07-20
 
