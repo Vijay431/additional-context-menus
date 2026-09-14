@@ -19,6 +19,8 @@ test/**/*.js.map
 .worktrees/
 .auto-claude/
 .automaker/
+.codegraph/
+graphify-out/
 .sisyphus
 .auto-claude-security.json
 
