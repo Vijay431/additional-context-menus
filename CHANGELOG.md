@@ -10,11 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Automated vulnerability remediation**: New CI job attempts to fix critical/high `pnpm audit` findings (reconciling with open Dependabot PRs) and opens a PR against `main` only after independently re-verifying the fix reduces vulnerabilities and the build/tests still pass.
+- CodeQL static analysis workflow (`.github/workflows/codeql.yml`) scanning JavaScript/TypeScript source for vulnerabilities on PRs/pushes to `main` and weekly.
+- OpenSSF Scorecard workflow (`.github/workflows/scorecard.yml`) tracking supply-chain security posture.
+- `capabilities.untrustedWorkspaces` and `capabilities.virtualWorkspaces` declarations in the extension manifest, enabling the Workspace Trust badge on the VS Code Marketplace listing.
 
 ### Changed
 
 - **CI packaging dry-run**: `build` job now runs `pnpm run package` (`vsce package`) after the build step, across the Node 22/24/26 matrix — validates the VSIX packaging pipeline on every PR/main run instead of only at release time. No upload/publish occurs.
 - **Release workflow**: Automatically triggers on merging a version bump to `main` (previously required a manually pushed `vX.Y.Z` git tag).
+- CI, release, and security workflows plus `.nvmrc` bumped from Node 22.x to Node 24.x (`lts/krypton`) as the single-version baseline (the 22/24/26 test matrix in `ci.yml` is unaffected).
 
 ### Fixed
 

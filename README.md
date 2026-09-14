@@ -5,6 +5,8 @@
 # Additional Context Menus
 
 [![CI](https://github.com/Vijay431/additional-context-menus/actions/workflows/ci.yml/badge.svg)](https://github.com/Vijay431/additional-context-menus/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Vijay431/additional-context-menus/actions/workflows/codeql.yml/badge.svg)](https://github.com/Vijay431/additional-context-menus/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Vijay431/additional-context-menus/badge)](https://scorecard.dev/viewer/?uri=github.com/Vijay431/additional-context-menus)
 [![VS Code Marketplace](https://vsmarketplacebadges.dev/version-short/VijayGangatharan.additional-context-menus.svg)](https://marketplace.visualstudio.com/items?itemName=VijayGangatharan.additional-context-menus)
 [![Open VSX Registry](https://img.shields.io/open-vsx/v/VijayGangatharan/additional-context-menus)](https://open-vsx.org/extension/VijayGangatharan/additional-context-menus)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

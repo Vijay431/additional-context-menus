@@ -34,6 +34,8 @@ Run integration tests before user-facing context menu, command, file operation, 
 - CI warms `node_modules` caches for Node 22/24/26, then runs lint, unit coverage, integration tests, and build.
 - PR security runs `pnpm audit --audit-level=high` plus dependency review.
 - Daily security runs audit/outdated-package summaries, uploads artifacts, and opens triage issues for critical/high findings or workflow failure. On critical/high findings, a `security-remediate` job also runs an OpenAI-SDK agent (`.github/scripts/security-remediate-agent.mjs`) that attempts a fix and opens a PR against `main` once it re-verifies the fix and passing build/tests (requires the `OPENAI_API_KEY` secret and `OPENAI_MODEL` repo variable, configured manually by a repo admin).
+- `CodeQL (codeql.yml)` — static analysis (JS/TS, `security-extended` queries) on PRs/pushes to `main` and weekly, results to Security → Code scanning tab.
+- `Scorecard (scorecard.yml)` — OpenSSF supply-chain posture check on pushes to `main` and weekly, SARIF results to Security tab.
 
 ## Assistant Conventions
 
