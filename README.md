@@ -7,6 +7,7 @@
 [![CI](https://github.com/Vijay431/additional-context-menus/actions/workflows/ci.yml/badge.svg)](https://github.com/Vijay431/additional-context-menus/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Vijay431/additional-context-menus/actions/workflows/codeql.yml/badge.svg)](https://github.com/Vijay431/additional-context-menus/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Vijay431/additional-context-menus/badge)](https://scorecard.dev/viewer/?uri=github.com/Vijay431/additional-context-menus)
+[![codecov](https://codecov.io/gh/Vijay431/additional-context-menus/graph/badge.svg)](https://codecov.io/gh/Vijay431/additional-context-menus)
 [![VS Code Marketplace](https://vsmarketplacebadges.dev/version-short/VijayGangatharan.additional-context-menus.svg)](https://marketplace.visualstudio.com/items?itemName=VijayGangatharan.additional-context-menus)
 [![Open VSX Registry](https://img.shields.io/open-vsx/v/VijayGangatharan/additional-context-menus)](https://open-vsx.org/extension/VijayGangatharan/additional-context-menus)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -163,6 +164,14 @@ All settings live under the `additionalContextMenus.*` namespace in your VS Code
 | `terminal.externalTerminalCommand` | string | `""`                 | Custom command for external terminal. Use `{{directory}}` as a placeholder.        |
 | `terminal.openBehavior`            | string | `"parent-directory"` | Directory to open: `"parent-directory"`, `"workspace-root"`, `"current-directory"` |
 
+**Accessibility**
+
+| Setting                            | Type    | Default    | Description                                                             |
+| ---------------------------------- | ------- | ---------- | ----------------------------------------------------------------------- |
+| `accessibility.verbosity`          | string  | `"normal"` | Screen reader announcement detail: `"minimal"`, `"normal"`, `"verbose"` |
+| `accessibility.screenReaderMode`   | boolean | `false`    | Enable enhanced screen reader support                                   |
+| `accessibility.keyboardNavigation` | boolean | `true`     | Show keyboard hints in Quick Pick menus                                 |
+
 ---
 
 ## Getting Help & Contributing
@@ -207,6 +216,14 @@ The extension currently detects React, Angular, Express, and Next.js projects. S
 ### Contribution Guidelines
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines, including how to set up the local development environment. Please open an issue to discuss significant changes before submitting a Pull Request.
+
+### Support
+
+For help, questions, or where to file issues, see [SUPPORT.md](SUPPORT.md).
+
+### Accessibility
+
+Additional Context Menus ships with built-in accessibility support: screen reader announcements for command results, configurable verbosity (`additionalContextMenus.accessibility.verbosity`), and optional keyboard-navigation hints in Quick Pick menus (`additionalContextMenus.accessibility.keyboardNavigation`). See the [Configuration](#configuration) table above for the full settings list.
 
 ### Contact
 

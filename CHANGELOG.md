@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CodeQL static analysis workflow (`.github/workflows/codeql.yml`) scanning JavaScript/TypeScript source for vulnerabilities on PRs/pushes to `main` and weekly.
 - OpenSSF Scorecard workflow (`.github/workflows/scorecard.yml`) tracking supply-chain security posture.
 - `capabilities.untrustedWorkspaces` and `capabilities.virtualWorkspaces` declarations in the extension manifest, enabling the Workspace Trust badge on the VS Code Marketplace listing.
+- `SUPPORT.md` — recognized GitHub community-health file pointing to issue templates, Marketplace Q&A, and the security disclosure process.
+- Codecov coverage reporting: `codecov/codecov-action@v5` upload step in the `test-unit` CI job, `codecov.yml` (informational-only status checks), and a coverage badge in `README.md`. Requires a `CODECOV_TOKEN` repository secret to actually upload (upload is non-blocking via `fail_ci_if_error: false` until configured).
+- `sponsor` field in `package.json` pointing to GitHub Sponsors, surfacing a "Sponsor" link on the VS Code Marketplace listing.
+- "Support" and "Accessibility" sections in `README.md`, including a new Accessibility settings table.
 
 ### Changed
 

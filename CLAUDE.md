@@ -283,7 +283,7 @@ This project follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html). Pre-re
 
 ### Automation Layout
 
-- `.github/workflows/ci.yml` runs PR/main quality gates: cache warmup, lint, unit coverage, integration tests, and build (Ubuntu × Node 22/24/26 × VS Code stable).
+- `.github/workflows/ci.yml` runs PR/main quality gates: cache warmup, lint, unit coverage, integration tests, and build (Ubuntu × Node 22/24/26 × VS Code stable). The unit-coverage job uploads `coverage/lcov.info` to Codecov (`codecov/codecov-action@v5`, `fail_ci_if_error: false`) — requires a `CODECOV_TOKEN` repo secret to actually publish; the coverage badge in `README.md` and `codecov.yml` (informational-only status checks) are wired regardless.
 - `.github/workflows/security-pr.yml` runs PR/main security gates: `pnpm audit --audit-level=high` and dependency review on PRs.
 - `.github/workflows/security-daily.yml` runs daily/manual/package-change security audits, outdated-package summaries, artifact uploads, and triage issue creation for critical/high findings or workflow failures. When `security-audit` finds critical/high vulnerabilities, a follow-up `security-remediate` job runs `.github/scripts/security-remediate-agent.mjs` — an OpenAI-SDK tool-calling agent that reconciles with open Dependabot PRs and attempts a real fix, opening a PR against `main` only after the script (not the agent) independently re-verifies the audit improved and build+tests still pass. Requires an `OPENAI_API_KEY` secret and `OPENAI_MODEL` repo variable to be configured before this job can run.
 - `.github/workflows/codeql.yml` runs CodeQL static analysis (JavaScript/TypeScript, `security-extended` queries) on PRs/pushes to `main` and weekly, uploading results to the Security → Code scanning tab.
@@ -291,6 +291,7 @@ This project follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html). Pre-re
 - `.github/workflows/release.yml` triggers on push to `main` when `package.json` changes: the `setup` job reads the version from `package.json`, checks (via `git ls-remote`) whether a `v<version>` tag already exists, and — if not — creates and pushes that tag itself before running the existing package/verify/publish/release pipeline. `workflow_dispatch` remains as a manual fallback with an optional `tag` input (defaults to the `package.json` version if omitted).
 - Community automation lives in `.github/workflows/stale.yml`, `.github/workflows/labels-sync.yml`, and `.github/workflows/all-contributors.yml`.
 - Release publishing requires `VSCE_PAT` and `OVSX_PAT`.
+- Codecov upload in `ci.yml` requires a `CODECOV_TOKEN` repo secret (optional — CI does not fail without it).
 
 ### How Release Detects Pre-release
 
