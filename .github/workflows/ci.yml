@@ -65,13 +65,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '22.x'
+          node-version: '24.x'
 
       - name: Restore node_modules
         uses: actions/cache/restore@v6
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
+          key: node-modules-${{ runner.os }}-node24.x-${{ hashFiles('pnpm-lock.yaml') }}
           fail-on-cache-miss: true
 
       - name: Run ESLint
@@ -95,13 +95,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '22.x'
+          node-version: '24.x'
 
       - name: Restore node_modules
         uses: actions/cache/restore@v6
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
+          key: node-modules-${{ runner.os }}-node24.x-${{ hashFiles('pnpm-lock.yaml') }}
           fail-on-cache-miss: true
 
       - name: Run Unit Tests with Coverage
@@ -125,7 +125,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '22.x'
+          node-version: '24.x'
 
       - name: Install System Dependencies
         run: sudo apt-get install -y xvfb
@@ -134,7 +134,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
+          key: node-modules-${{ runner.os }}-node24.x-${{ hashFiles('pnpm-lock.yaml') }}
           fail-on-cache-miss: true
 
       - name: Build Extension

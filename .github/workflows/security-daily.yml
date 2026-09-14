@@ -35,7 +35,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '22.x'
+          node-version: '24.x'
           cache: pnpm
           cache-dependency-path: |
             pnpm-lock.yaml
@@ -46,7 +46,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
+          key: node-modules-${{ runner.os }}-node24.x-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
@@ -253,7 +253,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '22.x'
+          node-version: '24.x'
           cache: pnpm
           cache-dependency-path: |
             pnpm-lock.yaml
@@ -264,7 +264,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
+          key: node-modules-${{ runner.os }}-node24.x-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
