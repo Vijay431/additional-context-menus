@@ -9,11 +9,7 @@ on:
   workflow_dispatch:
   branch_protection_rule:
 
-permissions:
-  security-events: write
-  id-token: write
-  contents: read
-  actions: read
+permissions: read-all
 
 jobs:
   analysis:

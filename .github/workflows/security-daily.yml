@@ -33,7 +33,7 @@ jobs:
           standalone: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '24.x'
           cache: pnpm
@@ -106,7 +106,7 @@ jobs:
           fi
 
       - name: Manage Security Alert Issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -251,7 +251,7 @@ jobs:
           standalone: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '24.x'
           cache: pnpm
@@ -275,7 +275,7 @@ jobs:
         run: node .github/scripts/security-remediate-agent.mjs
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENAI_MODEL_DEFAULT: ${{ vars.OPENAI_MODEL_DEFAULT }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Remediation Result

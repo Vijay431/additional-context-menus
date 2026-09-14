@@ -48,14 +48,17 @@ jobs:
       - name: Extract Version and Tag
         id: version
         shell: bash
+        env:
+          RELEASE_TAG_INPUT: ${{ github.event.inputs.tag }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.tag }}" ]; then
-            TAG="${{ github.event.inputs.tag }}"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ -n "$RELEASE_TAG_INPUT" ]; then
+            TAG="$RELEASE_TAG_INPUT"
             VERSION="${TAG#v}"
           else
             VERSION="$(node -p "require('./package.json').version")"
           fi
           TAG="v${VERSION}"
+          git check-ref-format --allow-onelevel "refs/tags/${TAG}" || { echo "::error::Invalid tag: ${TAG}"; exit 1; }
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
@@ -66,8 +69,13 @@ jobs:
           fi
 
           if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
-            echo "Tag ${TAG} already exists on remote — this push either wasn't a version bump or was already released. Skipping."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
+            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+              echo "Tag ${TAG} already exists on remote — continuing (manual workflow_dispatch recovery run)."
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "Tag ${TAG} already exists on remote — this push either wasn't a version bump or was already released. Skipping."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
             git config user.name "github-actions[bot]"
@@ -93,7 +101,7 @@ jobs:
           standalone: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '24.x'
           cache: pnpm
@@ -219,7 +227,7 @@ jobs:
           standalone: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '24.x'
 
@@ -254,7 +262,7 @@ jobs:
           standalone: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '24.x'
 
