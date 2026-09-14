@@ -19,6 +19,7 @@ test/**/*.js.map
 .worktrees/
 .auto-claude/
 .automaker/
+.firecrawl/
 .codegraph/
 graphify-out/
 .sisyphus
