@@ -37,3 +37,24 @@
 - name: ignore-for-release
   color: 'ffffff'
   description: Exclude from generated release notes.
+- name: configuration
+  color: 'c5def5'
+  description: Configuration or settings issue.
+- name: context-menu
+  color: 'bfd4f2'
+  description: Context menu functionality.
+- name: cross-platform
+  color: 'd4c5f9'
+  description: Windows/macOS/Linux compatibility issue.
+- name: framework-specific
+  color: 'fef2c0'
+  description: Issue specific to a supported framework (React, Angular, Express, Next.js).
+- name: performance
+  color: 'e99695'
+  description: Performance or resource usage issue.
+- name: refactoring
+  color: 'c2e0c6'
+  description: Code refactoring request.
+- name: terminal
+  color: 'bfdadc'
+  description: Terminal integration issue.
