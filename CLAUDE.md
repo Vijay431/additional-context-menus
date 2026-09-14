@@ -163,13 +163,13 @@ These are the commands users interact with. `package.json` `contributes.commands
 
 These power the features internally.
 
-| Service                 | Source File                               | Purpose                                                  |
-| ----------------------- | ----------------------------------------- | -------------------------------------------------------- |
-| CodeAnalysisService     | `src/services/codeAnalysisService.ts`     | AST-based function detection via @babel/parser           |
-| FileDiscoveryService    | `src/services/fileDiscoveryService.ts`    | Workspace file scanning and compatible-file filtering    |
-| ConfigurationService    | `src/services/configurationService.ts`    | VS Code settings access and change events                |
-| ProjectDetectionService | `src/services/projectDetectionService.ts` | Framework detection and context variable updates         |
-| AccessibilityService    | `src/services/accessibilityService.ts`    | Screen reader announcements and ARIA helpers             |
+| Service                 | Source File                               | Purpose                                               |
+| ----------------------- | ----------------------------------------- | ----------------------------------------------------- |
+| CodeAnalysisService     | `src/services/codeAnalysisService.ts`     | AST-based function detection via @babel/parser        |
+| FileDiscoveryService    | `src/services/fileDiscoveryService.ts`    | Workspace file scanning and compatible-file filtering |
+| ConfigurationService    | `src/services/configurationService.ts`    | VS Code settings access and change events             |
+| ProjectDetectionService | `src/services/projectDetectionService.ts` | Framework detection and context variable updates      |
+| AccessibilityService    | `src/services/accessibilityService.ts`    | Screen reader announcements and ARIA helpers          |
 
 ---
 
@@ -285,14 +285,14 @@ This project follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html). Pre-re
 
 - `.github/workflows/ci.yml` runs PR/main quality gates: cache warmup, lint, unit coverage, integration tests, and build (Ubuntu × Node 22/24/26 × VS Code stable).
 - `.github/workflows/security-pr.yml` runs PR/main security gates: `pnpm audit --audit-level=high` and dependency review on PRs.
-- `.github/workflows/security-daily.yml` runs daily/manual/package-change security audits, outdated-package summaries, artifact uploads, and triage issue creation for critical/high findings or workflow failures.
-- `.github/workflows/release.yml` runs only on `v*` tag pushes: package, verify, publish to VS Code Marketplace and Open VSX, and create a GitHub Release.
+- `.github/workflows/security-daily.yml` runs daily/manual/package-change security audits, outdated-package summaries, artifact uploads, and triage issue creation for critical/high findings or workflow failures. When `security-audit` finds critical/high vulnerabilities, a follow-up `security-remediate` job runs `.github/scripts/security-remediate-agent.mjs` — an OpenAI-SDK tool-calling agent that reconciles with open Dependabot PRs and attempts a real fix, opening a PR against `main` only after the script (not the agent) independently re-verifies the audit improved and build+tests still pass. Requires an `OPENAI_API_KEY` secret and `OPENAI_MODEL` repo variable to be configured before this job can run.
+- `.github/workflows/release.yml` triggers on push to `main` when `package.json` changes: the `setup` job reads the version from `package.json`, checks (via `git ls-remote`) whether a `v<version>` tag already exists, and — if not — creates and pushes that tag itself before running the existing package/verify/publish/release pipeline. `workflow_dispatch` remains as a manual fallback with an optional `tag` input (defaults to the `package.json` version if omitted).
 - Community automation lives in `.github/workflows/stale.yml`, `.github/workflows/labels-sync.yml`, and `.github/workflows/all-contributors.yml`.
 - Release publishing requires `VSCE_PAT` and `OVSX_PAT`.
 
 ### How Release Detects Pre-release
 
-The release workflow `setup` job checks the tag for `-rc`, `-next`, `-beta`, or `-alpha`:
+The release workflow `setup` job reads the version straight from `package.json` (or the `workflow_dispatch` `tag` input, if supplied) and checks it for `-rc`, `-next`, `-beta`, or `-alpha`:
 
 ```bash
 if echo "$VERSION" | grep -qE '\-(rc|next|beta|alpha)'; then
@@ -300,28 +300,32 @@ if echo "$VERSION" | grep -qE '\-(rc|next|beta|alpha)'; then
 fi
 ```
 
-- Pre-release tags → both marketplaces publish with `--pre-release`
-- Stable tags → both marketplaces publish as stable
+- Pre-release version strings → both marketplaces publish with `--pre-release`
+- Stable version strings → both marketplaces publish as stable
+
+The `setup` job then derives `v<version>` as the tag, checks via `git ls-remote` whether that tag already exists on the remote, and — if not — creates and pushes it itself before the build/verify/publish jobs run. No manual `git tag` step is needed for the normal flow.
 
 ### Release Checklist
 
-**Stable patch release (`v2.0.2`):**
+**Stable patch release (`2.0.2`):**
 
-1. Ensure `package.json` version is `2.0.2`
-2. Push tag: `git tag v2.0.2 && git push origin v2.0.2`
-3. Release workflow publishes to VS Code Marketplace + Open VSX, creates GitHub Release
+1. Bump `package.json` version to `2.0.2`
+2. Merge/push to `main`
+3. Release workflow detects the `package.json` change, creates tag `v2.0.2` itself, and publishes to VS Code Marketplace + Open VSX, creating a GitHub Release
 
-**Pre-release (`v2.1.0-beta.1`):**
+**Pre-release (`2.1.0-beta.1`):**
 
-1. Bump `package.json` version to `2.1.0`
-2. Push tag: `git tag v2.1.0-beta.1 && git push origin v2.1.0-beta.1`
-3. Release workflow publishes with `--pre-release` to both marketplaces
+1. Bump `package.json` version to `2.1.0-beta.1`
+2. Merge/push to `main`
+3. Release workflow detects the pre-release suffix, creates tag `v2.1.0-beta.1` itself, and publishes with `--pre-release` to both marketplaces
 
-**Graduating pre-release to stable (`v2.1.0`):**
+**Graduating pre-release to stable (`2.1.0`):**
 
-1. `package.json` already says `2.1.0` — no change needed
-2. Push tag: `git tag v2.1.0 && git push origin v2.1.0`
-3. Release workflow publishes stable to both marketplaces
+1. Bump `package.json` version to `2.1.0` (drop the pre-release suffix)
+2. Merge/push to `main`
+3. Release workflow creates tag `v2.1.0` itself and publishes stable to both marketplaces
+
+**Manual/break-glass fallback:** trigger `workflow_dispatch` directly (e.g. to re-run a release without a new `package.json` change). The `tag` input is optional — if omitted, the workflow falls back to the current `package.json` version, same as the push-triggered flow.
 
 ---
 

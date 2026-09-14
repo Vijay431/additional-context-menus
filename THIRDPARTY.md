@@ -19,6 +19,7 @@ pnpm licenses list --json
 | `husky`                 | 9.1.7           | MIT        | https://github.com/typicode/husky#readme                                   |
 | `lint-staged`           | 17.0.5          | MIT        | https://github.com/lint-staged/lint-staged#readme                          |
 | `mocha`                 | 11.7.6          | MIT        | https://mochajs.org/                                                       |
+| `openai`                | ^7.0.0          | Apache-2.0 | https://github.com/openai/openai-node#readme                               |
 | `ovsx`                  | 0.10.12         | EPL-2.0    | https://open-vsx.org                                                       |
 | `prettier`              | 2.8.8, 3.8.3    | MIT        | https://prettier.io                                                        |
 | `tsx`                   | 4.22.3          | MIT        | https://tsx.is                                                             |
@@ -26,6 +27,8 @@ pnpm licenses list --json
 | `vitest`                | 4.1.7           | MIT        | https://github.com/vitest-dev/vitest#readme                                |
 
 This file is informational and does not replace individual package license texts.
+
+**Note:** `openai` is a **devDependency used only by a CI script** (`.github/scripts/security-remediate-agent.mjs`) to help remediate security audit findings. It is not imported by any code under `src/` and is not shipped in the packaged VS Code extension (`.vsix`/bundle).
 
 ## GitHub Actions Tooling
 

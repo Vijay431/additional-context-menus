@@ -226,10 +226,11 @@ The repository separates quality gates, release publishing, and community automa
 **Daily security (`.github/workflows/security-daily.yml`, daily/manual/package changes):**
 
 - `security-audit` — runs `pnpm audit --json`, checks outdated packages, uploads audit artifacts, and opens triage issues for critical/high findings or workflow failures
+- `security-remediate` — when `security-audit` finds critical/high vulnerabilities, runs `.github/scripts/security-remediate-agent.mjs` (an OpenAI-SDK tool-calling agent) to reconcile with open Dependabot PRs and attempt a fix; the script independently re-verifies the fix reduces vulnerabilities and that build/tests still pass before opening a PR against `main`. Requires the repo-admin to configure the `OPENAI_API_KEY` secret and `OPENAI_MODEL` repo variable (one-time, manual setup)
 
-**Release (`.github/workflows/release.yml`, on `v*` tag push):**
+**Release (`.github/workflows/release.yml`, on push to `main` when `package.json` changes, with `workflow_dispatch` as a manual fallback):**
 
-- `setup` — extracts version, detects pre-release (`-rc`, `-next`, `-beta`, `-alpha`)
+- `setup` — extracts the version from `package.json` (or the optional `workflow_dispatch` tag input), detects pre-release (`-rc`, `-next`, `-beta`, `-alpha`), and auto-creates + pushes the `v<version>` tag if it doesn't already exist
 - `release-build` — checks out the tag and builds the production VSIX
 - `verifier` — validates VSIX contents (no source files, no node_modules, correct bundle)
 - `publish-vscode` — publishes to VS Code Marketplace (stable or `--pre-release`)
