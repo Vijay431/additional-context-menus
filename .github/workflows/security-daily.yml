@@ -19,6 +19,9 @@ jobs:
   security-audit:
     name: pnpm Security Audit
     runs-on: ubuntu-latest
+    outputs:
+      critical: ${{ steps.audit.outputs.critical }}
+      high: ${{ steps.audit.outputs.high }}
 
     steps:
       - name: Checkout Repository
@@ -227,3 +230,59 @@ jobs:
             outdated.json
             audit-summary.md
           retention-days: 30
+
+  security-remediate:
+    name: Automated Security Remediation
+    needs: [security-audit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: fromJSON(needs.security-audit.outputs.critical) > 0 || fromJSON(needs.security-audit.outputs.high) > 0
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Install PNPM
+        uses: pnpm/action-setup@v6
+        with:
+          standalone: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22.x'
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            package.json
+
+      - name: Cache node_modules
+        id: cache-node-modules
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Automated Remediation Agent
+        id: remediate
+        run: node .github/scripts/security-remediate-agent.mjs
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Remediation Result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: security-remediation-result-${{ github.run_number }}
+          path: remediation-result.json
+          retention-days: 30
+          if-no-files-found: warn
