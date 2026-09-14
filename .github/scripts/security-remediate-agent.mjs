@@ -151,12 +151,31 @@ export function countCriticalHigh(auditJson) {
 // Process/fs helpers (side-effecting; not exported).
 // ---------------------------------------------------------------------------
 
-function execCapture(cmd, args, cwd) {
+/**
+ * Strips secrets this script's own process holds (OPENAI_API_KEY, GH_TOKEN)
+ * out of the environment passed to spawned commands by default. Defense in
+ * depth: agent-controlled run_command calls (e.g. `pnpm run build`,
+ * `pnpm run test:unit`) must not be able to read these via process.env even
+ * if some other guard is bypassed.
+ * @returns {NodeJS.ProcessEnv}
+ */
+function sanitizedEnv() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to exclude them from `rest`
+  const { OPENAI_API_KEY, GH_TOKEN, ...rest } = process.env;
+  return rest;
+}
+
+function execCapture(cmd, args, cwd, envOverride) {
   return new Promise((resolve) => {
     execFile(
       cmd,
       args,
-      { cwd: cwd || process.cwd(), maxBuffer: 1024 * 1024 * 64, encoding: 'utf8' },
+      {
+        cwd: cwd || process.cwd(),
+        maxBuffer: 1024 * 1024 * 64,
+        encoding: 'utf8',
+        env: envOverride || sanitizedEnv(),
+      },
       (error, stdout, stderr) => {
         resolve({
           code: error ? (typeof error.code === 'number' ? error.code : 1) : 0,
@@ -206,6 +225,7 @@ async function listDependabotPrsImpl(repoRoot) {
     'gh',
     ['pr', 'list', '--author', 'dependabot[bot]', '--state', 'open', '--json', 'number,headRefName,title,body'],
     repoRoot,
+    { ...sanitizedEnv(), GH_TOKEN: process.env.GH_TOKEN },
   );
   if (result.code !== 0) {
     return { error: `gh pr list failed (exit ${result.code}): ${result.stderr}` };
@@ -220,6 +240,20 @@ async function listDependabotPrsImpl(repoRoot) {
 async function mergeDependabotBranchImpl(prNumber, repoRoot) {
   if (typeof prNumber !== 'number' || !Number.isInteger(prNumber) || prNumber <= 0) {
     return { error: 'prNumber must be a positive integer' };
+  }
+
+  // Re-fetch a FRESH list of currently-open Dependabot PRs immediately
+  // before trusting prNumber, rather than relying on a list the agent
+  // (or earlier tool output) may have seen or claimed. Without this check,
+  // prompt-injected text could steer the agent into merging from an
+  // arbitrary/attacker-controlled PR number.
+  const openPrs = await listDependabotPrsImpl(repoRoot);
+  if (!Array.isArray(openPrs)) {
+    return { error: `could not verify open Dependabot PRs: ${openPrs && openPrs.error}` };
+  }
+  const isConfirmedDependabotPr = openPrs.some((pr) => pr && pr.number === prNumber);
+  if (!isConfirmedDependabotPr) {
+    return { error: `PR #${prNumber} is not a currently open Dependabot PR` };
   }
 
   const branch = `pr-${prNumber}`;
@@ -261,12 +295,55 @@ async function readFileImpl(filePath, repoRoot) {
   }
 }
 
+/**
+ * Prevents write_file from turning package.json's "scripts" or "bin" fields
+ * into an executable-configuration escape hatch: run_command's allowlist
+ * includes `pnpm run build` / `pnpm run test:unit`, so an agent that could
+ * freely rewrite those fields could redefine them to arbitrary shell
+ * commands and then trigger them via an otherwise-innocuous allowlisted
+ * command. Returns an error string if the write would change either field,
+ * or null if the write is safe to proceed.
+ * @param {string} newContent
+ * @param {string} repoRoot
+ * @returns {Promise<string | null>}
+ */
+async function guardPackageJsonWrite(newContent, repoRoot) {
+  let newPkg;
+  try {
+    newPkg = JSON.parse(newContent);
+  } catch (e) {
+    return `write_file content is not valid JSON: ${e.message}`;
+  }
+
+  let currentPkg;
+  try {
+    const currentRaw = await fs.readFile(path.join(repoRoot, 'package.json'), 'utf8');
+    currentPkg = JSON.parse(currentRaw);
+  } catch {
+    currentPkg = {};
+  }
+
+  for (const field of ['scripts', 'bin']) {
+    if (JSON.stringify(newPkg[field] ?? null) !== JSON.stringify(currentPkg[field] ?? null)) {
+      return `write_file may not modify package.json "${field}" field (executable configuration is immutable for this agent)`;
+    }
+  }
+
+  return null;
+}
+
 async function writeFileImpl(filePath, content, repoRoot) {
   if (!isAllowedPath(filePath)) {
     return { error: `path not allowed: ${JSON.stringify(filePath)}` };
   }
   if (typeof content !== 'string') {
     return { error: 'content must be a string' };
+  }
+  if (filePath === 'package.json') {
+    const guardError = await guardPackageJsonWrite(content, repoRoot);
+    if (guardError) {
+      return { error: guardError };
+    }
   }
   try {
     await fs.writeFile(path.join(repoRoot, filePath), content, 'utf8');
@@ -589,9 +666,11 @@ async function writeResult(repoRoot, result) {
 async function main() {
   const repoRoot = process.cwd();
 
-  const model = process.env.OPENAI_MODEL;
+  const model = process.env.OPENAI_MODEL_DEFAULT;
   if (!model) {
-    throw new Error('OPENAI_MODEL environment variable is required (no default model is hardcoded in this script).');
+    throw new Error(
+      'OPENAI_MODEL_DEFAULT environment variable is required (no default model is hardcoded in this script).',
+    );
   }
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY environment variable is required.');
@@ -617,13 +696,6 @@ async function main() {
     await writeResult(repoRoot, { result: 'no_fix', reason: 'no critical/high vulnerabilities at baseline' });
     return;
   }
-
-  // Independently captured now, used later to cross-check the agent's
-  // supersedesPrs claims — never trust the agent's own recollection of PRs.
-  const confirmedDependabotPrs = await listDependabotPrsImpl(repoRoot);
-  const confirmedDependabotNumbers = new Set(
-    Array.isArray(confirmedDependabotPrs) ? confirmedDependabotPrs.map((pr) => pr.number) : [],
-  );
 
   const client = new OpenAI();
 
@@ -775,6 +847,7 @@ async function main() {
       prBody,
     ],
     repoRoot,
+    { ...sanitizedEnv(), GH_TOKEN: process.env.GH_TOKEN },
   );
   if (prCreateResult.code !== 0) {
     throw new Error(`gh pr create failed: ${prCreateResult.stderr}`);
@@ -786,6 +859,18 @@ async function main() {
   console.log(`[security-remediate] opened PR: ${prUrl}`);
 
   const supersedesPrs = Array.isArray(decision.supersedesPrs) ? decision.supersedesPrs : [];
+
+  // Re-fetch a FRESH list of currently-open Dependabot PRs right before
+  // closing anything — never trust the agent's own recollection of PRs, and
+  // never trust a list captured earlier in this run: by the time we reach
+  // this point the agent loop, `pnpm install`, `pnpm run build`, and
+  // `pnpm run test:unit` have all run, so a PR could have been merged,
+  // closed, or newly opened in the meantime.
+  const confirmedDependabotPrs = await listDependabotPrsImpl(repoRoot);
+  const confirmedDependabotNumbers = new Set(
+    Array.isArray(confirmedDependabotPrs) ? confirmedDependabotPrs.map((pr) => pr.number) : [],
+  );
+
   for (const num of supersedesPrs) {
     if (!confirmedDependabotNumbers.has(num)) {
       console.log(
@@ -797,6 +882,7 @@ async function main() {
       'gh',
       ['pr', 'close', String(num), '--comment', `Superseded by #${prNumber}`],
       repoRoot,
+      { ...sanitizedEnv(), GH_TOKEN: process.env.GH_TOKEN },
     );
     if (closeResult.code !== 0) {
       console.log(`[security-remediate] failed to close PR #${num}: ${closeResult.stderr}`);
