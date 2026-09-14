@@ -17,7 +17,7 @@ This is a TypeScript VS Code extension. Source code lives in `src/`: command han
 - `pnpm run test:integration`: compile tests and run VS Code integration tests.
 - `pnpm run package`: create a `.vsix` package.
 
-Use Node.js 22+ and pnpm. Development uses Node 24 LTS (`.nvmrc` = `lts/jod`). For manual testing, open the repo in VS Code and press `F5`.
+Use Node.js 22+ and pnpm. Development uses Node 24 LTS (`.nvmrc` = `lts/krypton`). For manual testing, open the repo in VS Code and press `F5`.
 
 ## Coding Style & Naming Conventions
 
@@ -37,43 +37,6 @@ Pull requests should include a clear description, linked issues when applicable,
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for full technical documentation.
 
-### Runtime Architecture
-
-```mermaid
-flowchart TD
-    A["extension"] --> B["ExtensionManager"]
-    B --> C["ContextMenuManager"]
-    C --> D["FileSaveService\nSave All"]
-    C --> E["TerminalService\nOpen in Terminal"]
-    C --> F["FileNamingConventionService\nRename to Convention"]
-    C --> G["Copy, Move, Duplicate handlers\nFunction, Selection, File"]
-    C -.->|"lazy load"| H["EnumGeneratorService\nGenerate Enum"]
-    C -.->|"lazy load"| I["EnvFileGeneratorService\nGenerate .env File"]
-    C -.->|"lazy load"| J["CronJobTimerGeneratorService\nGenerate Cron"]
-```
-
-### Codebase Structure
-
-```mermaid
-flowchart TD
-    A["extension"] --> B["managers"]
-    B --> C["di\ncontainer, interfaces"]
-    C --> D["Feature Services\nFileSaveService\nTerminalService\nFileNamingConventionService"]
-    C -.->|"lazy load"| L["Lazy Services\nEnumGeneratorService\nEnvFileGeneratorService\nCronJobTimerGeneratorService"]
-    D --> E["utils, types"]
-    L --> E
-```
-
 ## Security & Configuration Tips
 
 Do not commit secrets, local VS Code state, generated packages, coverage output, or build artifacts. Review `SECURITY.md` for vulnerability reporting. Configuration changes should update `package.json`, related types in `src/types/`, and tests together. Third-party tooling changes should keep `THIRDPARTY.md` current.
-
-## Assistant Conventions
-
-### Communication
-
-Default to **caveman mode** (terse: drop articles/filler/pleasantries; fragments OK). Keep technical substance exact. Code/commits/PRs/security warnings stay in normal English. Disable on request ("normal mode").
-
-### Shell commands
-
-Prepend `rtk` to all shell invocations when available — 60-90% token savings on dev ops. Examples: `rtk git status`, `rtk pnpm test`, `rtk ls`. Fallback to direct command if `rtk` unavailable, or for compound predicates (`find -not`, `find -exec`) which rtk does not support.

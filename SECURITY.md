@@ -54,9 +54,11 @@ We support safe harbor for security researchers who:
 Additional Context Menus extension:
 
 - Only operates on files within your VS Code workspace
-- Does not transmit any data externally
+- Does not transmit any data externally at runtime
 - Only accesses VS Code APIs and Node.js built-in modules
 - Follows VS Code extension security best practices
+
+For transparency: this repository's CI-side tooling (not the extension itself) includes an automated security remediation script (`.github/scripts/security-remediate-agent.mjs`) that sends `pnpm audit` vulnerability findings to the OpenAI API to help draft remediation PRs — this runs only in GitHub Actions and never on end-users' machines.
 
 ## Updates and Notifications
 
@@ -72,6 +74,8 @@ Security updates will be released through:
 - Pull requests and pushes to `main` run `pnpm audit --audit-level=high`.
 - Pull requests run dependency review and fail on high severity dependency findings.
 - A daily security workflow also runs on schedule, manual dispatch, and package manifest or lockfile changes. It uploads audit artifacts and opens a triage issue for critical/high findings or workflow failures.
+- When the daily audit finds critical/high vulnerabilities, a `security-remediate` job runs an OpenAI-SDK tool-calling agent (`.github/scripts/security-remediate-agent.mjs`) that reconciles with open Dependabot PRs and attempts a fix, independently re-verifying the audit improved and build/tests still pass before opening a PR against `main`.
+- `.github/workflows/codeql.yml` runs CodeQL static analysis (JavaScript/TypeScript, `security-extended` queries) on PRs/pushes to `main` and weekly. `.github/workflows/scorecard.yml` runs an OpenSSF Scorecard supply-chain posture check on pushes to `main` and weekly. Both upload results to the Security → Code scanning tab.
 
 ## Node.js Compatibility & Security
 

@@ -73,12 +73,7 @@ No authentication is required as this is a local development tool.
 
 ## 5. Local Development Setup & Configuration
 
-**Setup Instructions:**
-
-1. Clone the repository: `git clone https://github.com/Vijay431/additional-context-menus.git`
-2. Navigate into the directory: `cd additional-context-menus`
-3. Install dependencies: `pnpm install` (requires Node.js 22+ and pnpm)
-4. Launch the extension: Open in VS Code and press `F5` to open the Extension Development Host.
+See [CONTRIBUTING.md](CONTRIBUTING.md#development-setup) for the full clone/install/launch walkthrough.
 
 **Environment Variables:**
 There are no required `.env` variables for general development. GitHub Action workflows require `VSCE_PAT` and `OVSX_PAT` secrets for publishing.

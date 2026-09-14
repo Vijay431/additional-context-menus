@@ -32,7 +32,7 @@ jobs:
           standalone: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -63,15 +63,15 @@ jobs:
           standalone: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
-          node-version: '22.x'
+          node-version: '24.x'
 
       - name: Restore node_modules
         uses: actions/cache/restore@v6
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
+          key: node-modules-${{ runner.os }}-node24.x-${{ hashFiles('pnpm-lock.yaml') }}
           fail-on-cache-miss: true
 
       - name: Run ESLint
@@ -93,19 +93,26 @@ jobs:
           standalone: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
-          node-version: '22.x'
+          node-version: '24.x'
 
       - name: Restore node_modules
         uses: actions/cache/restore@v6
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
+          key: node-modules-${{ runner.os }}-node24.x-${{ hashFiles('pnpm-lock.yaml') }}
           fail-on-cache-miss: true
 
       - name: Run Unit Tests with Coverage
         run: pnpm run test:unit:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
 
   test-integration:
     name: Integration Tests
@@ -123,9 +130,9 @@ jobs:
           standalone: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
-          node-version: '22.x'
+          node-version: '24.x'
 
       - name: Install System Dependencies
         run: sudo apt-get install -y xvfb
@@ -134,7 +141,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
+          key: node-modules-${{ runner.os }}-node24.x-${{ hashFiles('pnpm-lock.yaml') }}
           fail-on-cache-miss: true
 
       - name: Build Extension
@@ -163,7 +170,7 @@ jobs:
           standalone: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
 

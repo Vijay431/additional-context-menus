@@ -84,8 +84,6 @@ pnpm run test:unit:coverage  # Run unit tests with LCOV coverage
 pnpm run test:integration  # Run integration tests (requires display/xvfb on Linux)
 ```
 
-The repository also includes a Dev Container and GitHub Codespaces configuration. Opening the project in that environment installs Node.js 24 (latest LTS), pnpm dependencies, recommended VS Code extensions, and Linux packages required for headless integration tests.
-
 ## Testing
 
 The project has two test layers:
@@ -226,10 +224,11 @@ The repository separates quality gates, release publishing, and community automa
 **Daily security (`.github/workflows/security-daily.yml`, daily/manual/package changes):**
 
 - `security-audit` — runs `pnpm audit --json`, checks outdated packages, uploads audit artifacts, and opens triage issues for critical/high findings or workflow failures
+- `security-remediate` — when `security-audit` finds critical/high vulnerabilities, runs `.github/scripts/security-remediate-agent.mjs` (an OpenAI-SDK tool-calling agent) to reconcile with open Dependabot PRs and attempt a fix; the script independently re-verifies the fix reduces vulnerabilities and that build/tests still pass before opening a PR against `main`. Requires the repo-admin to configure the `OPENAI_API_KEY` secret and `OPENAI_MODEL` repo variable (one-time, manual setup)
 
-**Release (`.github/workflows/release.yml`, on `v*` tag push):**
+**Release (`.github/workflows/release.yml`, on push to `main` when `package.json` changes, with `workflow_dispatch` as a manual fallback):**
 
-- `setup` — extracts version, detects pre-release (`-rc`, `-next`, `-beta`, `-alpha`)
+- `setup` — extracts the version from `package.json` (or the optional `workflow_dispatch` tag input), detects pre-release (`-rc`, `-next`, `-beta`, `-alpha`), and auto-creates + pushes the `v<version>` tag if it doesn't already exist
 - `release-build` — checks out the tag and builds the production VSIX
 - `verifier` — validates VSIX contents (no source files, no node_modules, correct bundle)
 - `publish-vscode` — publishes to VS Code Marketplace (stable or `--pre-release`)
@@ -246,23 +245,7 @@ The repository separates quality gates, release publishing, and community automa
 
 Additional Context Menus follows a service-oriented architecture:
 
-```
-src/
-├── extension.ts              # Entry point
-├── managers/
-│   ├── extensionManager.ts   # Lifecycle management
-│   └── contextMenuManager.ts # Context menu control
-├── services/
-│   ├── projectDetectionService.ts # Project detection
-│   ├── configurationService.ts    # Settings integration
-│   ├── fileDiscoveryService.ts    # File operations
-│   ├── fileSaveService.ts         # Save operations
-│   └── codeAnalysisService.ts     # AST analysis
-├── utils/
-│   └── logger.ts             # Logging utilities
-└── types/
-    └── extension.ts          # Type definitions
-```
+See [CLAUDE.md](CLAUDE.md#source-structure) for the canonical `src/` layout and module descriptions.
 
 When making changes:
 
