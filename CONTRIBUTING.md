@@ -84,8 +84,6 @@ pnpm run test:unit:coverage  # Run unit tests with LCOV coverage
 pnpm run test:integration  # Run integration tests (requires display/xvfb on Linux)
 ```
 
-The repository also includes a Dev Container and GitHub Codespaces configuration. Opening the project in that environment installs Node.js 24 (latest LTS), pnpm dependencies, recommended VS Code extensions, and Linux packages required for headless integration tests.
-
 ## Testing
 
 The project has two test layers:
@@ -247,23 +245,7 @@ The repository separates quality gates, release publishing, and community automa
 
 Additional Context Menus follows a service-oriented architecture:
 
-```
-src/
-├── extension.ts              # Entry point
-├── managers/
-│   ├── extensionManager.ts   # Lifecycle management
-│   └── contextMenuManager.ts # Context menu control
-├── services/
-│   ├── projectDetectionService.ts # Project detection
-│   ├── configurationService.ts    # Settings integration
-│   ├── fileDiscoveryService.ts    # File operations
-│   ├── fileSaveService.ts         # Save operations
-│   └── codeAnalysisService.ts     # AST analysis
-├── utils/
-│   └── logger.ts             # Logging utilities
-└── types/
-    └── extension.ts          # Type definitions
-```
+See [CLAUDE.md](CLAUDE.md#source-structure) for the canonical `src/` layout and module descriptions.
 
 When making changes:
 
