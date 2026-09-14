@@ -939,4 +939,24 @@ export default tseslint.config(
       // Reason: Build config accesses known object keys safely
     },
   },
+
+  // ============================================
+  // CI SCRIPTS OVERRIDE - .github/scripts
+  // ============================================
+  // Target: .github/scripts/**/*.mjs
+  // Purpose: Allow Node.js runtime globals in CI-only scripts run directly by
+  // GitHub Actions (not part of the TypeScript src/ build, no bundler).
+  // Rationale: These are plain Node ESM scripts invoked via `node <file>.mjs`.
+  {
+    files: ['.github/scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        Buffer: 'readonly',
+        console: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
+    },
+  },
 );
