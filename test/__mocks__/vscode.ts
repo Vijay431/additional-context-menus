@@ -19,6 +19,13 @@ export const workspace = {
     inspect: () => undefined,
   }),
   onDidChangeConfiguration: () => ({ dispose: () => {} }),
+  textDocuments: [] as unknown[],
+  fs: {
+    stat: async (_uri: unknown) => ({ type: 1, size: 0, ctime: 0, mtime: 0 }),
+    readFile: async (_uri: unknown) => new Uint8Array(),
+    copy: async () => {},
+    isWritableFileSystem: (_scheme: string) => true as boolean | undefined,
+  },
 };
 
 export const commands = {
@@ -32,6 +39,10 @@ export const window = {
   showErrorMessage: async () => undefined,
   showInformationMessage: async () => undefined,
   showInputBox: async () => undefined,
+  withProgress: async <T>(
+    _options: unknown,
+    task: (progress: { report: (value: unknown) => void }) => Promise<T>,
+  ): Promise<T> => task({ report: () => {} }),
   activeTextEditor: undefined as unknown,
   createOutputChannel: () => ({
     appendLine: () => {},
@@ -73,15 +84,57 @@ export const extensions = {
   all: [] as unknown[],
 };
 
+interface MockUri {
+  fsPath: string;
+  scheme: string;
+  path: string;
+  with: (change: { path?: string; scheme?: string }) => MockUri;
+  toString: () => string;
+}
+
+function makeUri(scheme: string, path: string): MockUri {
+  return {
+    fsPath: path,
+    scheme,
+    path,
+    with: (change) => makeUri(change.scheme ?? scheme, change.path ?? path),
+    toString: () => `${scheme}://${path}`,
+  };
+}
+
 export const Uri = {
-  file: (path: string) => ({ fsPath: path, scheme: 'file', path }),
+  file: (path: string) => makeUri('file', path),
   parse: (uri: string) => {
     const match = uri.match(/^([a-z][a-z0-9+.-]*):(\/\/)?(.*)$/i);
     const scheme = match?.[1] ?? 'file';
     const path = match?.[3] ?? uri;
-    return { fsPath: path, scheme, path };
+    return makeUri(scheme, path);
   },
 };
+
+export enum ProgressLocation {
+  SourceControl = 1,
+  Window = 10,
+  Notification = 15,
+}
+
+export class FileSystemError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string = 'Unknown',
+  ) {
+    super(message);
+  }
+  static FileNotFound(message = 'FileNotFound') {
+    return new FileSystemError(message, 'FileNotFound');
+  }
+  static FileExists(message = 'FileExists') {
+    return new FileSystemError(message, 'FileExists');
+  }
+  static NoPermissions(message = 'NoPermissions') {
+    return new FileSystemError(message, 'NoPermissions');
+  }
+}
 
 export enum DiagnosticSeverity {
   Error = 0,

@@ -94,7 +94,7 @@ export class Cache<T> {
     expired: 0,
     evicted: 0,
   };
-  private cleanupTimer?: NodeJS.Timeout;
+  private cleanupTimer?: NodeJS.Timeout | undefined;
 
   constructor(config: Partial<CacheConfig> = {}) {
     this.config = { ...DEFAULT_CACHE_CONFIG, ...config };
