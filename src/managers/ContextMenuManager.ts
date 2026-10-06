@@ -673,6 +673,15 @@ export class ContextMenuManager {
         return;
       }
 
+      // Inserting into the source file shifts the function's line range, so the delete below
+      // would remove the wrong lines.
+      if (path.resolve(targetFilePath) === path.resolve(document.uri.fsPath)) {
+        vscode.window.showWarningMessage(
+          'Move Function to File needs a different target file than the source file.',
+        );
+        return;
+      }
+
       await this.insertFunctionIntoFile(functionInfo.fullText, targetFilePath);
 
       const range = new vscode.Range(

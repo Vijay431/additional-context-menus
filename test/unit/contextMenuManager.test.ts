@@ -100,3 +100,35 @@ describe('ContextMenuManager move lines to file', () => {
     expect(sourceEdit).toHaveBeenCalledOnce();
   });
 });
+
+describe('ContextMenuManager move function to file', () => {
+  it('refuses a target equal to the source file and leaves the source untouched', async () => {
+    services.map.clear();
+    services.map.set(TYPES.Logger, logger);
+    services.map.set(TYPES.CodeAnalysisService, {
+      findFunctionAtPosition: async () => ({
+        name: 'f',
+        fullText: 'function f() {}',
+        startLine: 1,
+        endLine: 1,
+      }),
+    });
+    services.map.set(TYPES.FileDiscoveryService, {
+      getCompatibleFiles: async () => [{ path: '/t/source.ts' }],
+      validateTargetFile: async () => true,
+    });
+    vi.clearAllMocks();
+    const sourceEdit = vi.fn(async () => true);
+    (vscode.window as any).activeTextEditor = {
+      document: { fileName: '/t/source.ts', uri: { fsPath: '/t/source.ts' } },
+      selection: { active: {} },
+      edit: sourceEdit,
+    };
+    const openDoc = vscode.workspace.openTextDocument as any;
+
+    await (new ContextMenuManager() as any).handleMoveFunctionToFile();
+
+    expect(openDoc).not.toHaveBeenCalled();
+    expect(sourceEdit).not.toHaveBeenCalled();
+  });
+});
