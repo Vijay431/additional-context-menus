@@ -19,6 +19,24 @@ export { MoveFunctionToFileCommand } from './MoveFunctionToFileCommand';
 export { RenameFileConventionCommand } from './RenameFileConventionCommand';
 export { CopyFileContentsCommand } from './CopyFileContentsCommand';
 export { DuplicateFileCommand } from './DuplicateFileCommand';
+export { EnableCommand, DisableCommand } from './EnableDisableCommands';
+export { ShowOutputChannelCommand } from './ShowOutputChannelCommand';
+export {
+  DebugContextVariablesCommand,
+  RefreshContextVariablesCommand,
+} from './ContextVariableCommands';
+export {
+  CheckKeybindingConflictsCommand,
+  EnableKeybindingsCommand,
+  DisableKeybindingsCommand,
+} from './KeybindingCommands';
+export {
+  LazyGeneratorCommand,
+  GENERATE_ENUM_SPEC,
+  GENERATE_ENV_FILE_SPEC,
+  GENERATE_CRON_TIMER_SPEC,
+  type LazyGeneratorSpec,
+} from './LazyGeneratorCommand';
 
 // Command handler factory type
 export type CommandHandlerFactory = () => {
