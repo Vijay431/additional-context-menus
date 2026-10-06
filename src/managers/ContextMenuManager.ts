@@ -3,10 +3,13 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import {
+  CopyFileContentsCommand,
   CopyFunctionToFileCommand,
   CopyLinesToFileCommand,
+  DuplicateFileCommand,
   MoveFunctionToFileCommand,
   MoveLinesToFileCommand,
+  RenameFileConventionCommand,
 } from '../commands';
 import { isSupportedFileType } from '../commands/codeInsertion';
 import { getService } from '../di/container';
@@ -22,7 +25,6 @@ import type {
   ITerminalService,
 } from '../di/interfaces';
 import { TYPES } from '../di/types';
-import { getAccessibleQuickPickItem } from '../utils/accessibilityHelper';
 
 /**
  * Context Menu Manager
@@ -355,202 +357,21 @@ export class ContextMenuManager {
   }
 
   private async handleRenameFileConvention(uri?: vscode.Uri): Promise<void> {
-    this.logger.info('Rename File Convention command triggered');
-
-    try {
-      const targetPath = uri?.fsPath ?? vscode.window.activeTextEditor?.document.uri.fsPath;
-
-      if (!targetPath) {
-        vscode.window.showErrorMessage(
-          'No file or folder selected. Select a file or folder in the Explorer and try again.',
-        );
-        return;
-      }
-
-      const conventions = [
-        getAccessibleQuickPickItem(
-          {
-            label: 'kebab-case',
-            description: 'my-component-name.ts',
-            value: 'kebab-case' as const,
-          },
-          { ariaLabel: 'Kebab case: my-component-name.ts' },
-        ),
-        getAccessibleQuickPickItem(
-          { label: 'camelCase', description: 'myComponentName.ts', value: 'camelCase' as const },
-          { ariaLabel: 'Camel case: myComponentName.ts' },
-        ),
-        getAccessibleQuickPickItem(
-          { label: 'PascalCase', description: 'MyComponentName.ts', value: 'PascalCase' as const },
-          { ariaLabel: 'Pascal case: MyComponentName.ts' },
-        ),
-      ];
-
-      const selected = await vscode.window.showQuickPick(conventions, {
-        placeHolder: 'Select naming convention',
-      });
-
-      if (!selected) {
-        return;
-      }
-
-      const convention = (
-        selected as vscode.QuickPickItem & { value: 'kebab-case' | 'camelCase' | 'PascalCase' }
-      ).value;
-
-      const result = await this.fileNamingConventionService.renameByPath(targetPath, convention);
-
-      if (result.totalFiles === 0) {
-        vscode.window.showInformationMessage('No files found to rename.');
-        return;
-      }
-
-      const parts: string[] = [];
-      if (result.renamedFiles.length > 0) parts.push(`${result.renamedFiles.length} renamed`);
-      if (result.skippedFiles > 0)
-        parts.push(`${result.skippedFiles} already follow ${convention}`);
-      if (result.failedFiles.length > 0) parts.push(`${result.failedFiles.length} failed`);
-      const summary = parts.join(', ');
-
-      if (result.failedFiles.length > 0) {
-        vscode.window.showWarningMessage(
-          `Rename complete: ${summary}. Check Output Channel for details.`,
-        );
-        result.failedFiles.forEach((f) =>
-          this.logger.error(`Failed to rename: ${f.path} — ${f.error}`),
-        );
-      } else {
-        vscode.window.showInformationMessage(`Rename complete: ${summary}.`);
-      }
-
-      await this.announce(`Rename complete: ${summary}`, 'normal');
-    } catch (error) {
-      this.logger.error('Error in rename file convention', error);
-      vscode.window.showErrorMessage(`Failed to rename files: ${(error as Error).message}`);
-      await this.announceError('Rename File Convention', (error as Error).message);
-    }
+    await new RenameFileConventionCommand(
+      uri,
+      this.fileNamingConventionService,
+      this.logger,
+      this.accessibilityService,
+      () => this.isAccessibilityEnabled(),
+    ).execute();
   }
 
   private async handleCopyFileContents(uri?: vscode.Uri): Promise<void> {
-    this.logger.info('Copy File Contents command triggered');
-
-    try {
-      const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
-
-      if (!targetUri) {
-        vscode.window.showErrorMessage(
-          'No file selected. Right-click a file in the Explorer and choose Copy File Contents.',
-        );
-        return;
-      }
-
-      const stat = await vscode.workspace.fs.stat(targetUri);
-      if (stat.type & vscode.FileType.Directory) {
-        vscode.window.showErrorMessage('Copy File Contents only works on files, not folders.');
-        return;
-      }
-      const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
-      if (stat.size > MAX_BYTES) {
-        vscode.window.showWarningMessage(
-          `File is too large to copy (${(stat.size / 1024 / 1024).toFixed(1)} MB). Maximum is 10 MB.`,
-        );
-        return;
-      }
-      const bytes = await vscode.workspace.fs.readFile(targetUri);
-      const contents = new TextDecoder('utf-8').decode(bytes);
-      await vscode.env.clipboard.writeText(contents);
-
-      const fileName = path.basename(targetUri.fsPath);
-      vscode.window.showInformationMessage(`Copied contents of ${fileName} to clipboard`);
-      this.logger.info(`File contents copied: ${targetUri.fsPath}`);
-    } catch (error) {
-      this.logger.error('Error in Copy File Contents command', error);
-      vscode.window.showErrorMessage(
-        `Failed to copy file contents: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
+    await new CopyFileContentsCommand(uri, this.logger, this.accessibilityService).execute();
   }
 
   private async handleDuplicateFile(uri?: vscode.Uri): Promise<void> {
-    this.logger.info('Duplicate File command triggered');
-
-    try {
-      const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
-
-      if (!targetUri) {
-        vscode.window.showErrorMessage(
-          'No file selected. Right-click a file in the Explorer and choose Duplicate File.',
-        );
-        return;
-      }
-
-      const stat = await vscode.workspace.fs.stat(targetUri);
-      if (stat.type & vscode.FileType.Directory) {
-        vscode.window.showErrorMessage('Duplicate File only works on files, not folders.');
-        return;
-      }
-
-      const ext = path.posix.extname(targetUri.path);
-      const nameWithoutExt = path.posix.basename(targetUri.path, ext);
-
-      const parentPosixPath = path.posix.dirname(targetUri.path);
-
-      // Find a free name: <name>-duplicate<ext>, then <name>-duplicate-1<ext>, etc.
-      let candidatePosixPath = path.posix.join(
-        parentPosixPath,
-        `${nameWithoutExt}-duplicate${ext}`,
-      );
-      let counter = 1;
-      let slotFound = false;
-      const MAX_DUPLICATES = 100;
-      while (!slotFound) {
-        if (counter > MAX_DUPLICATES) {
-          vscode.window.showErrorMessage(
-            `Could not find a free name after ${MAX_DUPLICATES} attempts. Please rename or remove existing duplicates.`,
-          );
-          return;
-        }
-        try {
-          await vscode.workspace.fs.stat(targetUri.with({ path: candidatePosixPath }));
-          // File exists — try next increment
-          candidatePosixPath = path.posix.join(
-            parentPosixPath,
-            `${nameWithoutExt}-duplicate-${counter}${ext}`,
-          );
-          counter++;
-        } catch (statError) {
-          if (statError instanceof vscode.FileSystemError && statError.code === 'FileNotFound') {
-            slotFound = true;
-          } else {
-            throw statError; // propagate permission / network errors to outer catch
-          }
-        }
-      }
-
-      const newUri = targetUri.with({ path: candidatePosixPath });
-      try {
-        await vscode.workspace.fs.copy(targetUri, newUri, { overwrite: false });
-      } catch (copyError) {
-        // FileSystemError on a naming collision = TOCTOU race condition
-        if (copyError instanceof vscode.FileSystemError && copyError.code === 'FileExists') {
-          vscode.window.showWarningMessage(
-            'Could not create duplicate — a naming collision occurred. Please try again.',
-          );
-          return;
-        }
-        throw copyError; // re-throw non-collision errors to outer catch
-      }
-
-      const originalName = path.posix.basename(targetUri.path);
-      const newName = path.posix.basename(candidatePosixPath);
-      vscode.window.showInformationMessage(`Duplicated ${originalName} → ${newName}`);
-      this.logger.info(`File duplicated: ${targetUri.toString()} → ${newUri.toString()}`);
-    } catch (error) {
-      this.logger.error('Error in Duplicate File command', error);
-      vscode.window.showErrorMessage(
-        `Failed to duplicate file: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
+    await new DuplicateFileCommand(uri, this.logger, this.accessibilityService).execute();
   }
 
   private async handleShowOutputChannel(): Promise<void> {
