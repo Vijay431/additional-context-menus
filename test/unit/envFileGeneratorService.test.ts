@@ -1,4 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import * as fs from 'fs/promises';
+import * as os from 'os';
+import * as path from 'path';
+
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import * as vscode from 'vscode';
 
 import { EnvFileGeneratorService } from '../../src/services/envFileGeneratorService';
 
@@ -33,5 +38,58 @@ describe('EnvFileGeneratorService.parseEnvVariables', () => {
     expect(variables).toHaveLength(2);
     expect(variables[0].name).toBe('GOOD_VAR');
     expect(variables[1].name).toBe('ANOTHER');
+  });
+});
+
+describe('EnvFileGeneratorService path traversal protection', () => {
+  let svc: EnvFileGeneratorService;
+  let root: string;
+
+  beforeEach(async () => {
+    (EnvFileGeneratorService as any).instance = undefined;
+    svc = EnvFileGeneratorService.getInstance();
+    root = await fs.mkdtemp(path.join(os.tmpdir(), 'env-gen-'));
+    await fs.writeFile(path.join(root, '.env.example'), 'A=1\nB=2\n');
+  });
+
+  afterEach(async () => {
+    await fs.rm(root, { recursive: true, force: true });
+  });
+
+  async function getValidator(): Promise<(v: string) => string | undefined> {
+    let captured: ((v: string) => string | undefined) | undefined;
+    const spy = vi.spyOn(vscode.window, 'showInputBox').mockImplementation((async (opts: any) => {
+      captured = opts.validateInput;
+      return undefined;
+    }) as any);
+    await (svc as any).promptForEnvFileName();
+    spy.mockRestore();
+    return captured!;
+  }
+
+  it('rejects ../../.bashrc and sub/.env, accepts .env.local', async () => {
+    const validate = await getValidator();
+    expect(validate('../../.bashrc')).toBeDefined();
+    expect(validate('.sub/.env')).toBeDefined();
+    expect(validate('sub/.env')).toBeDefined();
+    expect(validate('.\\evil')).toBeDefined();
+    expect(validate('.')).toBeDefined();
+    expect(validate('..')).toBeDefined();
+    expect(validate('.env.local')).toBeUndefined();
+  });
+
+  it('refuses to write outside the workspace root', async () => {
+    const gen = (svc as any).generateEnvFileFromExample.bind(svc);
+    const example = path.join(root, '.env.example');
+    await expect(gen(example, path.join(root, '..', '.bashrc-evil'), root)).rejects.toThrow(
+      'Invalid file path',
+    );
+  });
+
+  it('writes .env.local inside the root', async () => {
+    const gen = (svc as any).generateEnvFileFromExample.bind(svc);
+    const target = path.join(root, '.env.local');
+    await expect(gen(path.join(root, '.env.example'), target, root)).resolves.toBe(true);
+    expect(await fs.readFile(target, 'utf-8')).toBe('A=\nB=');
   });
 });

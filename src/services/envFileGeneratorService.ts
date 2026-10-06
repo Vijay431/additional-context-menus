@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { AccessibilityService } from '../services/accessibilityService';
 import { formatAccessibleInputPrompt } from '../utils/accessibilityHelper';
 import { Logger } from '../utils/logger';
-import { isSafeFilePath } from '../utils/pathValidator';
+import { isPathWithin, isSafeFilePath } from '../utils/pathValidator';
 
 /**
  * Env File Generator Service
@@ -141,8 +141,19 @@ export class EnvFileGeneratorService {
         return;
       }
 
+      const nameError = EnvFileGeneratorService.validateEnvFileName(envFileName);
+      if (nameError) {
+        vscode.window.showErrorMessage(nameError);
+        await this.accessibilityService.announceError('Generate .env File', nameError);
+        return;
+      }
+
       const envFilePath = path.join(workspaceRoot, envFileName);
-      const generated = await this.generateEnvFileFromExample(envExamplePath, envFilePath);
+      const generated = await this.generateEnvFileFromExample(
+        envExamplePath,
+        envFilePath,
+        workspaceRoot,
+      );
       if (!generated) {
         return;
       }
@@ -176,15 +187,7 @@ export class EnvFileGeneratorService {
       prompt,
       placeHolder: '.env',
       value: '.env',
-      validateInput: (value) => {
-        if (!value || value.trim().length === 0) {
-          return 'Error: File name cannot be empty';
-        }
-        if (!value.startsWith('.')) {
-          return 'Error: File name must start with a dot';
-        }
-        return undefined;
-      },
+      validateInput: (value) => EnvFileGeneratorService.validateEnvFileName(value),
     });
 
     if (envFileName) {
@@ -195,6 +198,29 @@ export class EnvFileGeneratorService {
     }
 
     return envFileName;
+  }
+
+  /**
+   * Returns an error message if the name is not a plain dot-file name
+   * (no path separators, no traversal), otherwise undefined.
+   */
+  private static validateEnvFileName(value: string | undefined): string | undefined {
+    if (!value || value.trim().length === 0) {
+      return 'Error: File name cannot be empty';
+    }
+    if (!value.startsWith('.')) {
+      return 'Error: File name must start with a dot';
+    }
+    if (
+      value === '.' ||
+      value === '..' ||
+      value.includes('/') ||
+      value.includes('\\') ||
+      path.basename(value) !== value
+    ) {
+      return 'Error: File name must not contain path separators';
+    }
+    return undefined;
   }
 
   private async fileExists(filePath: string): Promise<boolean> {
@@ -209,10 +235,18 @@ export class EnvFileGeneratorService {
   private async generateEnvFileFromExample(
     examplePath: string,
     targetPath: string,
+    workspaceRoot: string,
   ): Promise<boolean> {
     const resolvedExamplePath = path.resolve(examplePath);
     const resolvedTargetPath = path.resolve(targetPath);
-    if (!isSafeFilePath(resolvedExamplePath) || !isSafeFilePath(resolvedTargetPath)) {
+    // Containment is enforced by isPathWithin; isSafeFilePath is not used for the
+    // target because its extension/'..' heuristics misjudge legitimate .env names.
+    if (
+      !isSafeFilePath(resolvedExamplePath) ||
+      !isPathWithin(workspaceRoot, resolvedExamplePath) ||
+      !isPathWithin(workspaceRoot, resolvedTargetPath) ||
+      resolvedTargetPath === path.resolve(workspaceRoot)
+    ) {
       throw new Error('Invalid file path');
     }
 
@@ -227,12 +261,12 @@ export class EnvFileGeneratorService {
       }
     }
 
-    // eslint-disable-next-line security/detect-non-literal-fs-filename -- paths validated by isSafeFilePath()
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- paths validated by isPathWithin()
     const exampleContent = await fs.readFile(resolvedExamplePath, 'utf-8');
     const variables = this.parseEnvVariables(exampleContent);
     const envContent = variables.map((variable) => `${variable.name}=`).join('\n');
 
-    // eslint-disable-next-line security/detect-non-literal-fs-filename -- path validated by isSafeFilePath()
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- path validated by isPathWithin()
     await fs.writeFile(resolvedTargetPath, envContent, 'utf-8');
     return true;
   }
