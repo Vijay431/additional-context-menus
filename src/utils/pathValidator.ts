@@ -16,3 +16,11 @@ export function isSafeFilePath(filePath: string): boolean {
 
   return !dangerousExts.includes(ext);
 }
+
+export function isPathWithin(root: string, target: string): boolean {
+  const relative = path.relative(path.resolve(root), path.resolve(target));
+  if (relative === '') {
+    return true;
+  }
+  return relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+}
