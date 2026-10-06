@@ -17,7 +17,7 @@ import {
 } from '../utils/accessibilityHelper';
 import { Cache } from '../utils/cache';
 import { Logger } from '../utils/logger';
-import { isSafeFilePath } from '../utils/pathValidator';
+import { isPathWithin, isSafeFilePath } from '../utils/pathValidator';
 
 type FileQuickPickItem = vscode.QuickPickItem & { filePath: string };
 
@@ -183,7 +183,7 @@ export class FileDiscoveryService implements IFileDiscoveryService {
     for (const fileUri of files) {
       try {
         const filePath = path.resolve(fileUri.fsPath);
-        if (!isSafeFilePath(filePath)) {
+        if (!isPathWithin(workspacePath, filePath) || !isSafeFilePath(filePath)) {
           continue;
         }
         // eslint-disable-next-line security/detect-non-literal-fs-filename -- path validated by isSafeFilePath()
