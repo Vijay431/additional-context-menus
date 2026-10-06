@@ -1,17 +1,29 @@
-import * as path from 'path';
-
 import * as vscode from 'vscode';
 
 import {
+  CheckKeybindingConflictsCommand,
   CopyFileContentsCommand,
+  CopyFunctionCommand,
   CopyFunctionToFileCommand,
   CopyLinesToFileCommand,
+  DebugContextVariablesCommand,
+  DisableCommand,
+  DisableKeybindingsCommand,
   DuplicateFileCommand,
+  EnableCommand,
+  EnableKeybindingsCommand,
+  GENERATE_CRON_TIMER_SPEC,
+  GENERATE_ENUM_SPEC,
+  GENERATE_ENV_FILE_SPEC,
+  LazyGeneratorCommand,
   MoveFunctionToFileCommand,
   MoveLinesToFileCommand,
+  OpenInTerminalCommand,
+  RefreshContextVariablesCommand,
   RenameFileConventionCommand,
+  SaveAllCommand,
+  ShowOutputChannelCommand,
 } from '../commands';
-import { isSupportedFileType } from '../commands/codeInsertion';
 import { getService } from '../di/container';
 import type {
   IAccessibilityService,
@@ -193,53 +205,12 @@ export class ContextMenuManager {
   }
 
   private async handleCopyFunction(): Promise<void> {
-    this.logger.info('Copy Function command triggered');
-
-    try {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showErrorMessage('No active editor found');
-        await this.announceError('Copy Function', 'No active editor found');
-        return;
-      }
-
-      if (!this.isSupportedFileType(editor.document.fileName)) {
-        vscode.window.showWarningMessage('Copy Function only supports .ts, .tsx, .js, .jsx files.');
-        return;
-      }
-
-      const document = editor.document;
-      const position = editor.selection.active;
-
-      // Find function at cursor position
-      const functionInfo = await this.codeAnalysisService.findFunctionAtPosition(
-        document,
-        position,
-      );
-
-      if (!functionInfo) {
-        const msg =
-          'No function found at cursor position. Place the cursor inside a function, arrow function, method, or class declaration and try again.';
-        vscode.window.showWarningMessage(msg);
-        await this.announce(msg, 'minimal');
-        return;
-      }
-
-      // Copy function to clipboard
-      await vscode.env.clipboard.writeText(functionInfo.fullText);
-
-      const message = `Copied ${functionInfo.type} '${functionInfo.name}' to clipboard`;
-      vscode.window.showInformationMessage(message);
-      await this.announceSuccess(
-        'Copy Function',
-        `Function '${functionInfo.name}' copied to clipboard`,
-      );
-      this.logger.info(`Function copied: ${functionInfo.name}`);
-    } catch (error) {
-      this.logger.error('Error in Copy Function command', error);
-      vscode.window.showErrorMessage('Failed to copy function');
-      await this.announceError('Copy Function', 'Failed to copy function');
-    }
+    await new CopyFunctionCommand(
+      this.codeAnalysisService,
+      this.accessibilityService,
+      this.logger,
+      () => this.isAccessibilityEnabled(),
+    ).execute();
   }
 
   private async handleCopyLinesToFile(): Promise<void> {
@@ -261,45 +232,27 @@ export class ContextMenuManager {
   }
 
   private async handleSaveAll(): Promise<void> {
-    this.logger.info('Save All command triggered');
-
-    try {
-      const result = await this.fileSaveService.saveAllFiles();
-      this.logger.info('Save All completed', result);
-    } catch (error) {
-      this.logger.error('Error in Save All command', error);
-      vscode.window.showErrorMessage(`Failed to save files: ${(error as Error).message}`);
-    }
+    await new SaveAllCommand(
+      this.fileSaveService,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   private async handleEnable(): Promise<void> {
-    await this.configService.updateConfiguration('enabled', true);
-    vscode.window.showInformationMessage('Additional Context Menus enabled');
+    await new EnableCommand(this.configService, this.logger, this.accessibilityService).execute();
   }
 
   private async handleDisable(): Promise<void> {
-    await this.configService.updateConfiguration('enabled', false);
-    vscode.window.showInformationMessage(
-      'Additional Context Menus disabled. To re-enable, run "Additional Context Menus: Enable" from the Command Palette.',
-    );
+    await new DisableCommand(this.configService, this.logger, this.accessibilityService).execute();
   }
 
   private async handleOpenInTerminal(): Promise<void> {
-    this.logger.info('Open in Terminal command triggered');
-
-    try {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showErrorMessage('No active editor found');
-        return;
-      }
-
-      const filePath = editor.document.fileName;
-      await this.terminalService.openInTerminal(filePath);
-    } catch (error) {
-      this.logger.error('Error in Open in Terminal command', error);
-      vscode.window.showErrorMessage('Failed to open terminal');
-    }
+    await new OpenInTerminalCommand(
+      this.terminalService,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   private async handleCopyFunctionToFile(): Promise<void> {
@@ -352,10 +305,6 @@ export class ContextMenuManager {
     this.projectDetectionService.clearCache();
   }
 
-  private isSupportedFileType(fileName: string): boolean {
-    return isSupportedFileType(fileName);
-  }
-
   private async handleRenameFileConvention(uri?: vscode.Uri): Promise<void> {
     await new RenameFileConventionCommand(
       uri,
@@ -375,206 +324,68 @@ export class ContextMenuManager {
   }
 
   private async handleShowOutputChannel(): Promise<void> {
-    this.logger.debug('Show Output Channel command triggered');
-    try {
-      // Create or get output channel
-      const outputChannel = vscode.window.createOutputChannel('Additional Context Menus');
-      outputChannel.show(true);
-      outputChannel.appendLine('Extension output channel opened');
-      this.logger.info('Output channel shown');
-    } catch (error) {
-      this.logger.error('Error showing output channel', error);
-      vscode.window.showErrorMessage('Failed to show output channel');
-    }
+    await new ShowOutputChannelCommand(this.logger, this.accessibilityService).execute();
   }
 
   private async handleDebugContextVariables(): Promise<void> {
-    this.logger.debug('Debug Context Variables command triggered');
-    try {
-      const workspaceFolders = vscode.workspace.workspaceFolders;
-      const projectType = await this.projectDetectionService.detectProjectType();
-      const isEnabled = this.configService.isEnabled();
-
-      const debugInfo = [
-        'Extension State:',
-        `  - Enabled: ${isEnabled}`,
-        `  - Node Project: ${projectType.isNodeProject}`,
-        `  - Workspace Folders: ${workspaceFolders?.length ?? 0}`,
-        `  - Frameworks: ${projectType.frameworks.join(', ')}`,
-        `  - TypeScript: ${projectType.hasTypeScript}`,
-        `  - Support Level: ${projectType.supportLevel}`,
-      ];
-
-      const outputChannel = vscode.window.createOutputChannel('Additional Context Menus Debug');
-      outputChannel.show();
-      outputChannel.appendLine(debugInfo.join('\n'));
-
-      this.logger.info('Debug context variables displayed');
-    } catch (error) {
-      this.logger.error('Error debugging context variables', error);
-      vscode.window.showErrorMessage('Failed to debug context variables');
-    }
+    await new DebugContextVariablesCommand(
+      this.projectDetectionService,
+      this.configService,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   private async handleRefreshContextVariables(): Promise<void> {
-    this.logger.debug('Refresh Context Variables command triggered');
-    try {
-      await this.projectDetectionService.updateContextVariables();
-      vscode.window.showInformationMessage('Context variables refreshed');
-      this.logger.info('Context variables refreshed');
-    } catch (error) {
-      this.logger.error('Error refreshing context variables', error);
-      vscode.window.showErrorMessage('Failed to refresh context variables');
-    }
+    await new RefreshContextVariablesCommand(
+      this.projectDetectionService,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   private async handleCheckKeybindingConflicts(): Promise<void> {
-    this.logger.debug('Check Keybinding Conflicts command triggered');
-    try {
-      const config = this.configService.getConfiguration();
-      const enabled = config.keybindings.enabled;
-      const showInMenu = config.keybindings.showInMenu;
-
-      let message = 'Keybinding Configuration:\n';
-      message += `  - Enabled: ${enabled}\n`;
-      message += `  - Show in Menu: ${showInMenu}\n`;
-
-      if (!enabled) {
-        message += '\nCustom keybindings are currently disabled.';
-      } else {
-        message += '\nCustom keybindings are enabled.';
-      }
-
-      await vscode.window.showInformationMessage(message, 'OK');
-      this.logger.info('Keybinding conflicts checked');
-    } catch (error) {
-      this.logger.error('Error checking keybinding conflicts', error);
-      vscode.window.showErrorMessage('Failed to check keybinding conflicts');
-    }
+    await new CheckKeybindingConflictsCommand(
+      this.configService,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   private async handleEnableKeybindings(): Promise<void> {
-    this.logger.debug('Enable Keybindings command triggered');
-    try {
-      const confirm = await vscode.window.showWarningMessage(
-        'Enable custom keybindings for extension commands?',
-        'Enable',
-        'Cancel',
-      );
-
-      if (confirm === 'Enable') {
-        await vscode.workspace
-          .getConfiguration('additionalContextMenus')
-          .update('enableKeybindings', true, vscode.ConfigurationTarget.Global);
-        vscode.window.showInformationMessage('Custom keybindings enabled');
-        this.logger.info('Custom keybindings enabled');
-      }
-    } catch (error) {
-      this.logger.error('Error enabling keybindings', error);
-      vscode.window.showErrorMessage('Failed to enable keybindings');
-    }
+    await new EnableKeybindingsCommand(this.logger, this.accessibilityService).execute();
   }
 
   private async handleDisableKeybindings(): Promise<void> {
-    this.logger.debug('Disable Keybindings command triggered');
-    try {
-      await vscode.workspace
-        .getConfiguration('additionalContextMenus')
-        .update('enableKeybindings', false, vscode.ConfigurationTarget.Global);
-      vscode.window.showInformationMessage('Custom keybindings disabled');
-      this.logger.info('Custom keybindings disabled');
-    } catch (error) {
-      this.logger.error('Error disabling keybindings', error);
-      vscode.window.showErrorMessage('Failed to disable keybindings');
-    }
+    await new DisableKeybindingsCommand(this.logger, this.accessibilityService).execute();
   }
 
-  // Generator commands with lazy loading from separate bundle files
+  // Generator commands with lazy loading from separate bundle files (see LazyGeneratorCommand)
   private async handleGenerateEnum(): Promise<void> {
-    this.logger.info('Generate Enum command triggered');
-    try {
-      // Load from lazy bundle at runtime
-      const extensionPath = vscode.extensions.getExtension(
-        'VijayGangatharan.additional-context-menus',
-      )?.extensionPath;
-      if (!extensionPath) {
-        throw new Error('Extension path not found');
-      }
-      const lazyPath = path.join(extensionPath, 'dist', 'lazy', 'enumGeneratorService.js');
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-dynamic-require, security/detect-non-literal-require
-      const { EnumGeneratorService } = require(lazyPath);
-      const service = EnumGeneratorService.getInstance();
-      await service.generateEnumFromSelection();
-    } catch (error) {
-      this.logger.error('Error generating enum', error);
-      vscode.window.showErrorMessage(`Failed to generate enum: ${(error as Error).message}`);
-    }
+    await new LazyGeneratorCommand(
+      GENERATE_ENUM_SPEC,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   private async handleGenerateEnvFile(): Promise<void> {
-    this.logger.info('Generate Env File command triggered');
-    try {
-      // Load from lazy bundle at runtime
-      const extensionPath = vscode.extensions.getExtension(
-        'VijayGangatharan.additional-context-menus',
-      )?.extensionPath;
-      if (!extensionPath) {
-        throw new Error('Extension path not found');
-      }
-      const lazyPath = path.join(extensionPath, 'dist', 'lazy', 'envFileGeneratorService.js');
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-dynamic-require, security/detect-non-literal-require
-      const { EnvFileGeneratorService } = require(lazyPath);
-      const service = EnvFileGeneratorService.getInstance();
-      await service.generateEnvFile();
-    } catch (error) {
-      this.logger.error('Error generating env file', error);
-      vscode.window.showErrorMessage(`Failed to generate env file: ${(error as Error).message}`);
-    }
+    await new LazyGeneratorCommand(
+      GENERATE_ENV_FILE_SPEC,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   private async handleGenerateCronTimer(): Promise<void> {
-    this.logger.info('Generate Cron Timer command triggered');
-    try {
-      // Load from lazy bundle at runtime
-      const extensionPath = vscode.extensions.getExtension(
-        'VijayGangatharan.additional-context-menus',
-      )?.extensionPath;
-      if (!extensionPath) {
-        throw new Error('Extension path not found');
-      }
-      const lazyPath = path.join(extensionPath, 'dist', 'lazy', 'cronJobTimerGeneratorService.js');
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-dynamic-require, security/detect-non-literal-require
-      const { CronJobTimerGeneratorService } = require(lazyPath);
-      const service = CronJobTimerGeneratorService.getInstance();
-      await service.generateCronExpression();
-    } catch (error) {
-      this.logger.error('Error generating cron timer', error);
-      vscode.window.showErrorMessage(`Failed to generate cron timer: ${(error as Error).message}`);
-    }
+    await new LazyGeneratorCommand(
+      GENERATE_CRON_TIMER_SPEC,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   // Accessibility helper methods
-  private async announce(
-    message: string,
-    verbosity: 'minimal' | 'normal' | 'verbose' = 'normal',
-  ): Promise<void> {
-    if (this.isAccessibilityEnabled()) {
-      await this.accessibilityService.announce(message, verbosity);
-    }
-  }
-
-  private async announceSuccess(operation: string, detail: string): Promise<void> {
-    if (this.isAccessibilityEnabled()) {
-      await this.accessibilityService.announceSuccess(operation, detail);
-    }
-  }
-
-  private async announceError(operation: string, error: string): Promise<void> {
-    if (this.isAccessibilityEnabled()) {
-      await this.accessibilityService.announceError(operation, error);
-    }
-  }
-
   private isAccessibilityEnabled(): boolean {
     try {
       return this.configService.getConfiguration().accessibility.screenReaderMode === true;
