@@ -283,7 +283,7 @@ export class ContextMenuManager {
       }
 
       // Copy code to target file
-      await this.copyCodeToTargetFile(selectedText, targetFilePath, editor.document);
+      await this.copyCodeToTargetFile(selectedText, targetFilePath);
 
       const fileName = this.getFileName(targetFilePath);
       vscode.window.showInformationMessage(`Lines copied to ${fileName}`);
@@ -348,7 +348,7 @@ export class ContextMenuManager {
       }
 
       // Copy code to target file first
-      await this.copyCodeToTargetFile(selectedText, targetFilePath, editor.document);
+      await this.copyCodeToTargetFile(selectedText, targetFilePath);
 
       // Remove code from source file
       await editor.edit((editBuilder) => {
@@ -380,11 +380,7 @@ export class ContextMenuManager {
     }
   }
 
-  private async copyCodeToTargetFile(
-    code: string,
-    targetFilePath: string,
-    _sourceDocument: vscode.TextDocument,
-  ): Promise<void> {
+  private async copyCodeToTargetFile(code: string, targetFilePath: string): Promise<void> {
     try {
       // Open target file
       const targetUri = vscode.Uri.file(targetFilePath);
@@ -400,9 +396,12 @@ export class ContextMenuManager {
       );
 
       // Insert code at the determined position
-      await targetEditor.edit((editBuilder) => {
+      const applied = await targetEditor.edit((editBuilder) => {
         editBuilder.insert(insertionPoint, `\n${code}\n`);
       });
+      if (!applied) {
+        throw new Error(`Failed to insert code into '${targetFilePath}'`);
+      }
     } catch (error) {
       this.logger.error('Error copying code to target file', error);
       const isPermissionError =
@@ -436,30 +435,91 @@ export class ContextMenuManager {
   }
 
   private findSmartInsertionPoint(document: vscode.TextDocument): vscode.Position {
-    const text = document.getText();
-    const lines = text.split('\n');
+    const lines = document.getText().split('\n');
+    const atCodeStart = this.computeCodeLineStarts(lines);
 
-    let lastImportLine = -1;
+    let lastImportEndLine = -1;
     let firstExportLine = -1;
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines.at(i)?.trim() ?? '';
+      if (!atCodeStart[i]) {
+        continue;
+      }
+      const line = lines[i]?.trim() ?? '';
 
-      if (line.startsWith('import ')) {
-        lastImportLine = i;
+      if (/^import(\s|\{|['"])/.test(line)) {
+        // Import statements may span lines; end at the line closing with a quoted specifier
+        for (let j = i; j < lines.length; j++) {
+          const text = lines[j]?.trim() ?? '';
+          const commentAt = text.indexOf(' //');
+          const code = commentAt === -1 ? text : text.slice(0, commentAt).trimEnd();
+          if (/['"];?$/.test(code)) {
+            lastImportEndLine = j;
+            i = j;
+            break;
+          }
+        }
       } else if (line.startsWith('export ') && firstExportLine === -1) {
         firstExportLine = i;
       }
     }
 
     // Insert after imports, or before exports, or at end
-    if (lastImportLine >= 0) {
-      return new vscode.Position(lastImportLine + 1, 0);
+    if (lastImportEndLine >= 0) {
+      return new vscode.Position(lastImportEndLine + 1, 0);
     } else if (firstExportLine >= 0) {
       return new vscode.Position(firstExportLine, 0);
     } else {
       return new vscode.Position(document.lineCount, 0);
     }
+  }
+
+  /**
+   * For each line, whether it starts in plain code (not inside a block comment
+   * or template literal). Simple scanner; not a full tokenizer.
+   */
+  private computeCodeLineStarts(lines: string[]): boolean[] {
+    const result: boolean[] = [];
+    let inBlockComment = false;
+    let inTemplate = false;
+
+    for (const line of lines) {
+      result.push(!inBlockComment && !inTemplate);
+      let quote: string | null = null;
+
+      for (let c = 0; c < line.length; c++) {
+        const ch = line[c];
+        const next = line[c + 1];
+        if (inBlockComment) {
+          if (ch === '*' && next === '/') {
+            inBlockComment = false;
+            c++;
+          }
+        } else if (inTemplate) {
+          if (ch === '\\') {
+            c++;
+          } else if (ch === '`') {
+            inTemplate = false;
+          }
+        } else if (quote) {
+          if (ch === '\\') {
+            c++;
+          } else if (ch === quote) {
+            quote = null;
+          }
+        } else if (ch === '/' && next === '/') {
+          break;
+        } else if (ch === '/' && next === '*') {
+          inBlockComment = true;
+          c++;
+        } else if (ch === '`') {
+          inTemplate = true;
+        } else if (ch === '"' || ch === "'") {
+          quote = ch;
+        }
+      }
+    }
+    return result;
   }
 
   private async handleEnable(): Promise<void> {
@@ -677,19 +737,7 @@ export class ContextMenuManager {
   }
 
   private async insertFunctionIntoFile(code: string, targetFilePath: string): Promise<void> {
-    const targetUri = vscode.Uri.file(targetFilePath);
-    const targetDocument = await vscode.workspace.openTextDocument(targetUri);
-    const insertionPoint = this.getInsertionPoint(targetDocument, code);
-    const targetEditor = await vscode.window.showTextDocument(
-      targetDocument,
-      vscode.ViewColumn.Beside,
-    );
-    const applied = await targetEditor.edit((editBuilder) => {
-      editBuilder.insert(insertionPoint, `\n${code}\n`);
-    });
-    if (!applied) {
-      throw new Error(`Failed to insert code into '${targetFilePath}'`);
-    }
+    await this.copyCodeToTargetFile(code, targetFilePath);
   }
 
   private getFileName(filePath: string): string {
