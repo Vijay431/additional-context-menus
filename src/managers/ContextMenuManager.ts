@@ -2,6 +2,7 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
+import { CopyLinesToFileCommand, MoveLinesToFileCommand } from '../commands';
 import { getService } from '../di/container';
 import type {
   IAccessibilityService,
@@ -234,138 +235,21 @@ export class ContextMenuManager {
   }
 
   private async handleCopyLinesToFile(): Promise<void> {
-    this.logger.info('Copy Lines to File command triggered');
-
-    try {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showErrorMessage('No active editor found');
-        return;
-      }
-
-      if (!this.isSupportedFileType(editor.document.fileName)) {
-        vscode.window.showWarningMessage(
-          'Copy Selection to File only supports .ts, .tsx, .js, .jsx files.',
-        );
-        return;
-      }
-
-      const selection = editor.selection;
-      if (selection.isEmpty) {
-        vscode.window.showWarningMessage('No code selected');
-        return;
-      }
-
-      const selectedText = editor.document.getText(selection);
-      const sourceExtension = this.getFileExtension(editor.document.fileName);
-
-      // Get compatible files
-      const compatibleFiles = await this.fileDiscoveryService.getCompatibleFiles(sourceExtension);
-
-      // Auto-select if only one compatible file, otherwise show file selector
-      let targetFilePath: string | undefined;
-      if (compatibleFiles.length === 1 && compatibleFiles[0]) {
-        // Auto-select the only compatible file (for test scenarios)
-        targetFilePath = compatibleFiles[0].path;
-      } else {
-        targetFilePath = await this.fileDiscoveryService.showFileSelector(compatibleFiles);
-      }
-
-      if (!targetFilePath) {
-        return; // User cancelled
-      }
-
-      // Validate target file
-      const isValid = await this.fileDiscoveryService.validateTargetFile(targetFilePath);
-      if (!isValid) {
-        vscode.window.showErrorMessage('Target file is not accessible or writable');
-        return;
-      }
-
-      // Copy code to target file
-      await this.copyCodeToTargetFile(selectedText, targetFilePath);
-
-      const fileName = this.getFileName(targetFilePath);
-      vscode.window.showInformationMessage(`Lines copied to ${fileName}`);
-      this.logger.info(`Lines copied to: ${targetFilePath}`);
-    } catch (error) {
-      this.logger.error('Error in Copy Lines to File command', error);
-      const msg =
-        error instanceof Error
-          ? error.message
-          : `Failed to copy lines to file. Check file permissions and try again.`;
-      vscode.window.showErrorMessage(msg);
-    }
+    await new CopyLinesToFileCommand(
+      this.fileDiscoveryService,
+      this.configService,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   private async handleMoveLinesToFile(): Promise<void> {
-    this.logger.info('Move Lines to File command triggered');
-
-    try {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showErrorMessage('No active editor found');
-        return;
-      }
-
-      if (!this.isSupportedFileType(editor.document.fileName)) {
-        vscode.window.showWarningMessage(
-          'Move Selection to File only supports .ts, .tsx, .js, .jsx files.',
-        );
-        return;
-      }
-
-      const selection = editor.selection;
-      if (selection.isEmpty) {
-        vscode.window.showWarningMessage('No code selected');
-        return;
-      }
-
-      const selectedText = editor.document.getText(selection);
-      const sourceExtension = this.getFileExtension(editor.document.fileName);
-
-      // Get compatible files
-      const compatibleFiles = await this.fileDiscoveryService.getCompatibleFiles(sourceExtension);
-
-      // Auto-select if only one compatible file, otherwise show file selector
-      let targetFilePath: string | undefined;
-      if (compatibleFiles.length === 1 && compatibleFiles[0]) {
-        // Auto-select the only compatible file (for test scenarios)
-        targetFilePath = compatibleFiles[0].path;
-      } else {
-        targetFilePath = await this.fileDiscoveryService.showFileSelector(compatibleFiles);
-      }
-
-      if (!targetFilePath) {
-        return; // User cancelled
-      }
-
-      // Validate target file
-      const isValid = await this.fileDiscoveryService.validateTargetFile(targetFilePath);
-      if (!isValid) {
-        vscode.window.showErrorMessage('Target file is not accessible or writable');
-        return;
-      }
-
-      // Copy code to target file first
-      await this.copyCodeToTargetFile(selectedText, targetFilePath);
-
-      // Remove code from source file
-      await editor.edit((editBuilder) => {
-        editBuilder.delete(selection);
-      });
-
-      const fileName = this.getFileName(targetFilePath);
-      vscode.window.showInformationMessage(`Lines moved to ${fileName}`);
-      this.logger.info(`Lines moved to: ${targetFilePath}`);
-    } catch (error) {
-      this.logger.error('Error in Move Lines to File command', error);
-      const msg =
-        error instanceof Error
-          ? error.message
-          : `Failed to move lines to file. Check file permissions and try again.`;
-      vscode.window.showErrorMessage(msg);
-    }
+    await new MoveLinesToFileCommand(
+      this.fileDiscoveryService,
+      this.configService,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   private async handleSaveAll(): Promise<void> {
