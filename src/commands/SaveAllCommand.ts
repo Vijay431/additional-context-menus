@@ -1,18 +1,13 @@
 /**
  * Save All Command
  *
- * Saves all open text documents with progress feedback.
- *
- * @description
- * This command handler:
- * - Saves all dirty text documents
- * - Shows progress for large operations
- * - Provides user feedback and error handling
- * - Respects configuration for read-only file handling
+ * Saves all open text documents via the file save service.
  *
  * @category Commands
  * @subcategory File Operations
  */
+
+import * as vscode from 'vscode';
 
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { IFileSaveService } from '../di/interfaces/IFileSaveService';
@@ -24,38 +19,26 @@ import type { ICommandHandler } from './ICommandHandler';
 
 /**
  * Save All Command Handler
- *
- * Saves all open text documents.
  */
 export class SaveAllCommand extends BaseCommandHandler implements ICommandHandler {
   constructor(
-    fileSaveService: IFileSaveService,
+    private readonly fileSaveService: IFileSaveService,
     logger: ILogger,
     accessibilityService: IAccessibilityService,
   ) {
     super('SaveAll', logger, accessibilityService);
-    this.fileSaveService = fileSaveService;
   }
 
-  private readonly fileSaveService: IFileSaveService;
-
   public async execute(): Promise<CommandResult> {
-    this.logInfo('Save All command triggered');
+    this.logger.info('Save All command triggered');
 
     try {
       const result = await this.fileSaveService.saveAllFiles();
-
-      const message =
-        result.savedCount > 0
-          ? `Saved ${result.savedCount} file${result.savedCount === 1 ? '' : 's'}`
-          : 'No unsaved files found';
-
-      this.logInfo('Save All completed', result);
-      return this.success(message);
+      this.logger.info('Save All completed', result);
+      return this.success('Save All completed');
     } catch (error) {
-      this.logError('Error in Save All command', error);
-      const errorMessage = `Failed to save files: ${error instanceof Error ? error.message : String(error)}`;
-      this.showError(errorMessage);
+      this.logger.error('Error in Save All command', error);
+      vscode.window.showErrorMessage(`Failed to save files: ${(error as Error).message}`);
       return this.error('Failed to save files', error);
     }
   }
