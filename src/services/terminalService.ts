@@ -1,3 +1,4 @@
+import { spawn } from 'child_process';
 import * as path from 'path';
 
 import * as vscode from 'vscode';
@@ -172,12 +173,8 @@ export class TerminalService implements ITerminalService {
 
       const command = this.buildExternalTerminalCommand(externalTerminalCommand, directoryPath);
 
-      const terminal = vscode.window.createTerminal({
-        name: 'External Terminal Launcher',
-      });
-
-      terminal.sendText(command);
-      terminal.dispose();
+      // User-provided shell string: keep shell semantics, but run detached
+      await this.launchDetached(command, [], { cwd: directoryPath, shell: true });
 
       this.logger.debug('External terminal command executed', { command });
     } catch (error) {
@@ -192,14 +189,10 @@ export class TerminalService implements ITerminalService {
 
       switch (platform) {
         case 'win32': {
-          // Use execFile with args array to avoid shell injection
-          const { execFile } = await import('child_process');
-          await new Promise<void>((resolve, reject) => {
-            execFile(
-              'cmd',
-              ['/c', 'start', 'cmd', '/k', `cd /d "${directoryPath.replace(/"/g, '\\"')}"`],
-              (err) => (err ? reject(err) : resolve()),
-            );
+          // No string-built `cd /d`: the new console inherits cwd
+          await this.launchDetached('cmd', ['/c', 'start', 'cmd', '/k'], {
+            cwd: directoryPath,
+            windowsHide: false,
           });
           break;
         }
@@ -220,10 +213,11 @@ export class TerminalService implements ITerminalService {
             throw new Error('No suitable terminal found on this Linux system');
           }
 
-          const command = this.buildLinuxTerminalCommand(availableTerminal, directoryPath);
-          const terminal = vscode.window.createTerminal({ name: 'System Terminal Launcher' });
-          terminal.sendText(command);
-          terminal.dispose();
+          await this.launchDetached(
+            availableTerminal,
+            this.buildLinuxTerminalArgs(availableTerminal, directoryPath),
+            { cwd: directoryPath },
+          );
           break;
         }
         default:
@@ -255,43 +249,61 @@ export class TerminalService implements ITerminalService {
     return null;
   }
 
-  private buildLinuxTerminalCommand(terminal: string, directoryPath: string): string {
-    const escapedPath = this.escapePathForShell(directoryPath);
-
+  private buildLinuxTerminalArgs(terminal: string, directoryPath: string): string[] {
     switch (terminal) {
-      case 'gnome-terminal':
-        return `gnome-terminal --working-directory='${escapedPath}'`;
       case 'konsole':
-        return `konsole --workdir '${escapedPath}'`;
-      case 'xfce4-terminal':
-        return `xfce4-terminal --working-directory='${escapedPath}'`;
+        return ['--workdir', directoryPath];
       case 'xterm':
-        return `cd '${escapedPath}' && xterm`;
+        // spawn cwd option sets the working directory
+        return [];
       default:
-        return `${terminal} --working-directory='${escapedPath}'`;
+        return [`--working-directory=${directoryPath}`];
     }
+  }
+
+  /**
+   * Spawn a launcher fully detached from the extension host.
+   * Resolves once the process has spawned; rejects on spawn 'error'
+   * so callers can fall back to the integrated terminal.
+   */
+  private launchDetached(
+    command: string,
+    args: string[],
+    options: { cwd: string; shell?: boolean; windowsHide?: boolean },
+  ): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const child = spawn(command, args, {
+        detached: true,
+        stdio: 'ignore',
+        ...options,
+      });
+      child.once('error', reject);
+      child.once('spawn', () => {
+        child.unref();
+        resolve();
+      });
+    });
   }
 
   private buildExternalTerminalCommand(terminalCommand: string, directoryPath: string): string {
     const escapedPath = this.escapePathForShell(directoryPath);
+    const quote = process.platform === 'win32' ? '"' : "'";
+    const quoted = `${quote}${escapedPath}${quote}`;
 
     if (terminalCommand.includes('{{directory}}')) {
-      // When using template, wrap with appropriate quotes for the platform
-      const quoted = process.platform === 'win32' ? `"${escapedPath}"` : `'${escapedPath}'`;
-      return terminalCommand.replace('{{directory}}', quoted);
+      // Function replacer: avoid `$&` / `$'` expansion in directory names
+      return terminalCommand.replaceAll('{{directory}}', () => quoted);
     }
 
-    // Use single quotes on Unix for consistency with escapePathForShell
-    const quote = process.platform === 'win32' ? '"' : "'";
-    return `${terminalCommand} ${quote}${escapedPath}${quote}`;
+    return `${terminalCommand} ${quoted}`;
   }
 
   private escapePathForShell(filePath: string): string {
     if (process.platform === 'win32') {
-      // Wrap in double quotes, escape internal double quotes
-      return filePath.replace(/"/g, '\\"');
+      // Double quotes are illegal in Windows paths; cmd has no backslash-quote escape
+      return filePath;
     }
-    // Unix: wrap in single quotes, escape internal single quotes
+    // Unix: escape internal single quotes for single-quoted context
     return filePath.replace(/'/g, "'\\''");
   }
 
