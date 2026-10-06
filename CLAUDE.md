@@ -376,3 +376,7 @@ Default to **caveman mode** (terse: drop articles/filler/pleasantries; fragments
 ### Shell commands
 
 Prepend `rtk` to all shell invocations when available — 60-90% token savings on dev ops. Examples: `rtk git status`, `rtk pnpm test`, `rtk ls`. Fallback to direct command if `rtk` unavailable, or for compound predicates (`find -not`, `find -exec`) which rtk does not support.
+
+## Knowledge vault
+
+Before exploring from scratch, check the knowledge vault with qmd (collection `vault`, root `~/Programmer/knowledge-vault`). This project's notes live in `02 - Projects/Opensource/additional-context-menus/`; cross-project notes in `03 - Cross-Project/`. Run `qmd search "<terms>" -c vault` (keyword, instant) or `qmd vsearch "<terms>" -c vault` (semantic, ~10s) for prior decisions, architecture and related work. Avoid `qmd query`: it hangs on LLM query expansion. Vault notes may be stale — verify against the code.
