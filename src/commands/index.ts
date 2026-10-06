@@ -16,6 +16,9 @@ export { CopyLinesToFileCommand } from './CopyLinesToFileCommand';
 export { MoveLinesToFileCommand } from './MoveLinesToFileCommand';
 export { CopyFunctionToFileCommand } from './CopyFunctionToFileCommand';
 export { MoveFunctionToFileCommand } from './MoveFunctionToFileCommand';
+export { RenameFileConventionCommand } from './RenameFileConventionCommand';
+export { CopyFileContentsCommand } from './CopyFileContentsCommand';
+export { DuplicateFileCommand } from './DuplicateFileCommand';
 
 // Command handler factory type
 export type CommandHandlerFactory = () => {
