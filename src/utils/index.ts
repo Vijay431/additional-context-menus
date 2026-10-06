@@ -37,4 +37,4 @@ export {
 } from './accessibilityHelper';
 export { Cache, createCache, memoize, type CacheConfig, type CacheStats } from './cache';
 export { type IMetricCollector, type MetricData } from './metrics';
-export { isSafeFilePath } from './pathValidator';
+export { isSafeFilePath, isPathWithin } from './pathValidator';

@@ -11,7 +11,7 @@ import type {
 } from '../di/interfaces/IProjectDetectionService';
 import { Cache } from '../utils/cache';
 import { Logger } from '../utils/logger';
-import { isSafeFilePath } from '../utils/pathValidator';
+import { isPathWithin, isSafeFilePath } from '../utils/pathValidator';
 
 /**
  * Project Detection Service
@@ -169,7 +169,10 @@ export class ProjectDetectionService implements IProjectDetectionService {
 
       // Parse package.json
       const resolvedPackageJsonPath = path.resolve(packageJsonPath);
-      if (!isSafeFilePath(resolvedPackageJsonPath)) {
+      if (
+        !isPathWithin(projectPath, resolvedPackageJsonPath) ||
+        !isSafeFilePath(resolvedPackageJsonPath)
+      ) {
         return this.createProjectType(false, [], false, 'none');
       }
       // eslint-disable-next-line security/detect-non-literal-fs-filename -- path validated by isSafeFilePath()

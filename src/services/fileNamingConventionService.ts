@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { Logger } from '../utils/logger';
-import { isSafeFilePath } from '../utils/pathValidator';
+import { isPathWithin, isSafeFilePath } from '../utils/pathValidator';
 
 /**
  * File Naming Convention Service
@@ -302,7 +302,11 @@ export class FileNamingConventionService {
       // Perform rename
       const resolvedFilePath = path.resolve(filePath);
       const resolvedNewPath = path.resolve(newPath);
-      if (!isSafeFilePath(resolvedFilePath) || !isSafeFilePath(resolvedNewPath)) {
+      if (
+        !isSafeFilePath(resolvedFilePath) ||
+        !isSafeFilePath(resolvedNewPath) ||
+        !isPathWithin(path.dirname(resolvedFilePath), resolvedNewPath)
+      ) {
         return { success: false, error: 'Path validation failed' };
       }
       // eslint-disable-next-line security/detect-non-literal-fs-filename -- paths validated by isSafeFilePath()
@@ -594,10 +598,12 @@ export class FileNamingConventionService {
   ): Promise<string[]> {
     const files: string[] = [];
 
+    const rootPath = path.resolve(dirPath);
+
     async function traverse(currentPath: string) {
       try {
         const resolvedPath = path.resolve(currentPath);
-        if (!isSafeFilePath(resolvedPath)) {
+        if (!isPathWithin(rootPath, resolvedPath) || !isSafeFilePath(resolvedPath)) {
           return;
         }
         // eslint-disable-next-line security/detect-non-literal-fs-filename -- path validated by isSafeFilePath()
