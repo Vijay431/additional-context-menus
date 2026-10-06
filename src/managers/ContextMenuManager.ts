@@ -2,7 +2,13 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
-import { CopyLinesToFileCommand, MoveLinesToFileCommand } from '../commands';
+import {
+  CopyFunctionToFileCommand,
+  CopyLinesToFileCommand,
+  MoveFunctionToFileCommand,
+  MoveLinesToFileCommand,
+} from '../commands';
+import { isSupportedFileType } from '../commands/codeInsertion';
 import { getService } from '../di/container';
 import type {
   IAccessibilityService,
@@ -264,148 +270,6 @@ export class ContextMenuManager {
     }
   }
 
-  private async copyCodeToTargetFile(code: string, targetFilePath: string): Promise<void> {
-    try {
-      // Open target file
-      const targetUri = vscode.Uri.file(targetFilePath);
-      const targetDocument = await vscode.workspace.openTextDocument(targetUri);
-
-      // Get insertion point
-      const insertionPoint = this.getInsertionPoint(targetDocument, code);
-
-      // Open target file in editor to make edits
-      const targetEditor = await vscode.window.showTextDocument(
-        targetDocument,
-        vscode.ViewColumn.Beside,
-      );
-
-      // Insert code at the determined position
-      const applied = await targetEditor.edit((editBuilder) => {
-        editBuilder.insert(insertionPoint, `\n${code}\n`);
-      });
-      if (!applied) {
-        throw new Error(`Failed to insert code into '${targetFilePath}'`);
-      }
-    } catch (error) {
-      this.logger.error('Error copying code to target file', error);
-      const isPermissionError =
-        error instanceof Error &&
-        (error.message.includes('EACCES') ||
-          error.message.includes('EPERM') ||
-          error.message.includes('permission'));
-      if (isPermissionError) {
-        throw new Error(
-          `Permission denied writing to '${targetFilePath}'. Check that the file is not read-only and you have write access.`,
-          { cause: error },
-        );
-      }
-      throw error;
-    }
-  }
-
-  private getInsertionPoint(document: vscode.TextDocument, _code: string): vscode.Position {
-    const config = this.configService.getCopyCodeConfig();
-
-    switch (config.insertionPoint) {
-      case 'beginning':
-        return new vscode.Position(0, 0);
-      case 'end':
-        return new vscode.Position(document.lineCount, 0);
-      case 'smart':
-      default:
-        // Smart insertion: after imports, before exports
-        return this.findSmartInsertionPoint(document);
-    }
-  }
-
-  private findSmartInsertionPoint(document: vscode.TextDocument): vscode.Position {
-    const lines = document.getText().split('\n');
-    const atCodeStart = this.computeCodeLineStarts(lines);
-
-    let lastImportEndLine = -1;
-    let firstExportLine = -1;
-
-    for (let i = 0; i < lines.length; i++) {
-      if (!atCodeStart[i]) {
-        continue;
-      }
-      const line = lines[i]?.trim() ?? '';
-
-      if (/^import(\s|\{|['"])/.test(line)) {
-        // Import statements may span lines; end at the line closing with a quoted specifier
-        for (let j = i; j < lines.length; j++) {
-          const text = lines[j]?.trim() ?? '';
-          const commentAt = text.indexOf(' //');
-          const code = commentAt === -1 ? text : text.slice(0, commentAt).trimEnd();
-          if (/['"];?$/.test(code)) {
-            lastImportEndLine = j;
-            i = j;
-            break;
-          }
-        }
-      } else if (line.startsWith('export ') && firstExportLine === -1) {
-        firstExportLine = i;
-      }
-    }
-
-    // Insert after imports, or before exports, or at end
-    if (lastImportEndLine >= 0) {
-      return new vscode.Position(lastImportEndLine + 1, 0);
-    } else if (firstExportLine >= 0) {
-      return new vscode.Position(firstExportLine, 0);
-    } else {
-      return new vscode.Position(document.lineCount, 0);
-    }
-  }
-
-  /**
-   * For each line, whether it starts in plain code (not inside a block comment
-   * or template literal). Simple scanner; not a full tokenizer.
-   */
-  private computeCodeLineStarts(lines: string[]): boolean[] {
-    const result: boolean[] = [];
-    let inBlockComment = false;
-    let inTemplate = false;
-
-    for (const line of lines) {
-      result.push(!inBlockComment && !inTemplate);
-      let quote: string | null = null;
-
-      for (let c = 0; c < line.length; c++) {
-        const ch = line[c];
-        const next = line[c + 1];
-        if (inBlockComment) {
-          if (ch === '*' && next === '/') {
-            inBlockComment = false;
-            c++;
-          }
-        } else if (inTemplate) {
-          if (ch === '\\') {
-            c++;
-          } else if (ch === '`') {
-            inTemplate = false;
-          }
-        } else if (quote) {
-          if (ch === '\\') {
-            c++;
-          } else if (ch === quote) {
-            quote = null;
-          }
-        } else if (ch === '/' && next === '/') {
-          break;
-        } else if (ch === '/' && next === '*') {
-          inBlockComment = true;
-          c++;
-        } else if (ch === '`') {
-          inTemplate = true;
-        } else if (ch === '"' || ch === "'") {
-          quote = ch;
-        }
-      }
-    }
-    return result;
-  }
-
   private async handleEnable(): Promise<void> {
     await this.configService.updateConfiguration('enabled', true);
     vscode.window.showInformationMessage('Additional Context Menus enabled');
@@ -437,157 +301,23 @@ export class ContextMenuManager {
   }
 
   private async handleCopyFunctionToFile(): Promise<void> {
-    this.logger.info('Copy Function to File command triggered');
-
-    try {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showErrorMessage('No active editor found');
-        return;
-      }
-
-      if (!this.isSupportedFileType(editor.document.fileName)) {
-        vscode.window.showWarningMessage(
-          'Copy Function to File only supports .ts, .tsx, .js, .jsx files.',
-        );
-        return;
-      }
-
-      const document = editor.document;
-      const position = editor.selection.active;
-
-      const functionInfo = await this.codeAnalysisService.findFunctionAtPosition(
-        document,
-        position,
-      );
-
-      if (!functionInfo) {
-        vscode.window.showWarningMessage(
-          'No function found at cursor position. Place the cursor inside a function, arrow function, method, or class declaration and try again.',
-        );
-        return;
-      }
-
-      const sourceExtension = this.getFileExtension(document.fileName);
-
-      const compatibleFiles = await this.fileDiscoveryService.getCompatibleFiles(sourceExtension);
-
-      let targetFilePath: string | undefined;
-      if (compatibleFiles.length === 1 && compatibleFiles[0]) {
-        targetFilePath = compatibleFiles[0].path;
-      } else {
-        targetFilePath = await this.fileDiscoveryService.showFileSelector(compatibleFiles);
-      }
-
-      if (!targetFilePath) {
-        return;
-      }
-
-      const isValid = await this.fileDiscoveryService.validateTargetFile(targetFilePath);
-      if (!isValid) {
-        vscode.window.showErrorMessage('Target file is not accessible or writable');
-        return;
-      }
-
-      await this.insertFunctionIntoFile(functionInfo.fullText, targetFilePath);
-
-      const fileName = this.getFileName(targetFilePath);
-      vscode.window.showInformationMessage(`Function '${functionInfo.name}' copied to ${fileName}`);
-      this.logger.info(`Function copied: ${functionInfo.name} to ${targetFilePath}`);
-    } catch (error) {
-      this.logger.error('Error in Copy Function to File command', error);
-      const msg =
-        error instanceof Error
-          ? error.message
-          : `Failed to copy function to file. Check file permissions and try again.`;
-      vscode.window.showErrorMessage(msg);
-    }
+    await new CopyFunctionToFileCommand(
+      this.codeAnalysisService,
+      this.fileDiscoveryService,
+      this.configService,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   private async handleMoveFunctionToFile(): Promise<void> {
-    this.logger.info('Move Function to File command triggered');
-
-    try {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showErrorMessage('No active editor found');
-        return;
-      }
-
-      if (!this.isSupportedFileType(editor.document.fileName)) {
-        vscode.window.showWarningMessage(
-          'Move Function to File only supports .ts, .tsx, .js, .jsx files.',
-        );
-        return;
-      }
-
-      const document = editor.document;
-      const position = editor.selection.active;
-
-      const functionInfo = await this.codeAnalysisService.findFunctionAtPosition(
-        document,
-        position,
-      );
-
-      if (!functionInfo) {
-        vscode.window.showWarningMessage(
-          'No function found at cursor position. Place the cursor inside a function, arrow function, method, or class declaration and try again.',
-        );
-        return;
-      }
-
-      const sourceExtension = this.getFileExtension(document.fileName);
-
-      const compatibleFiles = await this.fileDiscoveryService.getCompatibleFiles(sourceExtension);
-
-      let targetFilePath: string | undefined;
-      if (compatibleFiles.length === 1 && compatibleFiles[0]) {
-        targetFilePath = compatibleFiles[0].path;
-      } else {
-        targetFilePath = await this.fileDiscoveryService.showFileSelector(compatibleFiles);
-      }
-
-      if (!targetFilePath) {
-        return;
-      }
-
-      const isValid = await this.fileDiscoveryService.validateTargetFile(targetFilePath);
-      if (!isValid) {
-        vscode.window.showErrorMessage('Target file is not accessible or writable');
-        return;
-      }
-
-      // Inserting into the source file shifts the function's line range, so the delete below
-      // would remove the wrong lines.
-      if (path.resolve(targetFilePath) === path.resolve(document.uri.fsPath)) {
-        vscode.window.showWarningMessage(
-          'Move Function to File needs a different target file than the source file.',
-        );
-        return;
-      }
-
-      await this.insertFunctionIntoFile(functionInfo.fullText, targetFilePath);
-
-      const range = new vscode.Range(
-        new vscode.Position(functionInfo.startLine - 1, 0),
-        new vscode.Position(functionInfo.endLine - 1, Number.MAX_SAFE_INTEGER),
-      );
-
-      await editor.edit((editBuilder) => {
-        editBuilder.delete(range);
-      });
-
-      const fileName = this.getFileName(targetFilePath);
-      vscode.window.showInformationMessage(`Function '${functionInfo.name}' moved to ${fileName}`);
-      this.logger.info(`Function moved: ${functionInfo.name} to ${targetFilePath}`);
-    } catch (error) {
-      this.logger.error('Error in Move Function to File command', error);
-      const msg =
-        error instanceof Error
-          ? error.message
-          : `Failed to move function to file. Check file permissions and try again.`;
-      vscode.window.showErrorMessage(msg);
-    }
+    await new MoveFunctionToFileCommand(
+      this.codeAnalysisService,
+      this.fileDiscoveryService,
+      this.configService,
+      this.logger,
+      this.accessibilityService,
+    ).execute();
   }
 
   private async handleConfigurationChanged(): Promise<void> {
@@ -620,22 +350,8 @@ export class ContextMenuManager {
     this.projectDetectionService.clearCache();
   }
 
-  private getFileExtension(fileName: string): string {
-    const lastDot = fileName.lastIndexOf('.');
-    return lastDot >= 0 ? fileName.substring(lastDot) : '';
-  }
-
   private isSupportedFileType(fileName: string): boolean {
-    return ['.ts', '.tsx', '.js', '.jsx'].includes(this.getFileExtension(fileName));
-  }
-
-  private async insertFunctionIntoFile(code: string, targetFilePath: string): Promise<void> {
-    await this.copyCodeToTargetFile(code, targetFilePath);
-  }
-
-  private getFileName(filePath: string): string {
-    const lastSlash = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
-    return lastSlash >= 0 ? filePath.substring(lastSlash + 1) : filePath;
+    return isSupportedFileType(fileName);
   }
 
   private async handleRenameFileConvention(uri?: vscode.Uri): Promise<void> {
