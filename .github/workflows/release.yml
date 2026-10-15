@@ -27,10 +27,10 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
-          WHITELIST=$(echo "${{ secrets.RELEASE_WHITELIST_ACTORS }}" | tr -d ' ')
+          WHITELIST=$(echo "${{ vars.RELEASE_WHITELIST_ACTORS || secrets.RELEASE_WHITELIST_ACTORS }}" | tr -d ' ')
           ACTOR="${{ github.actor }}"
           if [[ -z "$WHITELIST" ]]; then
-            echo "Error: RELEASE_WHITELIST_ACTORS secret is not configured or is empty."
+            echo "Error: RELEASE_WHITELIST_ACTORS variable is not configured or is empty."
             exit 1
           fi
           if [[ ",$WHITELIST," != *",$ACTOR,"* ]]; then
