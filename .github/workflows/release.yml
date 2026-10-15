@@ -1,94 +1,54 @@
 name: Release
 
 on:
-  push:
-    branches: [main]
-    paths: ['package.json']
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to release (e.g., v2.1.2) — optional, defaults to package.json version'
-        required: false
+        description: 'Tag of an existing published release to re-run (e.g., v2.1.2)'
+        required: true
         type: string
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
 
 jobs:
   setup:
     name: Setup Release
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      tag: ${{ steps.version.outputs.tag }}
-      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
-      skip: ${{ steps.version.outputs.skip }}
+      version: ${{ steps.gate.outputs.version }}
+      tag: ${{ steps.gate.outputs.tag }}
+      is_prerelease: ${{ steps.gate.outputs.is_prerelease }}
     steps:
-      - name: Check Authorized Actor
-        if: github.event_name == 'workflow_dispatch'
-        shell: bash
-        run: |
-          WHITELIST=$(echo "${{ secrets.RELEASE_WHITELIST_ACTORS }}" | tr -d ' ')
-          ACTOR="${{ github.actor }}"
-          if [[ -z "$WHITELIST" ]]; then
-            echo "Error: RELEASE_WHITELIST_ACTORS secret is not configured or is empty."
-            exit 1
-          fi
-          if [[ ",$WHITELIST," != *",$ACTOR,"* ]]; then
-            echo "Error: User $ACTOR is not authorized to manually trigger this workflow."
-            exit 1
-          fi
-          echo "User $ACTOR is authorized."
-
       - name: Checkout Repository
         uses: actions/checkout@v7
         with:
-          ref: main
+          fetch-depth: 0
+          fetch-tags: true
 
-      - name: Extract Version and Tag
-        id: version
+      - name: Validate Release
+        id: gate
         shell: bash
         env:
-          RELEASE_TAG_INPUT: ${{ github.event.inputs.tag }}
-        run: |
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ -n "$RELEASE_TAG_INPUT" ]; then
-            TAG="$RELEASE_TAG_INPUT"
-            VERSION="${TAG#v}"
-          else
-            VERSION="$(node -p "require('./package.json').version")"
-          fi
-          TAG="v${VERSION}"
-          git check-ref-format --allow-onelevel "refs/tags/${TAG}" || { echo "::error::Invalid tag: ${TAG}"; exit 1; }
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-
-          if echo "$VERSION" | grep -qE '\-(rc|next|beta|alpha)'; then
-            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
-            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-              echo "Tag ${TAG} already exists on remote — continuing (manual workflow_dispatch recovery run)."
-              echo "skip=false" >> "$GITHUB_OUTPUT"
-            else
-              echo "Tag ${TAG} already exists on remote — this push either wasn't a version bump or was already released. Skipping."
-              echo "skip=true" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git tag -a "${TAG}" -m "Release ${TAG}"
-            git push origin "${TAG}"
-          fi
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
+          ACTOR: ${{ github.triggering_actor }}
+          ALLOWLIST: ${{ vars.RELEASE_WHITELIST_ACTORS }}
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/release-gate.sh
 
   release-build:
     name: Release Build
     runs-on: ubuntu-latest
     needs: [setup]
-    if: needs.setup.outputs.skip != 'true'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
@@ -234,9 +194,9 @@ jobs:
       - name: Publish to VS Code Marketplace
         run: |
           if [ "${{ needs.setup.outputs.is_prerelease }}" = "true" ]; then
-            pnpm dlx @vscode/vsce publish --packagePath *.vsix --pre-release
+            pnpm dlx @vscode/vsce publish --packagePath *.vsix --pre-release --skip-duplicate
           else
-            pnpm dlx @vscode/vsce publish --packagePath *.vsix
+            pnpm dlx @vscode/vsce publish --packagePath *.vsix --skip-duplicate
           fi
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
@@ -268,25 +228,25 @@ jobs:
 
       - name: Publish to Open VSX Registry
         run: |
-          pnpm dlx ovsx publish *.vsix
+          pnpm dlx ovsx publish *.vsix --skip-duplicate
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
-  create-release:
-    name: Create GitHub Release
+  attach-vsix:
+    name: Attach VSIX to GitHub Release
     runs-on: ubuntu-latest
     needs: [setup, publish-vscode, publish-openvsx]
+    permissions:
+      contents: write
     steps:
       - name: Download VSIX Artifact
         uses: actions/download-artifact@v7
         with:
           name: vsix-package
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ needs.setup.outputs.tag }}
-          name: Additional Context Menus ${{ needs.setup.outputs.version }}
-          files: '*.vsix'
-          generate_release_notes: true
-          prerelease: ${{ needs.setup.outputs.is_prerelease == 'true' }}
+      - name: Attach VSIX
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.setup.outputs.tag }}
+        run: gh release upload "$TAG" *.vsix --clobber

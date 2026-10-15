@@ -202,7 +202,7 @@ Commits before `v2.0.0` predate this enforcement and are not subject to these ru
 4. Open a PR against `main` with a clear title and description
 5. The CI and security workflows will automatically run lint, tests, build, audit, and dependency review checks
 6. At least one maintainer review is required before merging
-7. PRs are squash-merged to keep the history clean
+7. PRs are squash-merged (the only allowed merge method) and the head branch is deleted automatically. The PR title becomes the commit on `main`, so it must follow the conventional commit format; the `PR Title` check enforces it
 
 ### Automation Workflows
 
@@ -226,14 +226,20 @@ The repository separates quality gates, release publishing, and community automa
 - `security-audit` — runs `pnpm audit --json`, checks outdated packages, uploads audit artifacts, and opens triage issues for critical/high findings or workflow failures
 - `security-remediate` — when `security-audit` finds critical/high vulnerabilities, runs `.github/scripts/security-remediate-agent.mjs` (an OpenAI-SDK tool-calling agent) to reconcile with open Dependabot PRs and attempt a fix; the script independently re-verifies the fix reduces vulnerabilities and that build/tests still pass before opening a PR against `main`. Requires the repo-admin to configure the `OPENAI_API_KEY` secret and `OPENAI_MODEL` repo variable (one-time, manual setup)
 
-**Release (`.github/workflows/release.yml`, on push to `main` when `package.json` changes, with `workflow_dispatch` as a manual fallback):**
+**PR title (`.github/workflows/pr-title.yml`, on PRs):**
 
-- `setup` — extracts the version from `package.json` (or the optional `workflow_dispatch` tag input), detects pre-release (`-rc`, `-next`, `-beta`, `-alpha`), and auto-creates + pushes the `v<version>` tag if it doesn't already exist
+- `pr-title` — runs commitlint on the PR title with the repo config
+
+**Release (`.github/workflows/release.yml`, when a maintainer publishes a GitHub Release, with `workflow_dispatch` as an allowlisted recovery path):**
+
+- `setup` — gate: tag must be `v<package.json version>`, reachable from `main`, and the release's pre-release flag must match the version suffix (`-rc`, `-next`, `-beta`, `-alpha`)
 - `release-build` — checks out the tag and builds the production VSIX
 - `verifier` — validates VSIX contents (no source files, no node_modules, correct bundle)
-- `publish-vscode` — publishes to VS Code Marketplace (stable or `--pre-release`)
-- `publish-openvsx` — publishes to Open VSX Registry (stable or `--pre-release`)
-- `create-release` — creates a GitHub Release with the VSIX attached
+- `publish-vscode` — publishes to VS Code Marketplace (stable or `--pre-release`), skipping duplicates
+- `publish-openvsx` — publishes to Open VSX Registry (stable or `--pre-release`), skipping duplicates
+- `attach-vsix` — attaches the VSIX to the existing GitHub Release
+
+To release: bump the version in a PR and squash-merge it, then publish a GitHub Release `v<version>` targeting `main` with generated notes (set the pre-release flag for pre-release versions). To recover a partial failure, run Actions → Release → Run workflow with the tag; only logins in the `RELEASE_WHITELIST_ACTORS` repo variable are allowed.
 
 **Community automation:**
 
@@ -245,7 +251,7 @@ The repository separates quality gates, release publishing, and community automa
 
 Additional Context Menus follows a service-oriented architecture:
 
-See [CLAUDE.md](CLAUDE.md#source-structure) for the canonical `src/` layout and module descriptions.
+See [AGENTS.md](AGENTS.md#source-structure) for the canonical `src/` layout and module descriptions.
 
 When making changes:
 

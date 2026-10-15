@@ -241,47 +241,42 @@ This project follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html). Pre-re
 - `.github/workflows/security-daily.yml` runs daily/manual/package-change security audits (via both `pnpm audit` and the GitHub Dependabot Alerts API, requiring `security-events: read` permission), outdated-package summaries, artifact uploads, and triage issue creation for critical/high findings or workflow failures. When `security-audit` finds critical/high vulnerabilities via either `pnpm audit` or Dependabot alerts, a follow-up `security-remediate` job runs `.github/scripts/security-remediate-agent.mjs` — an OpenAI-SDK tool-calling agent that reconciles with open Dependabot PRs and attempts a real fix, opening a PR against `main` only after the script (not the agent) independently re-verifies the audit improved and build+tests still pass. The remediation agent includes a `list_dependabot_alerts` tool alongside its existing Dependabot-PR tools, enabling it to act on alert-only findings that `pnpm audit` doesn't surface. Requires an `OPENAI_API_KEY` secret and `OPENAI_MODEL_DEFAULT` repo variable to be configured before this job can run. `execCapture` (the script's process-spawning helper) strips `OPENAI_API_KEY`/`GH_TOKEN` from the environment of every spawned command by default — they're threaded back in explicitly only for the specific `gh` calls that need them.
 - `.github/workflows/codeql.yml` runs CodeQL static analysis (JavaScript/TypeScript, `security-extended` queries) on PRs/pushes to `main` and weekly, uploading results to the Security → Code scanning tab.
 - `.github/workflows/scorecard.yml` runs the OpenSSF Scorecard supply-chain posture check on pushes to `main` and weekly, uploading SARIF results to the Security tab.
-- `.github/workflows/release.yml` triggers on push to `main` when `package.json` changes: the `setup` job reads the version from `package.json`, checks (via `git ls-remote`) whether a `v<version>` tag already exists, and — if not — creates and pushes that tag itself before running the existing package/verify/publish/release pipeline. `workflow_dispatch` remains as a manual fallback with an optional `tag` input (defaults to the `package.json` version if omitted).
+- `.github/workflows/release.yml` runs when a maintainer publishes a GitHub Release (`release: published`). Merges to `main`, pushed tags and `package.json` changes never publish. The `setup` job runs `.github/scripts/release-gate.sh` before any build: the tag must be `v<package.json version at the tag>`, reachable from `main`, and the release's pre-release flag must match the version suffix. The VSIX is attached to the existing release; the workflow does not tag or release anything itself.
+- `.github/workflows/pr-title.yml` lints PR titles with the repo commitlint config. Merges into `main` are squash-only (repo settings and the `protect_default_branch` ruleset), the PR title and body become the commit, and head branches are deleted after merge.
 - Community automation lives in `.github/workflows/stale.yml`, `.github/workflows/labels-sync.yml`, and `.github/workflows/all-contributors.yml`.
 - Release publishing requires `VSCE_PAT` and `OVSX_PAT`.
 - Codecov upload in `ci.yml` requires a `CODECOV_TOKEN` repo secret (optional — CI does not fail without it).
 
 ### How Release Detects Pre-release
 
-The release workflow `setup` job reads the version straight from `package.json` (or the `workflow_dispatch` `tag` input, if supplied) and checks it for `-rc`, `-next`, `-beta`, or `-alpha`:
+The release gate derives the channel from the tag's version (`-rc`, `-next`, `-beta`, or `-alpha` suffix) and fails when it disagrees with the pre-release flag set on the GitHub Release:
 
 ```bash
-if echo "$VERSION" | grep -qE '\-(rc|next|beta|alpha)'; then
-  echo "is_prerelease=true"
+if [[ $TAG =~ -(rc|next|beta|alpha) ]]; then
+  is_prerelease=true
 fi
 ```
 
-- Pre-release version strings → both marketplaces publish with `--pre-release`
-- Stable version strings → both marketplaces publish as stable
-
-The `setup` job then derives `v<version>` as the tag, checks via `git ls-remote` whether that tag already exists on the remote, and — if not — creates and pushes it itself before the build/verify/publish jobs run. No manual `git tag` step is needed for the normal flow.
+- Pre-release versions → both marketplaces publish with `--pre-release`
+- Stable versions → both marketplaces publish as stable
+- Both publishes use `--skip-duplicate`, so re-running a release skips versions already live
 
 ### Release Checklist
 
-**Stable patch release (`2.0.2`):**
+1. Bump `package.json` version (e.g. `2.0.2`, `2.1.0-beta.1`, or `2.1.0` to graduate) in a PR and squash-merge it into `main`
+2. GitHub → Releases → Draft a new release: choose new tag `v<version>` targeting `main`, click **Generate release notes** (uses `.github/release.yml`), set **Set as a pre-release** only for pre-release versions
+3. Click **Publish release**. The workflow validates, builds, verifies, publishes to both marketplaces and attaches the VSIX
 
-1. Bump `package.json` version to `2.0.2`
-2. Merge/push to `main`
-3. Release workflow detects the `package.json` change, creates tag `v2.0.2` itself, and publishes to VS Code Marketplace + Open VSX, creating a GitHub Release
+A draft release does not start the workflow. If a gate fails, nothing is published: delete the release, fix the tag, and publish again.
 
-**Pre-release (`2.1.0-beta.1`):**
+**Recovery (e.g. one marketplace was down):** Actions → Release → Run workflow with the existing release tag. Only logins in the repo variable `RELEASE_WHITELIST_ACTORS` (Settings → Secrets and variables → Actions → Variables, comma-separated) may run it. The check applies to whoever started or re-ran the run, and an empty variable fails the run. Keep `actions: write` out of every workflow's permissions, since `github-actions[bot]` is allowlisted.
 
-1. Bump `package.json` version to `2.1.0-beta.1`
-2. Merge/push to `main`
-3. Release workflow detects the pre-release suffix, creates tag `v2.1.0-beta.1` itself, and publishes with `--pre-release` to both marketplaces
+A release created with `GITHUB_TOKEN` (e.g. by another workflow) does not trigger workflows; publish releases as a maintainer.
 
-**Graduating pre-release to stable (`2.1.0`):**
+### Merge Policy
 
-1. Bump `package.json` version to `2.1.0` (drop the pre-release suffix)
-2. Merge/push to `main`
-3. Release workflow creates tag `v2.1.0` itself and publishes stable to both marketplaces
-
-**Manual/break-glass fallback:** trigger `workflow_dispatch` directly (e.g. to re-run a release without a new `package.json` change). The `tag` input is optional — if omitted, the workflow falls back to the current `package.json` version, same as the push-triggered flow.
+- Merge method is squash only. PR title becomes the commit subject, so it must pass commitlint (checked by `pr-title.yml`); PR body becomes the commit message
+- Head branches are deleted automatically after merge
 
 ## Steps to Follow
 

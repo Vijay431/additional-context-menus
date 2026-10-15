@@ -92,7 +92,7 @@ The extension is bundled using `esbuild` for fast, tree-shaken builds via `pnpm 
 **CI/CD (GitHub Actions):**
 
 - **PRs:** Security checks (`pnpm audit`), linting, unit tests, and integration tests are run against a matrix of Node.js versions.
-- **Releases:** Pushing a `v*` tag triggers the release workflow which runs `vsce package` and `ovsx publish`, releasing the extension to both the VS Code Marketplace and Open VSX Registry.
+- **Releases:** Publishing a GitHub Release (tag `v<version>` on `main`) triggers the release workflow, which validates the tag, then runs `vsce publish` and `ovsx publish`, releasing the extension to both the VS Code Marketplace and Open VSX Registry.
 
 ## 8. Troubleshooting & Edge Cases
 

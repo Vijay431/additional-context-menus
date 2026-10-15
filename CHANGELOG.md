@@ -20,10 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING (release process)**: `release.yml` now runs only when a maintainer publishes a GitHub Release (`release: published`), not on pushes to `main` or pushed tags. A gate fails before build unless the tag is `v<package.json version>`, is reachable from `main`, and the release's pre-release flag matches the version. The VSIX is attached to the existing release, and marketplace publishes use `--skip-duplicate` so re-runs are safe. The manual recovery run is limited to the `RELEASE_WHITELIST_ACTORS` repo variable.
+- Merges into `main` are squash-only; head branches are deleted after merge. A new `PR Title` workflow checks PR titles against the commitlint config.
 - **CI packaging dry-run**: `build` job now runs `pnpm run package` (`vsce package`) after the build step, across the Node 22/24/26 matrix — validates the VSIX packaging pipeline on every PR/main run instead of only at release time. No upload/publish occurs.
-- **Release workflow**: Automatically triggers on merging a version bump to `main` (previously required a manually pushed `vX.Y.Z` git tag). A `workflow_dispatch` re-run now continues past build/verify/publish even if its target tag already exists on the remote (recovery flow), instead of always skipping — only automatic push-triggered duplicate runs still auto-skip.
 - CI, release, and security workflows plus `.nvmrc` bumped from Node 22.x to Node 24.x (`lts/krypton`) as the single-version baseline (the 22/24/26 test matrix in `ci.yml` is unaffected).
 - Renamed the `security-remediate` job's model-selection env var from `OPENAI_MODEL` to `OPENAI_MODEL_DEFAULT` (both in `.github/workflows/security-daily.yml` and `.github/scripts/security-remediate-agent.mjs`) to match the repo variable name.
+- The daily security workflow (`security-daily.yml`) and its automated remediation agent (`security-remediate-agent.mjs`) now also detect and act on GitHub Dependabot security alerts, not just `pnpm audit` findings — closing a gap where alerts with no corresponding open Dependabot PR were invisible to the pipeline.
 - `actions/setup-node` bumped v5→v7, `actions/github-script` bumped v7→v9 (fixing an inconsistent leftover in `security-daily.yml`), and `actions/stale` bumped v10→v11, across all workflow files.
 - Dev dependency bumps consolidated from open Dependabot PRs: `@babel/parser`/`@babel/types` 7.29.7→8.0.4, `@types/node` 22.20.1→26.1.2, `prettier` 3.8.3→3.9.6, `typescript-eslint`/`@typescript-eslint/parser` 8.60.1→8.70.0, `eslint` 10.4.1→10.10.0, `lint-staged` 17.0.7→17.5.1. `@vscode/test-electron` 2.5.2→3.1.0 was attempted but reverted (unverifiable in the sandbox used to prepare this change — see Fixed).
 
