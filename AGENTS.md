@@ -5,7 +5,7 @@
 - **Name:** Additional Context Menus
 - **Publisher:** VijayGangatharan
 - **Version:** 2.1.2
-- **VS Code engine:** >=1.111.0 (last 10 minor versions; 1.111–1.120)
+- **VS Code engine:** >=1.111.0
 - **Node.js:** >=22 runtime (22, 24, 26 supported); dev uses Node 24 LTS (`lts/krypton`)
 - **Package manager:** pnpm (`pnpm-workspace.yaml` owns `overrides` and `allowBuilds`; do not put them in `package.json`)
 - **Language:** TypeScript (strict mode)
