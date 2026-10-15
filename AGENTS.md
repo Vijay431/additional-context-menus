@@ -242,7 +242,7 @@ This project follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html). Pre-re
 - `.github/workflows/codeql.yml` runs CodeQL static analysis (JavaScript/TypeScript, `security-extended` queries) on PRs/pushes to `main` and weekly, uploading results to the Security → Code scanning tab.
 - `.github/workflows/scorecard.yml` runs the OpenSSF Scorecard supply-chain posture check on pushes to `main` and weekly, uploading SARIF results to the Security tab.
 - `.github/workflows/release.yml` runs when a maintainer publishes a GitHub Release (`release: published`). Merges to `main`, pushed tags and `package.json` changes never publish. The `setup` job runs `.github/scripts/release-gate.sh` before any build: the tag must be `v<package.json version at the tag>`, reachable from `main`, and the release's pre-release flag must match the version suffix. The VSIX is attached to the existing release; the workflow does not tag or release anything itself.
-- `.github/workflows/pr-title.yml` lints PR titles with the repo commitlint config. Merges into `main` are squash-only (repo settings and the `protect_default_branch` ruleset), the PR title and body become the commit, and head branches are deleted after merge.
+- `.github/workflows/pr-title.yml` lints PR titles with the repo commitlint config. Merges into `main` are squash-only by convention; the maintainer owns the GitHub merge settings and ruleset, and this repo does not change them. The PR title becomes the commit, so it must pass the check.
 - Community automation lives in `.github/workflows/stale.yml`, `.github/workflows/labels-sync.yml`, and `.github/workflows/all-contributors.yml`.
 - Release publishing requires `VSCE_PAT` and `OVSX_PAT`.
 - Codecov upload in `ci.yml` requires a `CODECOV_TOKEN` repo secret (optional — CI does not fail without it).
@@ -275,7 +275,7 @@ A release created with `GITHUB_TOKEN` (e.g. by another workflow) does not trigge
 
 ### Merge Policy
 
-- Merge method is squash only. PR title becomes the commit subject, so it must pass commitlint (checked by `pr-title.yml`); PR body becomes the commit message
+- Squash-merge PRs into `main`. PR title becomes the commit subject, so it must pass commitlint (checked by `pr-title.yml`); use the PR body as the commit message
 - Head branches are deleted automatically after merge
 
 ## Steps to Follow

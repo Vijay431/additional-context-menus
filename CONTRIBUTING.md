@@ -202,7 +202,7 @@ Commits before `v2.0.0` predate this enforcement and are not subject to these ru
 4. Open a PR against `main` with a clear title and description
 5. The CI and security workflows will automatically run lint, tests, build, audit, and dependency review checks
 6. At least one maintainer review is required before merging
-7. PRs are squash-merged (the only allowed merge method) and the head branch is deleted automatically. The PR title becomes the commit on `main`, so it must follow the conventional commit format; the `PR Title` check enforces it
+7. PRs are squash-merged and the head branch is deleted after merge. The PR title becomes the commit on `main`, so it must follow the conventional commit format; the `PR Title` check enforces it
 
 ### Automation Workflows
 

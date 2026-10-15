@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **BREAKING (release process)**: `release.yml` now runs only when a maintainer publishes a GitHub Release (`release: published`), not on pushes to `main` or pushed tags. A gate fails before build unless the tag is `v<package.json version>`, is reachable from `main`, and the release's pre-release flag matches the version. The VSIX is attached to the existing release, and marketplace publishes use `--skip-duplicate` so re-runs are safe. The manual recovery run is limited to the `RELEASE_WHITELIST_ACTORS` repo variable.
-- Merges into `main` are squash-only; head branches are deleted after merge. A new `PR Title` workflow checks PR titles against the commitlint config.
+- Squash-merge is the documented merge method for `main`. A new `PR Title` workflow checks PR titles against the commitlint config.
 - **CI packaging dry-run**: `build` job now runs `pnpm run package` (`vsce package`) after the build step, across the Node 22/24/26 matrix — validates the VSIX packaging pipeline on every PR/main run instead of only at release time. No upload/publish occurs.
 - CI, release, and security workflows plus `.nvmrc` bumped from Node 22.x to Node 24.x (`lts/krypton`) as the single-version baseline (the 22/24/26 test matrix in `ci.yml` is unaffected).
 - Renamed the `security-remediate` job's model-selection env var from `OPENAI_MODEL` to `OPENAI_MODEL_DEFAULT` (both in `.github/workflows/security-daily.yml` and `.github/scripts/security-remediate-agent.mjs`) to match the repo variable name.
