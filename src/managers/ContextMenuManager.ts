@@ -396,7 +396,9 @@ export class ContextMenuManager {
 
   public dispose(): void {
     this.logger.debug('Disposing ContextMenuManager');
-    this.disposables.forEach((disposable) => disposable.dispose());
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
     this.disposables = [];
   }
 }

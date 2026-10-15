@@ -513,19 +513,25 @@
     "vscode:prepublish": "tsx esbuild.config.ts --production",
     "build": "tsx esbuild.config.ts",
     "watch": "tsx esbuild.config.ts --watch",
-    "clean": "rimraf dist .out-test out-test *.vsix",
+    "clean": "rimraf dist out-test *.vsix",
     "rebuild": "pnpm run clean && pnpm run build && vsce package",
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage --coverage.reporter=text --coverage.reporter=lcov",
-    "test:integration": "pnpm exec tsc -p tsconfig.test.json && xvfb-run -a node ./.out-test/test/runTests.js",
+    "test:integration": "tsc -p tsconfig.test.json && vscode-test",
     "package": "vsce package",
     "package:openvsx": "vsce package",
     "publish": "vsce publish",
     "publish:openvsx": "ovsx publish",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "lint:md": "markdownlint-cli2 \"**/*.md\"",
+    "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "smoke:bundle": "node scripts/smoke-bundle.cjs",
+    "check:prerelease": "node scripts/check-prerelease.cjs",
+    "prepare": "husky",
     "lint-staged": "lint-staged",
-    "format": "prettier --write .",
+    "format": "biome format --write .",
     "system:verify": "husky"
   },
   "prettier": {
@@ -545,28 +551,11 @@
     "embeddedLanguageFormatting": "auto"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx}": [
-      "eslint --no-cache --fix --quiet",
-      "prettier --write"
-    ],
-    "scripts/**/*.{ts,tsx}": [
-      "eslint --no-cache --fix --quiet",
-      "prettier --write"
-    ],
-    "*.{json,yaml,yml}": [
-      "prettier --write"
+    "*.{ts,tsx,js,cjs,mjs,json,jsonc,css}": [
+      "biome check --write --no-errors-on-unmatched"
     ],
     "*.md": [
-      "prettier --write"
-    ],
-    "*.{html,css}": [
-      "prettier --write"
-    ],
-    "package.json": [
-      "prettier --write"
-    ],
-    "tsconfig.json": [
-      "prettier --write"
+      "markdownlint-cli2 --fix"
     ]
   },
   "commitlint": {
@@ -628,38 +617,26 @@
   "devDependencies": {
     "@babel/parser": "^8.0.4",
     "@babel/types": "^8.0.4",
+    "@biomejs/biome": "2.5.15",
     "@commitlint/cli": "^21.2.2",
     "@commitlint/config-conventional": "^21.2.2",
-    "@eslint/js": "^10.0.1",
     "@types/mocha": "10.0.10",
     "@types/node": "^24.19.2",
     "@types/vscode": "^1.111.0",
-    "@typescript-eslint/eslint-plugin": "^8.60.1",
-    "@typescript-eslint/parser": "^8.70.0",
     "@vitest/coverage-v8": "5.0.2",
-    "@vscode/test-electron": "2.5.2",
+    "@vscode/test-cli": "0.0.15",
+    "@vscode/test-electron": "3.1.0",
     "@vscode/vsce": "^3.9.2",
     "all-contributors-cli": "^6.26.1",
     "concurrently": "^10.0.3",
     "esbuild": "^0.28.1",
-    "eslint": "^10.10.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-n": "^18.3.0",
-    "eslint-plugin-prettier": "^5.5.6",
-    "eslint-plugin-promise": "^7.3.0",
-    "eslint-plugin-security": "^4.0.0",
-    "glob": "^13.0.6",
     "husky": "^9.1.7",
     "lint-staged": "^17.5.1",
-    "mocha": "12.0.1",
-    "openai": "^7.0.0",
+    "markdownlint-cli2": "0.23.3",
     "ovsx": "^1.2.0",
-    "prettier": "^3.9.6",
     "rimraf": "^6.0.1",
     "tsx": "^4.23.13",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.70.0",
     "vitest": "5.0.2"
   }
 }

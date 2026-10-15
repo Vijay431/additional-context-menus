@@ -13,9 +13,8 @@ import type { IAccessibilityService } from '../di/interfaces/IAccessibilityServi
 import type { IFileNamingConventionService } from '../di/interfaces/IFileNamingConventionService';
 import type { ILogger } from '../di/interfaces/ILogger';
 import { getAccessibleQuickPickItem } from '../utils/accessibilityHelper';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import type { ICommandHandler } from './ICommandHandler';
 
 /**
@@ -92,9 +91,9 @@ export class RenameFileConventionCommand extends BaseCommandHandler implements I
 
       if (result.failedFiles.length > 0) {
         this.showWarning(`Rename complete: ${summary}. Check Output Channel for details.`);
-        result.failedFiles.forEach((f) =>
-          this.logger.error(`Failed to rename: ${f.path} — ${f.error}`),
-        );
+        for (const f of result.failedFiles) {
+          this.logger.error(`Failed to rename: ${f.path} — ${f.error}`);
+        }
       } else {
         this.showInfo(`Rename complete: ${summary}.`);
       }

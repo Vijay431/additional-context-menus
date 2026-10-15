@@ -3,8 +3,8 @@ import * as vscode from 'vscode';
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { IConfigurationService } from '../di/interfaces/IConfigurationService';
 import type {
-  IFileSaveService,
   FileSaveResult as IFileSaveResult,
+  IFileSaveService,
 } from '../di/interfaces/IFileSaveService';
 import type { ILogger } from '../di/interfaces/ILogger';
 import { AccessibilityService } from '../services/accessibilityService';
@@ -330,13 +330,17 @@ export class FileSaveService implements IFileSaveService {
 
     if (result.failedFiles.length > 0) {
       details.push('Failed files:');
-      result.failedFiles.forEach((file) => details.push(`- ${file.path}: ${file.error}`));
+      for (const file of result.failedFiles) {
+        details.push(`- ${file.path}: ${file.error}`);
+      }
       details.push('');
     }
 
     if (result.skippedFiles.length > 0) {
       details.push('Skipped files:');
-      result.skippedFiles.forEach((file) => details.push(`- ${file}`));
+      for (const file of result.skippedFiles) {
+        details.push(`- ${file}`);
+      }
     }
 
     this.logger.info(details.join('\n'));

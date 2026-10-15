@@ -1,10 +1,10 @@
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
 import { Logger } from '../utils/logger';
-import { isPathWithin, isSafeFilePath } from '../utils/pathValidator';
+import { hasTraversalSegment, isPathWithin, isSafeFilePath } from '../utils/pathValidator';
 
 /**
  * File Naming Convention Service
@@ -488,7 +488,7 @@ export class FileNamingConventionService {
   ): Promise<RenameResult> {
     try {
       const resolvedPath = path.resolve(targetPath);
-      if (!isSafeFilePath(resolvedPath)) {
+      if (hasTraversalSegment(targetPath) || !isSafeFilePath(resolvedPath)) {
         return {
           success: false,
           renamedFiles: [],

@@ -64,7 +64,10 @@ describe('LazyGeneratorCommand', () => {
     (vscode.extensions.getExtension as any).mockReturnValue(undefined);
     const result = await new LazyGeneratorCommand(GENERATE_ENUM_SPEC, logger, a11y).execute();
     expect(result.success).toBe(false);
-    expect(logger.error).toHaveBeenCalledWith('Error generating enum', expect.any(Error));
+    expect(logger.error).toHaveBeenCalledWith(
+      '[GenerateEnum] Error generating enum',
+      expect.any(Error),
+    );
     expect(win.showErrorMessage).toHaveBeenCalledWith(
       'Failed to generate enum: Extension path not found',
     );
@@ -116,8 +119,13 @@ describe('Refresh context variables', () => {
 describe('SaveAllCommand', () => {
   it('delegates to the save service and reports errors', async () => {
     const svc = { saveAllFiles: vi.fn().mockResolvedValue({ savedCount: 2 }) } as any;
-    await new SaveAllCommand(svc, logger, a11y).execute();
-    expect(logger.info).toHaveBeenCalledWith('Save All completed', { savedCount: 2 });
+    const result = await new SaveAllCommand(svc, logger, a11y).execute();
+    expect(logger.info).toHaveBeenCalledWith('[SaveAll] Save All completed', { savedCount: 2 });
+    expect(result.message).toBe('Saved 2 files');
+    svc.saveAllFiles.mockResolvedValue({ savedCount: 0 });
+    expect((await new SaveAllCommand(svc, logger, a11y).execute()).message).toBe(
+      'No unsaved files found',
+    );
     svc.saveAllFiles.mockRejectedValue(new Error('boom'));
     await new SaveAllCommand(svc, logger, a11y).execute();
     expect(win.showErrorMessage).toHaveBeenCalledWith('Failed to save files: boom');
@@ -128,10 +136,11 @@ describe('OpenInTerminalCommand', () => {
   it('errors without an editor, delegates with one', async () => {
     const svc = { openInTerminal: vi.fn() } as any;
     await new OpenInTerminalCommand(svc, logger, a11y).execute();
-    expect(win.showErrorMessage).toHaveBeenCalledWith('No active editor found');
+    expect(win.showErrorMessage).toHaveBeenCalledWith('Failed to open terminal');
     win.activeTextEditor = { document: { fileName: '/a/b.ts' } };
     await new OpenInTerminalCommand(svc, logger, a11y).execute();
     expect(svc.openInTerminal).toHaveBeenCalledWith('/a/b.ts');
+    expect(win.showInformationMessage).toHaveBeenCalledWith('Terminal opened in b.ts');
   });
 });
 

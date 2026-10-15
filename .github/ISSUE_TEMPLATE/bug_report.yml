@@ -11,7 +11,6 @@ body:
     attributes:
       label: Summary
       description: What went wrong?
-      placeholder: The Copy Function command fails when...
     validations:
       required: true
   - type: textarea
@@ -20,9 +19,9 @@ body:
       label: Reproduction steps
       description: List the exact steps to reproduce the problem.
       placeholder: |
-        1. Open a TypeScript file in a Node.js project
-        2. Right-click inside a function
-        3. Select Additional Context Menus > Copy Function
+        1. Open ...
+        2. Run the command ...
+        3. See the error
     validations:
       required: true
   - type: textarea
@@ -39,26 +38,11 @@ body:
       description: What happened instead? Include errors from the Additional Context Menus output channel when available.
     validations:
       required: true
-  - type: dropdown
-    id: area
-    attributes:
-      label: Feature area
-      options:
-        - Context menu visibility
-        - Copy or move code
-        - Copy file contents
-        - Save all
-        - Open in terminal
-        - Generators
-        - Accessibility
-        - Other
-    validations:
-      required: true
   - type: input
     id: extension-version
     attributes:
       label: Extension version
-      placeholder: 2.1.2
+      placeholder: 0.0.1
     validations:
       required: true
   - type: input

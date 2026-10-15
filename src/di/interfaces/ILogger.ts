@@ -17,7 +17,7 @@
  * @module di/interfaces/ILogger
  */
 
-import { LogLevel } from '../../utils/logger';
+import type { LogLevel } from '../../utils/logger';
 
 /**
  * Logger Interface

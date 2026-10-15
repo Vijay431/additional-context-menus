@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as path from 'node:path';
 
 /**
  * Check whether `target` resolves to `root` itself or a location inside it.
@@ -14,6 +14,15 @@ export function isPathWithin(root: string, target: string): boolean {
     return false; // different drive (Windows)
   }
   return relative !== '..' && !relative.startsWith(`..${path.sep}`);
+}
+
+/**
+ * True when `filePath` contains a literal `..` path segment (either separator).
+ * Segment-based, so names like `my..proj` or `..foo` are not flagged. Check the
+ * raw (unresolved) input: `path.resolve` collapses `..` and hides it.
+ */
+export function hasTraversalSegment(filePath: string): boolean {
+  return filePath.split(/[\\/]/).includes('..');
 }
 
 const BLOCKED_EXTENSIONS = new Set(['.exe', '.bat', '.cmd', '.ps1', '.vbs']);

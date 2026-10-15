@@ -11,9 +11,8 @@ import type { IAccessibilityService } from '../di/interfaces/IAccessibilityServi
 import type { IConfigurationService } from '../di/interfaces/IConfigurationService';
 import type { ILogger } from '../di/interfaces/ILogger';
 import type { IProjectDetectionService } from '../di/interfaces/IProjectDetectionService';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import type { ICommandHandler } from './ICommandHandler';
 
 /** Prints extension state to a debug output channel. */

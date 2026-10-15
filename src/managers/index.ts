@@ -10,5 +10,5 @@
  * @module managers
  */
 
-export { ExtensionManager } from './ExtensionManager';
 export { ContextMenuManager } from './ContextMenuManager';
+export { ExtensionManager } from './ExtensionManager';

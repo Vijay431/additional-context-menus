@@ -23,11 +23,6 @@ export function isSupportedFileType(fileName: string): boolean {
   return ['.ts', '.tsx', '.js', '.jsx'].includes(getFileExtension(fileName));
 }
 
-export function getFileName(filePath: string): string {
-  const lastSlash = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
-  return lastSlash >= 0 ? filePath.substring(lastSlash + 1) : filePath;
-}
-
 /**
  * Resolve the target file: auto-select a single compatible file, otherwise
  * prompt. Returns undefined when cancelled or when the target is not writable
@@ -98,15 +93,6 @@ export async function copyCodeToTargetFile(
   }
 }
 
-export async function insertFunctionIntoFile(
-  code: string,
-  targetFilePath: string,
-  configService: IConfigurationService,
-  logger: ILogger,
-): Promise<void> {
-  await copyCodeToTargetFile(code, targetFilePath, configService, logger);
-}
-
 export function getInsertionPoint(
   document: vscode.TextDocument,
   configService: IConfigurationService,
@@ -118,7 +104,6 @@ export function getInsertionPoint(
       return new vscode.Position(0, 0);
     case 'end':
       return new vscode.Position(document.lineCount, 0);
-    case 'smart':
     default:
       // Smart insertion: after imports, before exports
       return findSmartInsertionPoint(document);
@@ -142,9 +127,11 @@ export function findSmartInsertionPoint(document: vscode.TextDocument): vscode.P
       // Import statements may span lines; end at the line closing with a quoted specifier
       for (let j = i; j < lines.length; j++) {
         const text = lines[j]?.trim() ?? '';
-        const commentAt = text.indexOf(' //');
-        const code = commentAt === -1 ? text : text.slice(0, commentAt).trimEnd();
-        if (/['"];?$/.test(code)) {
+        const code = text
+          .replace(/\/\*.*?\*\//g, '')
+          .replace(/\s\/\/.*$/, '')
+          .trimEnd();
+        if (/(['"]|\brequire\(\s*['"][^'"]*['"]\s*\))\s*;?$/.test(code)) {
           lastImportEndLine = j;
           i = j;
           break;

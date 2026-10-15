@@ -12,9 +12,8 @@ import * as vscode from 'vscode';
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { ICodeAnalysisService } from '../di/interfaces/ICodeAnalysisService';
 import type { ILogger } from '../di/interfaces/ILogger';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import type { ICommandHandler } from './ICommandHandler';
 
 const SUPPORTED_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx'];

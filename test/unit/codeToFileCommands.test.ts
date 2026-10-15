@@ -39,7 +39,11 @@ describe('MoveLinesToFileCommand', () => {
       return true;
     });
     (vscode.window as any).activeTextEditor = {
-      document: { fileName: '/t/source.ts', getText: () => 'code' },
+      document: {
+        fileName: '/t/source.ts',
+        uri: { fsPath: '/t/source.ts' },
+        getText: () => 'code',
+      },
       selection: { isEmpty: false },
       edit: sourceEdit,
     };
@@ -62,6 +66,21 @@ describe('MoveLinesToFileCommand', () => {
     const sourceEdit = setup(true);
     await make().execute();
     expect(sourceEdit).toHaveBeenCalledOnce();
+  });
+
+  it('reports failure when the source delete is not applied', async () => {
+    const sourceEdit = setup(true);
+    sourceEdit.mockResolvedValue(false);
+    const result = await make().execute();
+    expect(result.success).toBe(false);
+  });
+
+  it('refuses a target equal to the source file', async () => {
+    const sourceEdit = setup(true);
+    (vscode.window as any).activeTextEditor.document.uri.fsPath = '/t/target.ts';
+    const result = await make().execute();
+    expect(result.success).toBe(false);
+    expect(sourceEdit).not.toHaveBeenCalled();
   });
 });
 
@@ -88,7 +107,13 @@ describe('MoveFunctionToFileCommand', () => {
     };
     const openDoc = vscode.workspace.openTextDocument as any;
 
-    await new MoveFunctionToFileCommand(codeAnalysis, fileDiscovery, {} as any, logger, a11y).execute();
+    await new MoveFunctionToFileCommand(
+      codeAnalysis,
+      fileDiscovery,
+      {} as any,
+      logger,
+      a11y,
+    ).execute();
 
     expect(openDoc).not.toHaveBeenCalled();
     expect(sourceEdit).not.toHaveBeenCalled();

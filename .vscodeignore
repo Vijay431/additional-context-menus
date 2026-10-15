@@ -4,7 +4,6 @@
 src/
 test/
 scripts/
-.out-test/
 out-test/
 dist/src/
 dist/test/

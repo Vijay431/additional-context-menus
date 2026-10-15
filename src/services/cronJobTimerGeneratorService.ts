@@ -227,7 +227,7 @@ export class CronJobTimerGeneratorService {
         if (value === '*') {
           return undefined;
         }
-        const num = Number.parseInt(value);
+        const num = Number.parseInt(value, 10);
         if (Number.isNaN(num) || num < 0 || num > 59) {
           return 'Error: Invalid minute. Must be 0-59 or star';
         }
@@ -246,7 +246,7 @@ export class CronJobTimerGeneratorService {
         if (value === '*') {
           return undefined;
         }
-        const num = Number.parseInt(value);
+        const num = Number.parseInt(value, 10);
         if (Number.isNaN(num) || num < 0 || num > 23) {
           return 'Error: Invalid hour. Must be 0-23 or star';
         }
@@ -265,7 +265,7 @@ export class CronJobTimerGeneratorService {
         if (value === '*') {
           return undefined;
         }
-        const num = Number.parseInt(value);
+        const num = Number.parseInt(value, 10);
         if (Number.isNaN(num) || num < 1 || num > 31) {
           return 'Error: Invalid day. Must be 1-31 or star';
         }
@@ -284,7 +284,7 @@ export class CronJobTimerGeneratorService {
         if (value === '*') {
           return undefined;
         }
-        const num = Number.parseInt(value);
+        const num = Number.parseInt(value, 10);
         if (Number.isNaN(num) || num < 1 || num > 12) {
           return 'Error: Invalid month. Must be 1-12 or star';
         }
@@ -306,7 +306,7 @@ export class CronJobTimerGeneratorService {
         if (value === '*') {
           return undefined;
         }
-        const num = Number.parseInt(value);
+        const num = Number.parseInt(value, 10);
         if (Number.isNaN(num) || num < 0 || num > 6) {
           return 'Error: Invalid day. Must be 0-6 or star';
         }

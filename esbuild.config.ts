@@ -1,7 +1,8 @@
 #!/usr/bin/env tsx
 
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import * as esbuild from 'esbuild';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+
 // Ensure dist directory exists
 if (!existsSync('./dist')) {
   mkdirSync('./dist', { recursive: true });

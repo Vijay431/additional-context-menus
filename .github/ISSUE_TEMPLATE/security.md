@@ -8,7 +8,7 @@ assignees: ''
 
 ## ⚠️ Important Security Notice
 
-**For CRITICAL or HIGH severity vulnerabilities**, please email vijayanand431@gmail.com directly instead of using this template.
+**For CRITICAL or HIGH severity vulnerabilities**, please email <vijayanand431@gmail.com> directly instead of using this template.
 
 This template is for:
 
@@ -41,7 +41,7 @@ What is the potential impact of this vulnerability?
 - [ ] Code execution
 - [ ] Data corruption
 - [ ] Denial of service
-- [ ] Other: **\*\***\_\_\_\_**\*\***
+- [ ] Other: ______
 
 **Severity:**
 
@@ -53,16 +53,11 @@ What is the potential impact of this vulnerability?
 
 Which part of the extension is affected?
 
-- [ ] Code Analysis Service
 - [ ] Configuration Service
-- [ ] File Discovery Service
-- [ ] File Save Service
-- [ ] Terminal Service
-- [ ] Project Detection Service
-- [ ] Generator Services (Enum, Env, Cron, Naming)
+- [ ] Accessibility Service
 - [ ] Extension Manager
-- [ ] Context Menu Manager
-- [ ] Other: **\*\***\_\_\_\_**\*\***
+- [ ] Commands Manager
+- [ ] Other: ______
 
 ## Reproduction Steps
 
@@ -104,7 +99,7 @@ Describe a realistic attack scenario.
 - [ ] All users
 - [ ] Users on specific platforms
 - [ ] Users with specific configurations
-- [ ] Users working with specific file types
+- [ ] Other: ______
 
 ## Mitigation
 
@@ -130,7 +125,7 @@ Are there any security best practices that should be implemented?
 - [ ] Principle of least privilege
 - [ ] Defense in depth
 - [ ] Security testing
-- [ ] Other: **\*\***\_\_\_\_**\*\***
+- [ ] Other: ______
 
 ## Additional Context
 

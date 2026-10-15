@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Automated vulnerability remediation**: New CI job attempts to fix critical/high `pnpm audit` findings (reconciling with open Dependabot PRs) and opens a PR against `main` only after independently re-verifying the fix reduces vulnerabilities and the build/tests still pass.
+- Biome (lint and format), markdownlint, commitlint with husky `commit-msg`, `@vscode/test-cli` for integration tests, `.gitattributes`, `.all-contributorsrc`, `scripts/check-prerelease.cjs`, `scripts/smoke-bundle.cjs`, and `.github/VULNERABILITY_REPORT.yml`, synced from the template baseline (`docs/sync.md` in `vscode-extension-template`).
+- Issue forms for bug reports and feature requests, and configuration, cross-platform, performance, and refactoring templates.
+- Build-provenance attestation for the released `.vsix`; verify with `gh attestation verify`.
 - CodeQL static analysis workflow (`.github/workflows/codeql.yml`) scanning JavaScript/TypeScript source for vulnerabilities on PRs/pushes to `main` and weekly.
 - OpenSSF Scorecard workflow (`.github/workflows/scorecard.yml`) tracking supply-chain security posture.
 - `capabilities.untrustedWorkspaces` declaration in the extension manifest, enabling the Workspace Trust badge on the VS Code Marketplace listing. `capabilities.virtualWorkspaces.supported` is declared `false` — `openInTerminal`, `EnvFileGeneratorService`, and `FileDiscoveryService` assume `file:`-scheme paths and use Node `path`/`fs` APIs directly, which isn't safe for non-file virtual workspace URIs.
@@ -20,28 +22,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **BREAKING (release process)**: `release.yml` now runs only when a maintainer publishes a GitHub Release (`release: published`), not on pushes to `main` or pushed tags. A gate fails before build unless the tag is `v<package.json version>`, is reachable from `main`, and the release's pre-release flag matches the version. The VSIX is attached to the existing release, and marketplace publishes use `--skip-duplicate` so re-runs are safe. The manual recovery run is limited to the `RELEASE_WHITELIST_ACTORS` repo variable.
-- Squash-merge is the documented merge method for `main`. A new `PR Title` workflow checks PR titles against the commitlint config.
+- **BREAKING (release process)**: `release.yml` now runs when a `v*` tag is pushed, not when a GitHub Release is published. The gate fails before build unless the tag matches `package.json` and is reachable from `main`. A failed tag can be re-run with `workflow_dispatch` by actors in `RELEASE_WHITELIST_ACTORS`; re-runs skip versions already published.
+- **BREAKING (tests)**: Integration tests run through `vscode-test` (`@vscode/test-cli`, `.vscode-test.mjs`); `out-test/test/runTests.js` is gone and the output dir is `out-test/` (was `.out-test/`).
+- Every workflow action is pinned to a commit SHA, and the CI build matrix covers Node 22, 24, and 26.
 - **CI packaging dry-run**: `build` job now runs `pnpm run package` (`vsce package`) after the build step, across the Node 22/24/26 matrix — validates the VSIX packaging pipeline on every PR/main run instead of only at release time. No upload/publish occurs.
 - CI, release, and security workflows plus `.nvmrc` bumped from Node 22.x to Node 24.x (`lts/krypton`) as the single-version baseline (the 22/24/26 test matrix in `ci.yml` is unaffected).
-- Renamed the `security-remediate` job's model-selection env var from `OPENAI_MODEL` to `OPENAI_MODEL_DEFAULT` (both in `.github/workflows/security-daily.yml` and `.github/scripts/security-remediate-agent.mjs`) to match the repo variable name.
-- The daily security workflow (`security-daily.yml`) and its automated remediation agent (`security-remediate-agent.mjs`) now also detect and act on GitHub Dependabot security alerts, not just `pnpm audit` findings — closing a gap where alerts with no corresponding open Dependabot PR were invisible to the pipeline.
 - `actions/setup-node` bumped v5→v7, `actions/github-script` bumped v7→v9 (fixing an inconsistent leftover in `security-daily.yml`), and `actions/stale` bumped v10→v11, across all workflow files.
-- Dev dependency bumps consolidated from open Dependabot PRs: `@babel/parser`/`@babel/types` 7.29.7→8.0.4, `@types/node` 22.20.1→26.1.2, `prettier` 3.8.3→3.9.6, `typescript-eslint`/`@typescript-eslint/parser` 8.60.1→8.70.0, `eslint` 10.4.1→10.10.0, `lint-staged` 17.0.7→17.5.1. `@vscode/test-electron` 2.5.2→3.1.0 was attempted but reverted (unverifiable in the sandbox used to prepare this change — see Fixed).
 
 ### Fixed
 
+- `useParseIntRadix`: cron field validation now parses with radix 10.
 - Daily security audit workflow now manages a single tracking issue instead of creating duplicate issues each day; resolves all 41 stale bot-generated security alert issues
-- Updated CLAUDE.md to correctly document that `codeAnalysisService` uses `@babel/parser` (not TypeScript Compiler API)
 - **Security audit remediation**: Tightened pnpm overrides for `js-yaml` (`>=4.1.2` → `>=5.2.2`) and `brace-expansion` (`>=5.0.6` → `>=5.0.8`) — the prior ranges were resolving to vulnerable versions (`js-yaml@5.2.1`, `brace-expansion@5.0.7`) because they only set a floor without excluding the vulnerable window. `pnpm audit --audit-level=low` now reports zero vulnerabilities.
 - **Security audit remediation**: Tightened pnpm overrides for `undici` (`>=7.28.0` → `>=8.9.0`), `fast-uri` (`>=3.1.2` → `>=4.1.2`), and `postcss` (`>=8.5.10` → `>=8.5.23`) — the prior ranges were resolving to vulnerable versions (`undici@8.7.0`, `fast-uri@4.1.1`, `postcss@8.5.19`) because they only set a floor without excluding the vulnerable window. `pnpm audit --audit-level=low` now reports zero vulnerabilities.
 - **Security audit remediation**: Tightened the `fast-uri` override again (`>=4.1.2` → `>=4.1.3` — `4.1.2` was itself vulnerable to four newly-published high-severity advisories) and added a `nanoid: '>=3.3.18'` override (previously unpinned, resolving to vulnerable `3.3.16` via `vitest`→`vite`→`postcss`). `pnpm audit --audit-level=high` now reports zero high/critical findings.
-- **`security-remediate-agent.mjs` hardening** (CodeRabbit review on PR #388): `merge_dependabot_branch` now re-validates the PR number against a fresh, independently-fetched list of open Dependabot PRs before fetching/checking out its branch, closing an authorization-bypass path where a prompt-injected agent could merge from an arbitrary PR. `write_file` now rejects any change to `package.json`'s `scripts`/`bin` fields, closing a path where the agent could turn `pnpm run build`/`pnpm run test:unit` (both allowlisted commands) into arbitrary code execution. The `supersedesPrs` closing loop re-fetches confirmed-open Dependabot PR numbers immediately before closing, instead of relying on a baseline snapshot taken before the whole agent run. `execCapture` no longer inherits `OPENAI_API_KEY`/`GH_TOKEN` into spawned subprocesses by default (defense in depth); both are threaded back in explicitly only for the specific `gh` calls that need them.
-- **`release.yml` tag-injection fix**: `workflow_dispatch`'s `tag` input is no longer interpolated directly into a bash `run:` block (a static-analysis-flagged template-injection risk) — it's now passed through `env:` and referenced as a shell variable, plus validated with `git check-ref-format` before any git operation.
 - **`scorecard.yml` permissions fix**: top-level workflow `permissions` changed to `read-all` (job-level `analysis.permissions` already grants the writes the Scorecard action needs) — a workflow-level write permission was rejected by the action's `publish_results: true` requirement.
-- Added `.github/scripts/security-remediate-agent.d.mts` declaring the `.mjs` script's exported validators, fixing a `TS7016` compile error in `test/unit/security-remediate-agent.test.ts` that was failing the Integration Tests CI job.
 - Fixed `src/services/codeAnalysisService.ts` parser plugin list for the `@babel/parser` 8.x bump: `classProperties` is parsed by default as of `@babel/parser` 8 (class fields are standard JS) and is no longer a valid plugin name.
-- Left `@vscode/test-electron` pinned at `2.5.2` rather than bumping to `3.1.0`: the integration test runner (`xvfb-run -a node ./.out-test/test/runTests.js`) failed identically ("bad option" on every launch flag) at both versions in the local environment used to prepare this change, indicating that environment can't launch a real VS Code/Electron binary at all rather than a genuine `3.1.0` regression — the bump needs verification against a real CI runner (e.g. a standalone PR) before it's safe to take.
+
+### Removed
+
+- ESLint, Prettier, the `openai` dev dependency, the automated vulnerability-remediation agent, and the `pr-commit-size`, `stale`, `security-pr`, and `pr-title` workflows. Contributors listing moved from `CONTRIBUTORS.md` to `.all-contributorsrc`; `CLAUDE.md` and `.github/copilot-instructions.md` removed in favor of `AGENTS.md`.
 
 ## [2.1.3] - 2026-07-20
 

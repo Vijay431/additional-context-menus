@@ -18,15 +18,19 @@
 pnpm install              # install dependencies
 pnpm run build            # build extension (~1s)
 pnpm run watch            # watch mode
-pnpm run clean            # remove dist/ and *.vsix
+pnpm run clean            # remove dist/, out-test/ and *.vsix
 pnpm run rebuild          # clean + build + package
 pnpm run package          # production build (.vsix)
-pnpm run lint             # ESLint
-pnpm run lint:fix         # auto-fix lint issues
-pnpm run format           # format files with Prettier
+pnpm run lint             # Biome lint + format check
+pnpm run lint:fix         # Biome safe fixes
+pnpm run lint:md          # markdownlint
+pnpm run typecheck        # tsc --noEmit for src and tests
+pnpm run format           # Biome format
+pnpm run check:prerelease # fail on prerelease direct dependencies
+pnpm run smoke:bundle     # load the production bundle outside VS Code
 pnpm run test:unit        # run unit tests (Vitest)
 pnpm run test:unit:coverage # run unit tests with LCOV coverage
-pnpm run test:integration # run integration tests (Mocha + VS Code, requires display)
+pnpm run test:integration # run integration tests (@vscode/test-cli, requires display; use xvfb-run -a on Linux)
 pnpm run publish          # publish to VS Code Marketplace
 pnpm run publish:openvsx  # publish to Open VSX Registry
 ```
@@ -84,16 +88,16 @@ test/
   unit/                         # Vitest unit tests (infrastructure, no VS Code API)
   suite/                        # Mocha integration tests (feature-level, live VS Code)
   fixtures/                     # test fixture files (sample.ts, package.json files)
-  runTests.ts                   # @vscode/test-electron launcher
 vitest.config.ts                # Vitest config (aliases vscode to mock)
 tsconfig.test.json              # TypeScript config for compiling integration tests
+.vscode-test.mjs                # @vscode/test-cli config (files, Mocha options)
 ```
 
 ## Canonical Sources
 
 - **`package.json` `contributes`** — canonical source for all command IDs, settings, and keybindings (VS Code loads it directly).
 - **`README.md`** — canonical user-facing narrative.
-- **`CLAUDE.md`** — canonical architecture and dev conventions.
+- **`AGENTS.md`** — dev conventions and commands for contributors and AI assistants.
 - **`ARCHITECTURE.md`** — technical documentation and architectural decisions.
 
 ## Services
@@ -236,20 +240,18 @@ This project follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html). Pre-re
 
 ### Automation Layout
 
-- `.github/workflows/ci.yml` runs PR/main quality gates: cache warmup, lint, unit coverage, integration tests, and build (Ubuntu × Node 22/24/26 × VS Code stable). The unit-coverage job uploads `coverage/lcov.info` to Codecov (`codecov/codecov-action@v5`, `fail_ci_if_error: false`) — requires a `CODECOV_TOKEN` repo secret to actually publish; the coverage badge in `README.md` and `codecov.yml` (informational-only status checks) are wired regardless.
-- `.github/workflows/security-pr.yml` runs PR/main security gates: `pnpm audit --audit-level=high` and dependency review on PRs.
-- `.github/workflows/security-daily.yml` runs daily/manual/package-change security audits (via both `pnpm audit` and the GitHub Dependabot Alerts API, requiring `security-events: read` permission), outdated-package summaries, artifact uploads, and triage issue creation for critical/high findings or workflow failures. When `security-audit` finds critical/high vulnerabilities via either `pnpm audit` or Dependabot alerts, a follow-up `security-remediate` job runs `.github/scripts/security-remediate-agent.mjs` — an OpenAI-SDK tool-calling agent that reconciles with open Dependabot PRs and attempts a real fix, opening a PR against `main` only after the script (not the agent) independently re-verifies the audit improved and build+tests still pass. The remediation agent includes a `list_dependabot_alerts` tool alongside its existing Dependabot-PR tools, enabling it to act on alert-only findings that `pnpm audit` doesn't surface. Requires an `OPENAI_API_KEY` secret and `OPENAI_MODEL_DEFAULT` repo variable to be configured before this job can run. `execCapture` (the script's process-spawning helper) strips `OPENAI_API_KEY`/`GH_TOKEN` from the environment of every spawned command by default — they're threaded back in explicitly only for the specific `gh` calls that need them.
-- `.github/workflows/codeql.yml` runs CodeQL static analysis (JavaScript/TypeScript, `security-extended` queries) on PRs/pushes to `main` and weekly, uploading results to the Security → Code scanning tab.
-- `.github/workflows/scorecard.yml` runs the OpenSSF Scorecard supply-chain posture check on pushes to `main` and weekly, uploading SARIF results to the Security tab.
-- `.github/workflows/release.yml` runs when a maintainer publishes a GitHub Release (`release: published`). Merges to `main`, pushed tags and `package.json` changes never publish. The `setup` job runs `.github/scripts/release-gate.sh` before any build: the tag must be `v<package.json version at the tag>`, reachable from `main`, and the release's pre-release flag must match the version suffix. The VSIX is attached to the existing release; the workflow does not tag or release anything itself.
-- `.github/workflows/pr-title.yml` lints PR titles with the repo commitlint config. Merges into `main` are squash-only by convention; the maintainer owns the GitHub merge settings and ruleset, and this repo does not change them. The PR title becomes the commit, so it must pass the check.
-- Community automation lives in `.github/workflows/stale.yml`, `.github/workflows/labels-sync.yml`, and `.github/workflows/all-contributors.yml`.
+- `.github/workflows/ci.yml` runs PR/main quality gates: Biome lint, markdownlint, typecheck, commitlint (PR commits and title), unit coverage, integration tests under `xvfb-run -a`, `pnpm audit`, dependency review (PRs), a bundle smoke test, and a build matrix (Ubuntu, Windows, macOS × Node 22/24/26 × VS Code stable/insiders). The unit-coverage job uploads `coverage/lcov.info` to Codecov (`fail_ci_if_error: false`) and needs a `CODECOV_TOKEN` repo secret to publish.
+- `.github/workflows/security-daily.yml` runs daily, on manual dispatch, and on `package.json`/`pnpm-lock.yaml` changes on `main`. It audits with `pnpm audit` and the Dependabot Alerts API (needs `security-events: read`), summarizes outdated packages, uploads artifacts, and opens or updates one triage issue for critical or high findings.
+- `.github/workflows/codeql.yml` runs CodeQL (JavaScript/TypeScript, `security-extended`) on PRs and pushes to `main` and weekly.
+- `.github/workflows/scorecard.yml` runs the OpenSSF Scorecard check on pushes to `main` and weekly, uploading SARIF to the Security tab.
+- `.github/workflows/release.yml` runs when a `v*` tag is pushed. Merges to `main` and `package.json` changes never publish. The `gate` job runs `.github/scripts/release-gate.sh` before any build: the tag must match `v<major>.<minor>.<patch>[-suffix]`, equal `package.json` `version` at the tagged commit, and be reachable from `main`. Then it verifies, publishes to both marketplaces, attests the `.vsix` build provenance, and attaches the `.vsix` to the GitHub Release.
+- Community automation lives in `.github/workflows/labels-sync.yml` and `.github/workflows/all-contributors.yml`.
+- Every workflow action is pinned to a commit SHA; Dependabot keeps the pins current.
 - Release publishing requires `VSCE_PAT` and `OVSX_PAT`.
-- Codecov upload in `ci.yml` requires a `CODECOV_TOKEN` repo secret (optional — CI does not fail without it).
 
 ### How Release Detects Pre-release
 
-The release gate derives the channel from the tag's version (`-rc`, `-next`, `-beta`, or `-alpha` suffix) and fails when it disagrees with the pre-release flag set on the GitHub Release:
+The release gate derives the channel from the tag's version (`-rc`, `-next`, `-beta`, or `-alpha` suffix):
 
 ```bash
 if [[ $TAG =~ -(rc|next|beta|alpha) ]]; then
@@ -264,26 +266,23 @@ fi
 ### Release Checklist
 
 1. Bump `package.json` version (e.g. `2.0.2`, `2.1.0-beta.1`, or `2.1.0` to graduate) in a PR and squash-merge it into `main`
-2. GitHub → Releases → Draft a new release: choose new tag `v<version>` targeting `main`, click **Generate release notes** (uses `.github/release.yml`), set **Set as a pre-release** only for pre-release versions
-3. Click **Publish release**. The workflow validates, builds, verifies, publishes to both marketplaces and attaches the VSIX
+2. Update `CHANGELOG.md`, then tag the merge commit: `git tag v<version> && git push origin v<version>`
+3. The workflow validates, builds, verifies, publishes to both marketplaces, attests the VSIX, and creates the GitHub Release with the VSIX attached
 
-A draft release does not start the workflow. If a gate fails, nothing is published: delete the release, fix the tag, and publish again.
+If a gate fails, nothing is published: delete the tag, fix the problem, and tag again.
 
-**Recovery (e.g. one marketplace was down):** Actions → Release → Run workflow with the existing release tag. Only logins in the repo variable `RELEASE_WHITELIST_ACTORS` (Settings → Secrets and variables → Actions → Variables, comma-separated) may run it. The check applies to whoever started or re-ran the run, and an empty variable fails the run. Keep `actions: write` out of every workflow's permissions, since `github-actions[bot]` is allowlisted.
-
-A release created with `GITHUB_TOKEN` (e.g. by another workflow) does not trigger workflows; publish releases as a maintainer.
+**Recovery (e.g. one marketplace was down):** Actions → Release → Run workflow with the existing tag. Only logins in the repo variable `RELEASE_WHITELIST_ACTORS` (Settings → Secrets and variables → Actions → Variables, comma-separated) may run it manually. The run builds from the tag, skips versions already published, and replaces assets on an existing GitHub Release.
 
 ### Merge Policy
 
-- Squash-merge PRs into `main`. PR title becomes the commit subject, so it must pass commitlint (checked by `pr-title.yml`); use the PR body as the commit message
+- Squash-merge PRs into `main`. PR title becomes the commit subject, so it must pass commitlint (checked by the `commitlint` job in `ci.yml`); use the PR body as the commit message
 - Head branches are deleted automatically after merge
 
 ## Steps to Follow
 
-- All new changes should be added to the `CLAUDE.md` file
 - All new changes that are user viewable should be added to `public/` and `README.md`
 - All new changes should be logged in the `CHANGELOG.md` file under unreleased section
-- Community automation changes should update `AGENTS.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md`, and `THIRDPARTY.md` when commands, workflow ownership, or dependency notices change.
+- Community automation changes should update `AGENTS.md`, `CONTRIBUTING.md`, and `THIRDPARTY.md` when commands, workflow ownership, or dependency notices change.
 - Configuration or command behavior changes must update `package.json`, related types in `src/types/`, tests, and docs together.
 - Third-party tooling changes must keep `THIRDPARTY.md` current.
 
@@ -295,7 +294,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 - `fix(fileDiscovery): respect cache ttl`
 - `test(unit): cover enum generation`
 
-**Commit size limits** (enforced by hooks and CI): max **10 files** and **400 changed lines** per commit. Sweeping refactors that exceed these limits may add the `size/override` label to the PR to bypass the CI hard-fail (warning comment is still posted).
+Husky runs Biome and markdownlint on staged files and commitlint on the message.
 
 Branch naming: `feature/`, `fix/`, `docs/`, or `refactor/` prefix from `main`.
 
@@ -305,7 +304,7 @@ Branch naming: `feature/`, `fix/`, `docs/`, or `refactor/` prefix from `main`.
 - **Coverage** (`pnpm run test:unit:coverage`): Vitest coverage output is written to `coverage/lcov.info`.
 - **Integration tests** (`test/suite/`, run with `pnpm run test:integration`): feature-level tests that exercise the 13 user-facing commands end-to-end in a real VS Code Extension Development Host.
 - **No separate E2E layer**: The integration suite already drives a real VS Code Extension Development Host, which is the canonical end-to-end layer for a VS Code extension. A separate `@vscode/test-web` layer is not warranted unless vscode.dev certification is required (out of scope for v2.0.x). Do not add a separate e2e folder.
-- Integration test build output goes to `.out-test/` (not `dist/`). The script is `pnpm run test:integration`. Compile errors fail the build — `|| true` is not used in CI.
+- Integration test build output goes to `out-test/` (not `dist/`) and runs through `@vscode/test-cli` (`.vscode-test.mjs`). The script is `pnpm run test:integration`. Compile errors fail the build — `|| true` is not used in CI.
 - Never add VS Code API-dependent logic to unit tests; never add pure-logic tests to the integration suite.
 - On Linux CI, integration tests run under `xvfb-run -a`.
 - All test descriptions must start with `"should "` (e.g. `it('should detect React', ...)`).
@@ -320,9 +319,11 @@ This is a TypeScript VS Code extension. Source code lives in `src/`: command han
 - `pnpm install`: install dependencies.
 - `pnpm run build`: bundle the extension with esbuild.
 - `pnpm run watch`: rebuild during extension development.
-- `pnpm run lint`: run ESLint against `src/`.
-- `pnpm run lint:fix`: apply automatic ESLint fixes.
-- `pnpm run format`: format the repository with Prettier.
+- `pnpm run lint`: run Biome (lint and format check).
+- `pnpm run lint:fix`: apply Biome safe fixes.
+- `pnpm run lint:md`: run markdownlint.
+- `pnpm run typecheck`: TypeScript type checking (no emit).
+- `pnpm run format`: format the repository with Biome.
 - `pnpm run test:unit`: run Vitest unit tests.
 - `pnpm run test:unit:coverage`: run Vitest unit tests and produce `coverage/lcov.info`.
 - `pnpm run test:integration`: compile tests and run VS Code integration tests.
@@ -332,7 +333,7 @@ Use Node.js 22+ and pnpm. Development uses Node 24 LTS (`.nvmrc` = `lts/krypton`
 
 ## Coding Style & Naming Conventions
 
-Write TypeScript and keep modules focused by responsibility. Use PascalCase for classes and service files such as `FileDiscoveryService.ts`, camelCase for functions and variables, and command names matching package command IDs. Prettier handles formatting; ESLint enforces quality and security rules. Avoid committing compiled `.js` or `.js.map` files under `src/`, `test/`, or `scripts/`.
+Write TypeScript and keep modules focused by responsibility. Use PascalCase for classes and service files such as `FileDiscoveryService.ts`, camelCase for functions and variables, and command names matching package command IDs. Biome handles linting and formatting. Avoid committing compiled `.js` or `.js.map` files under `src/`, `test/`, or `scripts/`.
 
 ## Testing Guidelines
 
@@ -340,9 +341,9 @@ Add unit tests in `test/unit/*.test.ts` for services, utilities, and validators.
 
 ## Commit & Pull Request Guidelines
 
-Use Conventional Commits, for example `feat(copy): add file contents command`, `fix(fileDiscovery): respect cache ttl`, or `test(unit): cover enum generation`. Hooks and CI enforce a maximum of 10 files and 400 changed lines per commit. Sweeping refactors may add the `size/override` label to the PR to bypass the CI hard-fail. Branch from `main` using prefixes such as `feature/`, `fix/`, `docs/`, or `refactor/`.
+Use Conventional Commits, for example `feat(copy): add file contents command`, `fix(fileDiscovery): respect cache ttl`, or `test(unit): cover enum generation`. Husky runs commitlint on every commit message. Branch from `main` using prefixes such as `feature/`, `fix/`, `docs/`, or `refactor/`.
 
-Pull requests should include a clear description, linked issues when applicable, and screenshots or recordings for visible VS Code UI changes. Before opening a PR, run `pnpm run lint`, `pnpm run build`, and relevant tests. CI warms `node_modules` caches for Node 22/24/26; security workflows run high-severity `pnpm audit`, PR dependency review, and daily/manual audit summaries. Workflow or community automation changes should also update `README.md`, `CHANGELOG.md`, `CLAUDE.md`, `CONTRIBUTING.md`, and `.github/copilot-instructions.md` when commands or maintainer procedures change.
+Pull requests should include a clear description, linked issues when applicable, and screenshots or recordings for visible VS Code UI changes. Before opening a PR, run `pnpm run lint`, `pnpm run lint:md`, `pnpm run typecheck`, `pnpm run build`, and relevant tests. CI runs `pnpm audit` and dependency review on PRs; `security-daily.yml` runs daily audit summaries. Workflow or community automation changes should also update `README.md`, `CHANGELOG.md` and `CONTRIBUTING.md` when commands or maintainer procedures change.
 
 ## Architecture
 

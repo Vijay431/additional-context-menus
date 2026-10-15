@@ -9,15 +9,14 @@
  * @subcategory Generators
  */
 
-import * as path from 'path';
+import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { ILogger } from '../di/interfaces/ILogger';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import type { ICommandHandler } from './ICommandHandler';
 
 /** Describes a lazily loaded generator. */
@@ -79,7 +78,7 @@ export class LazyGeneratorCommand extends BaseCommandHandler implements ICommand
   }
 
   public async execute(): Promise<CommandResult> {
-    this.logger.info(this.spec.triggerMessage);
+    this.logInfo(this.spec.triggerMessage);
     try {
       // Load from lazy bundle at runtime
       const extensionPath = vscode.extensions.getExtension(
@@ -95,8 +94,9 @@ export class LazyGeneratorCommand extends BaseCommandHandler implements ICommand
       await service[this.spec.method]();
       return this.success(`${this.spec.name} completed`);
     } catch (error) {
-      this.logger.error(this.spec.errorLogMessage, error);
-      vscode.window.showErrorMessage(`${this.spec.errorPrefix}: ${(error as Error).message}`);
+      this.logError(this.spec.errorLogMessage, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.showError(`${this.spec.errorPrefix}: ${errorMessage}`);
       return this.error(this.spec.errorPrefix, error);
     }
   }

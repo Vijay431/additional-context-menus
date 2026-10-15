@@ -7,7 +7,7 @@
  * @subcategory File Operations
  */
 
-import * as path from 'path';
+import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
@@ -16,17 +16,15 @@ import type { ICodeAnalysisService } from '../di/interfaces/ICodeAnalysisService
 import type { IConfigurationService } from '../di/interfaces/IConfigurationService';
 import type { IFileDiscoveryService } from '../di/interfaces/IFileDiscoveryService';
 import type { ILogger } from '../di/interfaces/ILogger';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
-import type { ICommandHandler } from './ICommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import {
+  copyCodeToTargetFile,
   getFileExtension,
-  getFileName,
-  insertFunctionIntoFile,
   isSupportedFileType,
   resolveTargetFile,
 } from './codeInsertion';
+import type { ICommandHandler } from './ICommandHandler';
 
 export class MoveFunctionToFileCommand extends BaseCommandHandler implements ICommandHandler {
   constructor(
@@ -84,7 +82,7 @@ export class MoveFunctionToFileCommand extends BaseCommandHandler implements ICo
         return this.error(message);
       }
 
-      await insertFunctionIntoFile(
+      await copyCodeToTargetFile(
         functionInfo.fullText,
         targetFilePath,
         this.configService,
@@ -96,11 +94,16 @@ export class MoveFunctionToFileCommand extends BaseCommandHandler implements ICo
         new vscode.Position(functionInfo.endLine - 1, Number.MAX_SAFE_INTEGER),
       );
 
-      await editor.edit((editBuilder) => {
+      const removed = await editor.edit((editBuilder) => {
         editBuilder.delete(range);
       });
+      if (!removed) {
+        const message = `Function '${functionInfo.name}' was copied to ${path.basename(targetFilePath)} but could not be removed from the source file.`;
+        this.showError(message);
+        return this.error(message);
+      }
 
-      const fileName = getFileName(targetFilePath);
+      const fileName = path.basename(targetFilePath);
       const message = `Function '${functionInfo.name}' moved to ${fileName}`;
       this.showInfo(message);
       this.logger.info(`Function moved: ${functionInfo.name} to ${targetFilePath}`);

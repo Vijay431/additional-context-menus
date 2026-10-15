@@ -7,18 +7,30 @@
  * @subcategory File Operations
  */
 
-import * as path from 'path';
+import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { ILogger } from '../di/interfaces/ILogger';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import type { ICommandHandler } from './ICommandHandler';
 
 const MAX_DUPLICATES = 100;
+
+/**
+ * True when a `workspace.fs.stat` failure means the path does not exist.
+ * VS Code FileSystemError uses code 'FileNotFound'; providers, remote file
+ * systems and Node-style errors may instead use 'ENOENT'.
+ */
+function isNotFoundError(error: unknown): boolean {
+  if (error instanceof vscode.FileSystemError && error.code === 'FileNotFound') {
+    return true;
+  }
+  const code = (error as { code?: unknown } | null)?.code;
+  return code === 'ENOENT' || code === 'FileNotFound';
+}
 
 /**
  * Duplicate File Command Handler
@@ -79,7 +91,7 @@ export class DuplicateFileCommand extends BaseCommandHandler implements ICommand
           );
           counter++;
         } catch (statError) {
-          if (statError instanceof vscode.FileSystemError && statError.code === 'FileNotFound') {
+          if (isNotFoundError(statError)) {
             slotFound = true;
           } else {
             throw statError; // propagate permission / network errors to outer catch

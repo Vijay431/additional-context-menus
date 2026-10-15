@@ -1,0 +1,24 @@
+{
+  // Relaxed to rules that catch real breakage; style noise is disabled.
+  "config": {
+    "default": true,
+    "MD013": false, // line length: prose wrap is preserved
+    "MD024": false, // duplicate headings (CHANGELOG repeats Added/Changed/Fixed)
+    "MD033": false, // inline HTML (README badges)
+    "MD035": false, // horizontal rule style
+    "MD040": false, // code fence language
+    "MD041": false, // first line heading (templated front matter)
+    "MD060": false // table column style (Biome-style aligned tables not required)
+  },
+  "ignores": [
+    "node_modules/**",
+    "graphify-out/**",
+    "openspec/**",
+    ".claude/**",
+    "coverage/**",
+    ".vscode-test/**",
+    "out-test/**",
+    "dist/**",
+    "site/_site/**"
+  ]
+}

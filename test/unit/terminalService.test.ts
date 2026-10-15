@@ -1,6 +1,6 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const spawnMock = vi.hoisted(() => vi.fn());
 vi.mock('child_process', () => ({
@@ -50,23 +50,43 @@ describe('TerminalService external launchers', () => {
     restorePlatform = undefined;
   });
 
-  it("does not corrupt directory names containing $& or $'", async () => {
+  const ENV = 'ACM_TERMINAL_DIRECTORY';
+
+  it('passes the directory via env, never interpolating it into the command (unix)', async () => {
     restorePlatform = setPlatform('linux');
     spawnMock.mockImplementation(() => fakeChild('spawn'));
     const svc = makeService({
       type: 'external',
       externalTerminalCommand: 'myterm --cwd {{directory}} --again {{directory}}',
     });
-    const dir = "/tmp/a$&b$'c";
-    const quoted = `'${dir.replace(/'/g, "'\\''")}'`;
+    const dir = '/tmp/a$&b$\'c"`x';
 
     await svc.openDirectoryInTerminal(dir);
 
-    const [cmd] = spawnMock.mock.calls[0] as [string];
-    expect(cmd).toBe(`myterm --cwd ${quoted} --again ${quoted}`);
+    const [cmd, , opts] = spawnMock.mock.calls[0] as [
+      string,
+      string[],
+      { env: Record<string, string> },
+    ];
+    expect(cmd).toBe(`myterm --cwd "$${ENV}" --again "$${ENV}"`);
+    expect(opts.env[ENV]).toBe(dir);
   });
 
-  it('escapes single quotes on Unix', async () => {
+  it('adapts to user quoting context on Unix', async () => {
+    restorePlatform = setPlatform('linux');
+    spawnMock.mockImplementation(() => fakeChild('spawn'));
+    const svc = makeService({
+      type: 'external',
+      externalTerminalCommand: `sh -c "cd {{directory}}" 'x {{directory}}' "y {{directory}}" \\"{{directory}}`,
+    });
+
+    await svc.openDirectoryInTerminal('/tmp/p');
+
+    const [cmd] = spawnMock.mock.calls[0] as [string];
+    expect(cmd).toBe(`sh -c "cd $${ENV}" 'x '"$${ENV}"'' "y $${ENV}" \\""$${ENV}"`);
+  });
+
+  it('appends a quoted env reference when no placeholder (unix)', async () => {
     restorePlatform = setPlatform('linux');
     spawnMock.mockImplementation(() => fakeChild('spawn'));
     const svc = makeService({ type: 'external', externalTerminalCommand: 'myterm' });
@@ -74,7 +94,62 @@ describe('TerminalService external launchers', () => {
     await svc.openDirectoryInTerminal("/tmp/it's");
 
     const [cmd] = spawnMock.mock.calls[0] as [string];
-    expect(cmd).toBe("myterm '/tmp/it'\\''s'");
+    expect(cmd).toBe(`myterm "$${ENV}"`);
+  });
+
+  it('uses quoted %VAR% on Windows so cmd metacharacters stay inert', async () => {
+    restorePlatform = setPlatform('win32');
+    spawnMock.mockImplementation(() => fakeChild('spawn'));
+    const svc = makeService({
+      type: 'external',
+      externalTerminalCommand: 'wt -d {{directory}} cmd /k "cd {{directory}}"',
+    });
+    const dir = 'C:\\a&b^c%PATH%)d\\';
+
+    await svc.openDirectoryInTerminal(dir);
+
+    const [cmd, , opts] = spawnMock.mock.calls[0] as [
+      string,
+      string[],
+      { env: Record<string, string> },
+    ];
+    expect(cmd).toBe(`wt -d "%${ENV}%" cmd /k "cd %${ENV}%"`);
+    expect(opts.env[ENV]).toBe('C:\\a&b^c%PATH%)d');
+  });
+
+  it.each([
+    ['alacritty', ['--working-directory', '/d']],
+    ['kitty', ['--directory', '/d']],
+    ['konsole', ['--workdir', '/d']],
+    ['xterm', []],
+    ['gnome-terminal', ['--working-directory=/d']],
+    ['xfce4-terminal', ['--working-directory=/d']],
+    ['wezterm', ['start', '--cwd', '/d']],
+  ])('builds correct linux args for %s', (term, expected) => {
+    const svc = makeService({ type: 'system-default' }) as unknown as {
+      buildLinuxTerminalArgs(t: string, d: string): string[];
+    };
+    expect(svc.buildLinuxTerminalArgs(term, '/d')).toEqual(expected);
+  });
+
+  it('falls back when launcher exits non-zero right after spawning', async () => {
+    restorePlatform = setPlatform('linux');
+    spawnMock.mockImplementation(() => {
+      const child = fakeChild('spawn');
+      setTimeout(() => child.emit('exit', 2, null), 10);
+      return child;
+    });
+    const vscode = await import('vscode');
+    const show = vi.fn();
+    const createTerminal = vi
+      .spyOn(vscode.window, 'createTerminal')
+      .mockReturnValue({ show } as never);
+    const svc = makeService({ type: 'external', externalTerminalCommand: 'badterm' });
+
+    await svc.openDirectoryInTerminal('/tmp/proj');
+
+    expect(createTerminal).toHaveBeenCalled();
+    createTerminal.mockRestore();
   });
 
   it('spawns detached with ignored stdio and unrefs the child', async () => {

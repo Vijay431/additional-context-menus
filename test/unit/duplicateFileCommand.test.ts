@@ -59,6 +59,32 @@ describe('DuplicateFileCommand', () => {
     expect(err).not.toHaveBeenCalled();
   });
 
+  it('treats a plain ENOENT stat error as a free name', async () => {
+    stat.mockImplementation(async (u: any) => {
+      if (u.path === '/ws/a.txt') {
+        return { type: vscode.FileType.File, size: 1 };
+      }
+      throw Object.assign(new Error('ENOENT: no such file'), { code: 'ENOENT' });
+    });
+    const r = await new DuplicateFileCommand(uri, logger, a11y).execute();
+    expect(r.success).toBe(true);
+    expect(copy.mock.calls[0][1].path).toBe('/ws/a-duplicate.txt');
+    expect(err).not.toHaveBeenCalled();
+  });
+
+  it('propagates non-not-found stat errors', async () => {
+    stat.mockImplementation(async (u: any) => {
+      if (u.path === '/ws/a.txt') {
+        return { type: vscode.FileType.File, size: 1 };
+      }
+      throw Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' });
+    });
+    const r = await new DuplicateFileCommand(uri, logger, a11y).execute();
+    expect(r.success).toBe(false);
+    expect(copy).not.toHaveBeenCalled();
+    expect(err).toHaveBeenCalledWith('Failed to duplicate file: EACCES: permission denied');
+  });
+
   it('errors after 100 attempts', async () => {
     setup(() => true);
     const r = await new DuplicateFileCommand(uri, logger, a11y).execute();

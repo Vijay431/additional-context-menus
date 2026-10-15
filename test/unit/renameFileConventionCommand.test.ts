@@ -43,9 +43,12 @@ describe('RenameFileConventionCommand', () => {
   it('does not announce when screen reader mode is off', async () => {
     pick.mockResolvedValue({ label: 'kebab-case', value: 'kebab-case' });
     const svc = {
-      renameByPath: vi
-        .fn()
-        .mockResolvedValue({ totalFiles: 1, renamedFiles: ['a'], skippedFiles: 0, failedFiles: [] }),
+      renameByPath: vi.fn().mockResolvedValue({
+        totalFiles: 1,
+        renamedFiles: ['a'],
+        skippedFiles: 0,
+        failedFiles: [],
+      }),
     } as any;
     await new RenameFileConventionCommand(uri, svc, logger, a11y, () => false).execute();
     expect(info).toHaveBeenCalled();

@@ -7,15 +7,14 @@
  * @subcategory File Operations
  */
 
-import * as path from 'path';
+import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { ILogger } from '../di/interfaces/ILogger';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import type { ICommandHandler } from './ICommandHandler';
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB

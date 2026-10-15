@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { isPathWithin, isSafeFilePath } from '../../src/utils/pathValidator';
+import { describe, expect, it } from 'vitest';
+import { hasTraversalSegment, isPathWithin, isSafeFilePath } from '../../src/utils/pathValidator';
 
 describe('isSafeFilePath', () => {
   it('should return true for a normal .ts file path', () => {
@@ -67,5 +67,18 @@ describe('isPathWithin', () => {
 
   it('should reject sibling dir sharing a name prefix', () => {
     expect(isPathWithin('/ws', '/ws2/x.ts')).toBe(false);
+  });
+});
+
+describe('hasTraversalSegment', () => {
+  it('detects .. segments with either separator', () => {
+    expect(hasTraversalSegment('/a/../b')).toBe(true);
+    expect(hasTraversalSegment('a\\..\\b')).toBe(true);
+    expect(hasTraversalSegment('..')).toBe(true);
+  });
+
+  it('ignores names merely containing dots', () => {
+    expect(hasTraversalSegment('/a/my..proj/x.ts')).toBe(false);
+    expect(hasTraversalSegment('/a/..foo/x.ts')).toBe(false);
   });
 });

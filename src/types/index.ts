@@ -14,33 +14,33 @@
  */
 
 export {
-  type CopyCodeConfig,
-  type SaveAllConfig,
-  type TerminalConfig,
-  type KeybindingsConfig,
   type AccessibilityConfig,
-  type ExtensionConfiguration,
   CONFIG_KEYS,
+  type CopyCodeConfig,
   DEFAULT_CONFIG,
+  type ExtensionConfiguration,
   isCopyCodeConfig,
   isSaveAllConfig,
   isTerminalConfig,
   isValidInsertionPoint,
-  isValidTerminalType,
   isValidOpenBehavior,
+  isValidTerminalType,
   isValidVerbosity,
+  type KeybindingsConfig,
+  type SaveAllConfig,
+  type TerminalConfig,
 } from './config';
 
-export {
-  type ExtensionConfig,
-  type ProjectType,
-  type CompatibleFile,
-  type SaveAllResult,
-  type CopyValidation,
-  type MoveValidation,
-  type CopyConflictResolution,
-  type SaveAllFeedback,
-  type FunctionInfo,
+export type {
+  CompatibleFile,
+  CopyConflictResolution,
+  CopyValidation,
+  ExtensionConfig,
+  FunctionInfo,
+  MoveValidation,
+  ProjectType,
+  SaveAllFeedback,
+  SaveAllResult,
 } from './extension';
 
 export { vscode } from './vscode';

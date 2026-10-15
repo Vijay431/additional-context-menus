@@ -17,7 +17,7 @@ We provide security updates for the following versions of Additional Context Men
 We take the security of Additional Context Menus VS Code Extension seriously. If you believe you have found a security vulnerability, please follow these steps:
 
 1. **DO NOT** disclose the vulnerability publicly.
-2. Send a detailed description of the vulnerability to vijayanand431@gmail.com.
+2. Send a detailed description of the vulnerability to <vijayanand431@gmail.com>.
 3. You should receive a response within 48 hours.
 4. Please provide sufficient information to reproduce the vulnerability.
 

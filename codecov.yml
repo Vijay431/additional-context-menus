@@ -6,7 +6,6 @@ coverage:
     patch:
       default:
         informational: true
-
 comment:
-  layout: 'reach,diff,flags,files'
+  layout: 'diff, files'
   require_changes: true

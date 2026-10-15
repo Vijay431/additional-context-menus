@@ -1,5 +1,5 @@
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
@@ -116,7 +116,7 @@ export class EnvFileGeneratorService {
       const workspaceRoot = (activeFolder ?? fallbackFolder).uri.fsPath;
       const envExamplePath = path.join(workspaceRoot, '.env.example');
 
-      if (!isSafeFilePath(envExamplePath)) {
+      if (!isPathWithin(workspaceRoot, envExamplePath) || !isSafeFilePath(envExamplePath)) {
         this.logger.warn('Rejected unsafe .env.example path', { path: envExamplePath });
         vscode.window.showErrorMessage('Path to .env.example is not allowed.');
         await this.accessibilityService.announceError(

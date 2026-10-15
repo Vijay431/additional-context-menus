@@ -8,6 +8,9 @@ minimumReleaseAgeExclude:
   - qs@6.16.1
 
 overrides:
+  katex: '>=0.18.2'
+  linkify-it: '>=5.0.2'
+  smol-toml: '>=1.9.0'
   fast-uri: '>=4.1.5'
   nanoid: '>=3.3.18'
   serialize-javascript: '>=7.0.5'

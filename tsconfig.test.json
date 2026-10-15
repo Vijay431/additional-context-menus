@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": "./.out-test",
+    "outDir": "./out-test",
     "skipLibCheck": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -16,12 +16,6 @@
     "noFallthroughCasesInSwitch": false,
     "noEmitOnError": true
   },
-  "include": [
-    "test/runTests.ts",
-    "test/suite/**/*",
-    "test/unit/**/*",
-    "test/__mocks__/**/*",
-    "src/**/*"
-  ],
+  "include": ["test/suite/**/*", "test/unit/**/*", "test/__mocks__/**/*", "src/**/*"],
   "exclude": ["node_modules"]
 }

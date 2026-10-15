@@ -7,14 +7,11 @@
  * @subcategory Terminal Operations
  */
 
-import * as vscode from 'vscode';
-
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { ILogger } from '../di/interfaces/ILogger';
 import type { ITerminalService } from '../di/interfaces/ITerminalService';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import type { ICommandHandler } from './ICommandHandler';
 
 /**
@@ -30,22 +27,28 @@ export class OpenInTerminalCommand extends BaseCommandHandler implements IComman
   }
 
   public async execute(): Promise<CommandResult> {
-    this.logger.info('Open in Terminal command triggered');
+    this.logInfo('Open in Terminal command triggered');
 
     try {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showErrorMessage('No active editor found');
-        return this.error('No active editor found');
-      }
-
+      const editor = this.requireActiveEditor();
       const filePath = editor.document.fileName;
+
       await this.terminalService.openInTerminal(filePath);
-      return this.success('Terminal opened');
+
+      const fileName = this.getFileName(filePath);
+      const message = `Terminal opened in ${fileName}`;
+      this.showInfo(message);
+      this.logInfo(`Terminal opened for: ${filePath}`);
+      return this.success(message);
     } catch (error) {
-      this.logger.error('Error in Open in Terminal command', error);
-      vscode.window.showErrorMessage('Failed to open terminal');
+      this.logError('Error in Open in Terminal command', error);
+      this.showError('Failed to open terminal');
       return this.error('Failed to open terminal', error);
     }
+  }
+
+  private getFileName(filePath: string): string {
+    const lastSlash = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+    return lastSlash >= 0 ? filePath.substring(lastSlash + 1) : filePath;
   }
 }

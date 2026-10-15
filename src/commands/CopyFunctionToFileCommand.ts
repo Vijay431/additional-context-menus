@@ -7,6 +7,8 @@
  * @subcategory File Operations
  */
 
+import * as path from 'node:path';
+
 import * as vscode from 'vscode';
 
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
@@ -14,17 +16,15 @@ import type { ICodeAnalysisService } from '../di/interfaces/ICodeAnalysisService
 import type { IConfigurationService } from '../di/interfaces/IConfigurationService';
 import type { IFileDiscoveryService } from '../di/interfaces/IFileDiscoveryService';
 import type { ILogger } from '../di/interfaces/ILogger';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
-import type { ICommandHandler } from './ICommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import {
+  copyCodeToTargetFile,
   getFileExtension,
-  getFileName,
-  insertFunctionIntoFile,
   isSupportedFileType,
   resolveTargetFile,
 } from './codeInsertion';
+import type { ICommandHandler } from './ICommandHandler';
 
 export class CopyFunctionToFileCommand extends BaseCommandHandler implements ICommandHandler {
   constructor(
@@ -74,14 +74,14 @@ export class CopyFunctionToFileCommand extends BaseCommandHandler implements ICo
         return this.error('No target file');
       }
 
-      await insertFunctionIntoFile(
+      await copyCodeToTargetFile(
         functionInfo.fullText,
         targetFilePath,
         this.configService,
         this.logger,
       );
 
-      const fileName = getFileName(targetFilePath);
+      const fileName = path.basename(targetFilePath);
       const message = `Function '${functionInfo.name}' copied to ${fileName}`;
       this.showInfo(message);
       this.logger.info(`Function copied: ${functionInfo.name} to ${targetFilePath}`);

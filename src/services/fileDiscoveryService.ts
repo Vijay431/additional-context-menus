@@ -1,15 +1,15 @@
-import { constants } from 'fs';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import { constants } from 'node:fs';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { IConfigurationService } from '../di/interfaces/IConfigurationService';
-import type { IFileDiscoveryService, DiscoveredFile } from '../di/interfaces/IFileDiscoveryService';
+import type { DiscoveredFile, IFileDiscoveryService } from '../di/interfaces/IFileDiscoveryService';
 import type { ILogger } from '../di/interfaces/ILogger';
 import { AccessibilityService } from '../services/accessibilityService';
-import { CompatibleFile } from '../types/extension';
+import type { CompatibleFile } from '../types/extension';
 import {
   createAccessibleFileDescription,
   formatAccessiblePlaceholder,

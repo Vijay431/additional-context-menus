@@ -7,23 +7,23 @@
  * @subcategory File Operations
  */
 
+import * as path from 'node:path';
+
 import * as vscode from 'vscode';
 
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { IConfigurationService } from '../di/interfaces/IConfigurationService';
 import type { IFileDiscoveryService } from '../di/interfaces/IFileDiscoveryService';
 import type { ILogger } from '../di/interfaces/ILogger';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
-import type { ICommandHandler } from './ICommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import {
   copyCodeToTargetFile,
   getFileExtension,
-  getFileName,
   isSupportedFileType,
   resolveTargetFile,
 } from './codeInsertion';
+import type { ICommandHandler } from './ICommandHandler';
 
 export class MoveLinesToFileCommand extends BaseCommandHandler implements ICommandHandler {
   constructor(
@@ -65,14 +65,28 @@ export class MoveLinesToFileCommand extends BaseCommandHandler implements IComma
         return this.error('No target file');
       }
 
+      // Inserting into the source file shifts the selection range, so the delete below
+      // would remove the wrong lines.
+      if (path.resolve(targetFilePath) === path.resolve(editor.document.uri.fsPath)) {
+        const message =
+          'Move Selection to File needs a different target file than the source file.';
+        this.showWarning(message);
+        return this.error(message);
+      }
+
       await copyCodeToTargetFile(selectedText, targetFilePath, this.configService, this.logger);
 
       // Remove code from source file (only reached when the insert was applied)
-      await editor.edit((editBuilder) => {
+      const removed = await editor.edit((editBuilder) => {
         editBuilder.delete(selection);
       });
+      if (!removed) {
+        const message = `Lines were copied to ${path.basename(targetFilePath)} but could not be removed from the source file.`;
+        this.showError(message);
+        return this.error(message);
+      }
 
-      const fileName = getFileName(targetFilePath);
+      const fileName = path.basename(targetFilePath);
       const message = `Lines moved to ${fileName}`;
       this.showInfo(message);
       this.logger.info(`Lines moved to: ${targetFilePath}`);

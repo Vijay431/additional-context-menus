@@ -1,10 +1,10 @@
 import { parse } from '@babel/parser';
-import type { Node, File } from '@babel/types';
-import * as vscode from 'vscode';
+import type { File, Node } from '@babel/types';
+import type * as vscode from 'vscode';
 
 import type {
-  ICodeAnalysisService,
   FunctionInfo,
+  ICodeAnalysisService,
   ImportInfo,
 } from '../di/interfaces/ICodeAnalysisService';
 import type { ILogger } from '../di/interfaces/ILogger';

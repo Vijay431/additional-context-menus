@@ -8,35 +8,35 @@
  */
 
 export { BaseCommandHandler, type CommandResult } from './BaseCommandHandler';
-export type { ICommandHandler } from './ICommandHandler';
-export { CopyFunctionCommand } from './CopyFunctionCommand';
-export { SaveAllCommand } from './SaveAllCommand';
-export { OpenInTerminalCommand } from './OpenInTerminalCommand';
-export { CopyLinesToFileCommand } from './CopyLinesToFileCommand';
-export { MoveLinesToFileCommand } from './MoveLinesToFileCommand';
-export { CopyFunctionToFileCommand } from './CopyFunctionToFileCommand';
-export { MoveFunctionToFileCommand } from './MoveFunctionToFileCommand';
-export { RenameFileConventionCommand } from './RenameFileConventionCommand';
-export { CopyFileContentsCommand } from './CopyFileContentsCommand';
-export { DuplicateFileCommand } from './DuplicateFileCommand';
-export { EnableCommand, DisableCommand } from './EnableDisableCommands';
-export { ShowOutputChannelCommand } from './ShowOutputChannelCommand';
 export {
   DebugContextVariablesCommand,
   RefreshContextVariablesCommand,
 } from './ContextVariableCommands';
+export { CopyFileContentsCommand } from './CopyFileContentsCommand';
+export { CopyFunctionCommand } from './CopyFunctionCommand';
+export { CopyFunctionToFileCommand } from './CopyFunctionToFileCommand';
+export { CopyLinesToFileCommand } from './CopyLinesToFileCommand';
+export { DuplicateFileCommand } from './DuplicateFileCommand';
+export { DisableCommand, EnableCommand } from './EnableDisableCommands';
+export type { ICommandHandler } from './ICommandHandler';
 export {
   CheckKeybindingConflictsCommand,
-  EnableKeybindingsCommand,
   DisableKeybindingsCommand,
+  EnableKeybindingsCommand,
 } from './KeybindingCommands';
 export {
-  LazyGeneratorCommand,
+  GENERATE_CRON_TIMER_SPEC,
   GENERATE_ENUM_SPEC,
   GENERATE_ENV_FILE_SPEC,
-  GENERATE_CRON_TIMER_SPEC,
+  LazyGeneratorCommand,
   type LazyGeneratorSpec,
 } from './LazyGeneratorCommand';
+export { MoveFunctionToFileCommand } from './MoveFunctionToFileCommand';
+export { MoveLinesToFileCommand } from './MoveLinesToFileCommand';
+export { OpenInTerminalCommand } from './OpenInTerminalCommand';
+export { RenameFileConventionCommand } from './RenameFileConventionCommand';
+export { SaveAllCommand } from './SaveAllCommand';
+export { ShowOutputChannelCommand } from './ShowOutputChannelCommand';
 
 // Command handler factory type
 export type CommandHandlerFactory = () => {

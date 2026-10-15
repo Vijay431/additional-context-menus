@@ -34,4 +34,20 @@ describe('findSmartInsertionPoint', () => {
   it('falls back to first export when no imports', () => {
     expect(find('const a = 1;\nexport const b = 2;')).toBe(1);
   });
+
+  it('handles import = require', () => {
+    expect(find("import x = require('y');\nconst a = 'x';")).toBe(1);
+    expect(find("import x = require('y')\nconst a = 'x';")).toBe(1);
+  });
+
+  it('ignores trailing line and block comments on import lines', () => {
+    expect(find("import a from 'a'; /* c */\nconst b = 'x';")).toBe(1);
+    expect(find("import a from 'a'; // c\nconst b = 'x';")).toBe(1);
+    expect(find("import {\n  a, /* x */\n} from 'a' /* c */;\nconst b = 'x';")).toBe(3);
+  });
+
+  it('does not treat export ... from as an import end', () => {
+    expect(find("import a from 'a';\nexport { b } from 'b';\nconst c = 'x';")).toBe(1);
+    expect(find("export * from 'b';\nconst c = 1;")).toBe(0);
+  });
 });

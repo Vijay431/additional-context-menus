@@ -8,33 +8,34 @@
  * - accessibilityHelper: Functions for creating accessible QuickPick items, ARIA labels, and screen reader announcements.
  * - Cache / CacheConfig / CacheStats / createCache / memoize: Generic TTL-based cache with LRU eviction.
  * - IMetricCollector / MetricData: Interface and types for collecting operation performance metrics.
- * - isSafeFilePath: Guards against path traversal and dangerous file extensions.
+ * - isSafeFilePath: Sanity check (non-empty string, not a Windows executable/script extension). Does not check traversal.
+ * - isPathWithin / hasTraversalSegment: Traversal guards; containment within a root and literal `..` segment detection.
  *
  * @category Utilities
  * @module utils
  */
 
-export { Logger, LogLevel, LogFormat, LogCategory } from './logger';
 export {
-  ConfigValidator,
-  validateExtensionConfig,
-  validateConfigValue,
-  formatValidationErrors,
-  type ValidationResult,
-  type ValidationError,
-} from './configValidator';
-export {
-  getAccessibleLabel,
   announceToScreenReader,
+  createAccessibleFileDescription,
+  createAccessibleValidationMessage,
+  formatAccessibleInputPrompt,
   formatAccessiblePlaceholder,
+  getAccessibleLabel,
   getAccessibleQuickPickItem,
   getAccessibleQuickPickItems,
-  formatAccessibleInputPrompt,
-  createAccessibleValidationMessage,
   getKeyboardNavigationHint,
-  createAccessibleFileDescription,
   truncateForAccessibility,
 } from './accessibilityHelper';
-export { Cache, createCache, memoize, type CacheConfig, type CacheStats } from './cache';
-export { type IMetricCollector, type MetricData } from './metrics';
-export { isSafeFilePath, isPathWithin } from './pathValidator';
+export { Cache, type CacheConfig, type CacheStats, createCache, memoize } from './cache';
+export {
+  ConfigValidator,
+  formatValidationErrors,
+  type ValidationError,
+  type ValidationResult,
+  validateConfigValue,
+  validateExtensionConfig,
+} from './configValidator';
+export { LogCategory, LogFormat, Logger, LogLevel } from './logger';
+export type { IMetricCollector, MetricData } from './metrics';
+export { hasTraversalSegment, isPathWithin, isSafeFilePath } from './pathValidator';

@@ -38,4 +38,4 @@ function outer() {
   return inner();
 }
 
-export { add, multiply, fetchData, MyComponent, useCounter, Calculator, outer };
+export { add, Calculator, fetchData, MyComponent, multiply, outer, useCounter };

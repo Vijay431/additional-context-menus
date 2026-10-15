@@ -61,11 +61,11 @@ pnpm install
 # Build the extension (requires Node.js 22+; Node 24 LTS recommended)
 pnpm run build
 
-# Run ESLint — uses tsconfig.eslint.json for type-aware rules
+# Lint and format check with Biome, then lint Markdown and typecheck
 pnpm run lint
+pnpm run lint:md
+pnpm run typecheck
 ```
-
-> **Note on `tsconfig.eslint.json`**: The project uses a dedicated `tsconfig.eslint.json` (extending `tsconfig.json`) for ESLint's type-aware rules. It includes `src/`, `scripts/`, and `esbuild.config.ts` with `noEmit: true` so linting never affects the production build output.
 
 ### 4. Launch Development Environment
 
@@ -78,7 +78,7 @@ pnpm run lint
 ```bash
 pnpm run watch      # Watch mode for active development
 pnpm run package    # Production build + VSIX packaging
-pnpm run format     # Format code with Prettier
+pnpm run format     # Format code with Biome
 pnpm run test:unit       # Run unit tests (Vitest)
 pnpm run test:unit:coverage  # Run unit tests with LCOV coverage
 pnpm run test:integration  # Run integration tests (requires display/xvfb on Linux)
@@ -146,7 +146,7 @@ Examples:
 
 ### Commit Standards
 
-Commit messages and size are enforced automatically via git hooks (commitlint + husky) and CI.
+Commit messages are enforced automatically via git hooks (commitlint + husky) and CI.
 
 #### Message Format (enforced by `commit-msg` hook)
 
@@ -170,29 +170,7 @@ type(scope): short description
 
 Breaking changes: append `!` after the type — `feat!: remove deprecated API`
 
-#### Commit Size Limits (enforced by `pre-commit` hook + CI)
-
-| Limit                        | Value   | Rationale                            |
-| ---------------------------- | ------- | ------------------------------------ |
-| Max files per commit         | **10**  | Keeps commits focused and reviewable |
-| Max lines changed per commit | **400** | Prevents large, hard-to-review diffs |
-
-If your change exceeds these limits, split it into multiple focused commits. For sweeping refactors that cannot reasonably be split, add the `size/override` label to the PR — the CI check will post a warning but will not hard-fail.
-
-```bash
-# Stage and commit one logical group at a time
-git add src/services/terminalService.ts
-git commit -m "feat(terminal): add integrated terminal support"
-
-git add src/commands/openInTerminal.ts
-git commit -m "feat(terminal): add openInTerminal command handler"
-```
-
-> **Note:** `--no-verify` bypasses local hooks but the CI `commit-size` job will still block oversized PRs.
-
-#### Grandfathered History
-
-Commits before `v2.0.0` predate this enforcement and are not subject to these rules. Enforcement applies to all commits from the next release onwards.
+> **Note:** `--no-verify` bypasses local hooks, but CI still runs Biome, markdownlint, and commitlint (commits and PR title).
 
 ### Pull Request Process
 
@@ -279,11 +257,11 @@ pnpm run test:unit
 - Enable **strict mode** compliance
 - Use **meaningful variable names**
 - Add **JSDoc comments** for public functions
-- Follow **ESLint rules** configured in the project
+- Follow the **Biome rules** configured in `biome.json`
 
 ### Code Formatting
 
-- Use **Prettier** for consistent formatting
+- Use **Biome** for consistent formatting
 - Run `pnpm run format` before committing
 - Use **2 spaces** for indentation
 - Use **semicolons** at line endings
@@ -346,8 +324,7 @@ Contributors are recognized in:
 Helpful extensions for development:
 
 - **TypeScript Importer** - Auto-import management
-- **ESLint** - Code linting
-- **Prettier** - Code formatting
+- **Biome** - Linting and formatting (`biomejs.biome`)
 - **GitLens** - Git integration
 
 ### Debugging

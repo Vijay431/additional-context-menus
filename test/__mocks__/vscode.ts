@@ -167,7 +167,9 @@ export class EventEmitter<T = void> {
     };
   };
   fire(data: T) {
-    this.listeners.forEach((l) => l(data));
+    for (const l of this.listeners) {
+      l(data);
+    }
   }
   dispose() {
     this.listeners = [];

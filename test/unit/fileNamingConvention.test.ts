@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 // FileNamingConventionService uses Logger.getInstance() which needs the vscode mock.
 // The vscode alias is configured in vitest.config.ts.
@@ -99,5 +99,15 @@ describe('FileNamingConventionService.convertToConvention', () => {
     expect(service.convertToConvention('MyButtonComponent', 'kebab-case')).toBe(
       'my-button-component',
     );
+  });
+});
+
+describe('FileNamingConventionService.renameByPath', () => {
+  it('rejects targets containing a .. segment', async () => {
+    const service = FileNamingConventionService.getInstance();
+    const result = await service.renameByPath('/ws/src/../../etc/My File.ts', 'kebab-case');
+    expect(result.success).toBe(false);
+    expect(result.failedFiles[0]?.error).toBe('Path validation failed');
+    expect(result.renamedFiles).toEqual([]);
   });
 });

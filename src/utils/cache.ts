@@ -323,11 +323,7 @@ export function memoize(
   ttl?: number,
   keyGenerator?: (...args: unknown[]) => string,
 ): MethodDecorator {
-  return function (
-    _target: unknown,
-    _propertyKey: string | symbol,
-    descriptor: PropertyDescriptor,
-  ) {
+  return (_target: unknown, _propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     const originalMethod = descriptor.value;
     const cacheConfig: Partial<CacheConfig> = {};
     if (ttl !== undefined) {
