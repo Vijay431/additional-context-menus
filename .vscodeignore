@@ -1,83 +1,11 @@
-# ============================================
-# Source & Build Directories
-# ============================================
-src/
-test/
-scripts/
-out-test/
-dist/src/
-dist/test/
-dist/meta.json
-coverage/
+# Allowlist: ignore everything, then re-include only what users need at runtime.
+# New shipped files must also be added to the VSIX verifier in .github/workflows/release.yml.
+**
 
-# ============================================
-# Dependencies & Package Management
-# ============================================
-node_modules/
-pnpm-lock.yaml
-pnpm-workspace.yaml
-
-# ============================================
-# Development & CI/CD Configuration
-# ============================================
-.github/
-.husky/
-.gitignore
-.editorconfig
-.coderabbit.yaml
-.nvmrc
-.mcp.json
-.prettier*
-eslint*
-tsconfig*.json
-esbuild*
-vitest.config.ts
-tsconfig.test.json
-.vscode-test.mjs
-.lintstagedrc
-.devcontainer/
-.cursorignore
-.code-review-graph/
-.antigravitycli/
-
-# ============================================
-# VS Code Configuration & Workspaces
-# ============================================
-.vscode/
-.vscode-test/
-.vscodeignore
-.worktrees/
-.auto-claude/
-.automaker/
-.claude/
-.sisyphus
-
-# ============================================
-# Build Artifacts & Logs
-# ============================================
-*.vsix
-debug.log
-
-# ============================================
-# Documentation & Content
-# ============================================
-blogs/
-docs/
-public/
-
-# ============================================
-# Project & Documentation Files
-# ============================================
-CLAUDE.md
-CHANGELOG_RELEASE.md
-TODO.md
-IMPLEMENTATION_SUMMARY.md
-opencode.json
-.auto-claude-security.json
-DEVELOPER.md
-AGENTS.md
-ARCHITECTURE.md
-CONTRIBUTORS.md
-SECURITY.md
-SUPPORT.md
-codecov.yml
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+!logo.png
+!dist/extension.js
+!dist/lazy/**
