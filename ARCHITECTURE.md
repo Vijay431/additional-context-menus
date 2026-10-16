@@ -29,6 +29,20 @@ flowchart TD
     C -.->|"lazy load"| J["CronJobTimerGeneratorService\nGenerate Cron"]
 ```
 
+### Activation
+
+`activate()` in `src/extension.ts` runs these steps in order:
+
+1. `initializeContainer(context)` registers the services in the DI container.
+2. `new ExtensionManager()` takes the logger and configuration service singletons and creates a `ContextMenuManager`.
+3. `ExtensionManager.activate(context)` validates the configuration with `ConfigValidator`.
+4. `initializeComponents()` calls `ContextMenuManager.initialize()`, which registers the commands, then subscribes to configuration changes. Commands are always registered; `when` clauses control menu visibility.
+5. `checkForNodeProject()` warns if the workspace has no `package.json`.
+6. It pushes the collected disposables and a disposal hook onto `context.subscriptions`.
+7. It sets the `additionalContextMenus.enabled` context key from the configuration.
+
+If any step throws, `activate()` logs the error, shows it in an output channel, and displays an error message. `deactivate()` disposes the manager.
+
 ## 2. Codebase Structure & Modules
 
 The repository is structured with separation of concerns in mind:

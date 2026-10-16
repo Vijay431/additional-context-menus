@@ -13,17 +13,6 @@
       "preLaunchTask": "npm: watch"
     },
     {
-      "name": "Extension Tests",
-      "type": "extensionHost",
-      "request": "launch",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
-        "--extensionTestsPath=${workspaceFolder}/out-test/test/suite"
-      ],
-      "outFiles": ["${workspaceFolder}/out-test/**/*.js"],
-      "preLaunchTask": "test:integration"
-    },
-    {
       "name": "Launch Extension (Minimal)",
       "type": "extensionHost",
       "request": "launch",

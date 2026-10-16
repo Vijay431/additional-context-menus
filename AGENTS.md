@@ -307,6 +307,7 @@ Branch naming: `feature/`, `fix/`, `docs/`, or `refactor/` prefix from `main`.
 - Integration test build output goes to `out-test/` (not `dist/`) and runs through `@vscode/test-cli` (`.vscode-test.mjs`). The script is `pnpm run test:integration`. Compile errors fail the build — `|| true` is not used in CI.
 - Never add VS Code API-dependent logic to unit tests; never add pure-logic tests to the integration suite.
 - On Linux CI, integration tests run under `xvfb-run -a`.
+- Debug a test from the Test Explorer (Extension Test Runner, reads `.vscode-test.mjs`); there is no launch entry for it.
 - All test descriptions must start with `"should "` (e.g. `it('should detect React', ...)`).
 - Run integration tests before any change to context menus, commands, file operations, or editor interactions.
 
