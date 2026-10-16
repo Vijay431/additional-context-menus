@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `.vscodeignore` is now an allowlist, so the published package no longer includes tooling, planning or config files (`graphify-out/`, `openspec/`, `biome.json`, and similar). The release verifier fails on any file outside the allowlist or on shipped JS that references a source map.
 - **BREAKING (release process)**: `release.yml` now runs when a `v*` tag is pushed, not when a GitHub Release is published. The gate fails before build unless the tag matches `package.json` and is reachable from `main`. A failed tag can be re-run with `workflow_dispatch` by actors in `RELEASE_WHITELIST_ACTORS`; re-runs skip versions already published.
 - **BREAKING (tests)**: Integration tests run through `vscode-test` (`@vscode/test-cli`, `.vscode-test.mjs`); `out-test/test/runTests.js` is gone and the output dir is `out-test/` (was `.out-test/`).
 - Every workflow action is pinned to a commit SHA, and the CI build matrix covers Node 22, 24, and 26.

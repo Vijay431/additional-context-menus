@@ -168,6 +168,23 @@ jobs:
           check_field "repository"
           check_field "license"
 
+          # 6. Assert every file is on the allowlist (keep in sync with .vscodeignore)
+          ALLOWED='^(\[Content_Types\]\.xml|extension\.vsixmanifest|extension/(package\.json|README\.md|CHANGELOG\.md|LICENSE(\.txt)?|logo\.png|dist/extension\.js|dist/lazy/[^/]+\.js))$'
+          UNEXPECTED=$(unzip -Z1 "${VSIX_FILE}" | grep -v '/$' | grep -Eiv "${ALLOWED}" || true)
+          if [ -n "${UNEXPECTED}" ]; then
+            echo "ERROR: VSIX contains files outside the allowlist:"
+            echo "${UNEXPECTED}"
+            exit 1
+          fi
+          echo "✓ All files are on the allowlist"
+
+          # 7. Assert shipped JS does not reference a source map
+          if grep -rl "sourceMappingURL=" "${UNZIP_DIR}/extension" --include="*.js" | grep -q .; then
+            echo "ERROR: Shipped JS references a source map (sourceMappingURL=)"
+            exit 1
+          fi
+          echo "✓ No source map references found"
+
           echo "All VSIX verification checks passed."
 
   publish-vscode:
