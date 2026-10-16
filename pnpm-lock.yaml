@@ -31,8 +31,8 @@ importers:
   .:
     devDependencies:
       '@babel/parser':
-        specifier: ^8.0.4
-        version: 8.0.5
+        specifier: ^8.0.7
+        version: 8.0.7
       '@babel/types':
         specifier: ^8.0.6
         version: 8.0.6
@@ -177,8 +177,8 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  '@babel/parser@8.0.5':
-    resolution: {integrity: sha512-51RXvQNFakaS0bTpYiGkxNbUVwkPO4kONv6EVLorZABxsx+KZ6Z7uSYvi/wmKS/+X+rfj9RvOw0/ZNh+cmI0Rw==}
+  '@babel/parser@8.0.7':
+    resolution: {integrity: sha512-UkDwEbPO1px2JQSrdh4qIgaH1JgG7GO/pFeJkpxhDxIETkT/QvGpnigXIw75ViHYPtIgKITmVUJqLjiO+JuWjA==}
     engines: {node: ^22.18.0 || >=24.11.0}
     hasBin: true
 
@@ -3336,7 +3336,7 @@ snapshots:
     dependencies:
       '@babel/types': 7.29.8
 
-  '@babel/parser@8.0.5':
+  '@babel/parser@8.0.7':
     dependencies:
       '@babel/types': 8.0.6
 
