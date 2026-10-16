@@ -7,15 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Biome (lint and format), markdownlint, commitlint with husky `commit-msg`, `@vscode/test-cli` for integration tests, `.gitattributes`, `.all-contributorsrc`, `scripts/check-prerelease.cjs`, `scripts/smoke-bundle.cjs`, and `.github/VULNERABILITY_REPORT.yml`, synced from the template baseline (`docs/sync.md` in `vscode-extension-template`).
+- Issue forms for bug reports and feature requests, and configuration, cross-platform, performance, and refactoring templates.
+- Build-provenance attestation for the released `.vsix`; verify with `gh attestation verify`.
+- CodeQL static analysis workflow (`.github/workflows/codeql.yml`) scanning JavaScript/TypeScript source for vulnerabilities on PRs/pushes to `main` and weekly.
+- OpenSSF Scorecard workflow (`.github/workflows/scorecard.yml`) tracking supply-chain security posture.
+- `capabilities.untrustedWorkspaces` declaration in the extension manifest, enabling the Workspace Trust badge on the VS Code Marketplace listing. `capabilities.virtualWorkspaces.supported` is declared `false` — `openInTerminal`, `EnvFileGeneratorService`, and `FileDiscoveryService` assume `file:`-scheme paths and use Node `path`/`fs` APIs directly, which isn't safe for non-file virtual workspace URIs.
+- `SUPPORT.md` — recognized GitHub community-health file pointing to issue templates, Marketplace Q&A, and the security disclosure process.
+- Codecov coverage reporting: `codecov/codecov-action@v5` upload step in the `test-unit` CI job, `codecov.yml` (informational-only status checks), and a coverage badge in `README.md`. Requires a `CODECOV_TOKEN` repository secret to actually upload (upload is non-blocking via `fail_ci_if_error: false` until configured).
+- `sponsor` field in `package.json` pointing to GitHub Sponsors, surfacing a "Sponsor" link on the VS Code Marketplace listing.
+- "Support" and "Accessibility" sections in `README.md`, including a new Accessibility settings table.
+
 ### Changed
 
+- **BREAKING (release process)**: `release.yml` now runs when a `v*` tag is pushed, not when a GitHub Release is published. The gate fails before build unless the tag matches `package.json` and is reachable from `main`. A failed tag can be re-run with `workflow_dispatch` by actors in `RELEASE_WHITELIST_ACTORS`; re-runs skip versions already published.
+- **BREAKING (tests)**: Integration tests run through `vscode-test` (`@vscode/test-cli`, `.vscode-test.mjs`); `out-test/test/runTests.js` is gone and the output dir is `out-test/` (was `.out-test/`).
+- Every workflow action is pinned to a commit SHA, and the CI build matrix covers Node 22, 24, and 26.
 - **CI packaging dry-run**: `build` job now runs `pnpm run package` (`vsce package`) after the build step, across the Node 22/24/26 matrix — validates the VSIX packaging pipeline on every PR/main run instead of only at release time. No upload/publish occurs.
+- CI, release, and security workflows plus `.nvmrc` bumped from Node 22.x to Node 24.x (`lts/krypton`) as the single-version baseline (the 22/24/26 test matrix in `ci.yml` is unaffected).
+- `actions/setup-node` bumped v5→v7, `actions/github-script` bumped v7→v9 (fixing an inconsistent leftover in `security-daily.yml`), and `actions/stale` bumped v10→v11, across all workflow files.
 
 ### Fixed
+
+- `useParseIntRadix`: cron field validation now parses with radix 10.
 - Daily security audit workflow now manages a single tracking issue instead of creating duplicate issues each day; resolves all 41 stale bot-generated security alert issues
-- Updated CLAUDE.md to correctly document that `codeAnalysisService` uses `@babel/parser` (not TypeScript Compiler API)
 - **Security audit remediation**: Tightened pnpm overrides for `js-yaml` (`>=4.1.2` → `>=5.2.2`) and `brace-expansion` (`>=5.0.6` → `>=5.0.8`) — the prior ranges were resolving to vulnerable versions (`js-yaml@5.2.1`, `brace-expansion@5.0.7`) because they only set a floor without excluding the vulnerable window. `pnpm audit --audit-level=low` now reports zero vulnerabilities.
 - **Security audit remediation**: Tightened pnpm overrides for `undici` (`>=7.28.0` → `>=8.9.0`), `fast-uri` (`>=3.1.2` → `>=4.1.2`), and `postcss` (`>=8.5.10` → `>=8.5.23`) — the prior ranges were resolving to vulnerable versions (`undici@8.7.0`, `fast-uri@4.1.1`, `postcss@8.5.19`) because they only set a floor without excluding the vulnerable window. `pnpm audit --audit-level=low` now reports zero vulnerabilities.
+- **Security audit remediation**: Tightened the `fast-uri` override again (`>=4.1.2` → `>=4.1.3` — `4.1.2` was itself vulnerable to four newly-published high-severity advisories) and added a `nanoid: '>=3.3.18'` override (previously unpinned, resolving to vulnerable `3.3.16` via `vitest`→`vite`→`postcss`). `pnpm audit --audit-level=high` now reports zero high/critical findings.
+- **`scorecard.yml` permissions fix**: top-level workflow `permissions` changed to `read-all` (job-level `analysis.permissions` already grants the writes the Scorecard action needs) — a workflow-level write permission was rejected by the action's `publish_results: true` requirement.
+- Fixed `src/services/codeAnalysisService.ts` parser plugin list for the `@babel/parser` 8.x bump: `classProperties` is parsed by default as of `@babel/parser` 8 (class fields are standard JS) and is no longer a valid plugin name.
+
+### Removed
+
+- ESLint, Prettier, the `openai` dev dependency, the automated vulnerability-remediation agent, and the `pr-commit-size`, `stale`, `security-pr`, and `pr-title` workflows. Contributors listing moved from `CONTRIBUTORS.md` to `.all-contributorsrc`; `CLAUDE.md` and `.github/copilot-instructions.md` removed in favor of `AGENTS.md`.
 
 ## [2.1.3] - 2026-07-20
 

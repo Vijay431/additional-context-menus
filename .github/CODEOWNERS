@@ -12,6 +12,8 @@
 /.github/CODEOWNERS @Vijay431 # circular — anyone editing this can unprotect everything else
 /.github/workflows/ci.yml @Vijay431 # main PR gate (lint, unit, integration, audit) — can be neutered
 /.github/workflows/pr-commit-size.yml @Vijay431 # 10-file / 400-line cap enforcement
+/.github/workflows/codeql.yml @Vijay431 # SAST gate — bad change disables vulnerability scanning
+/.github/workflows/scorecard.yml @Vijay431 # supply-chain posture gate
 /.husky/ @Vijay431 # local pre-commit / commit-msg hooks
 /scripts/check-commit-size.sh @Vijay431 # commit-size script CI calls
 /scripts/commit-size-excludes.txt @Vijay431 # bypass list for commit-size check — abuse vector

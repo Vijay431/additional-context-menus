@@ -94,7 +94,7 @@ export class Cache<T> {
     expired: 0,
     evicted: 0,
   };
-  private cleanupTimer?: NodeJS.Timeout;
+  private cleanupTimer?: NodeJS.Timeout | undefined;
 
   constructor(config: Partial<CacheConfig> = {}) {
     this.config = { ...DEFAULT_CACHE_CONFIG, ...config };
@@ -323,11 +323,7 @@ export function memoize(
   ttl?: number,
   keyGenerator?: (...args: unknown[]) => string,
 ): MethodDecorator {
-  return function (
-    _target: unknown,
-    _propertyKey: string | symbol,
-    descriptor: PropertyDescriptor,
-  ) {
+  return (_target: unknown, _propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     const originalMethod = descriptor.value;
     const cacheConfig: Partial<CacheConfig> = {};
     if (ttl !== undefined) {

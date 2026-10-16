@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type {
-  IEnumGeneratorService,
   EnumNamingConvention,
+  IEnumGeneratorService,
 } from '../di/interfaces/IEnumGeneratorService';
 import type { ILogger } from '../di/interfaces/ILogger';
 import { AccessibilityService } from '../services/accessibilityService';
@@ -191,11 +191,11 @@ export class EnumGeneratorService implements IEnumGeneratorService {
   private extractStringLiterals(text: string): string[] {
     const values: string[] = [];
 
+    // biome-ignore lint/correctness/noEmptyCharacterClassInRegex: legacy pattern kept as-is; changing it would change which literals are extracted
     const patterns = [/(['"])([^'"]*)\1/g, /(['])([^]]*)\1/g, /(['`])([^'`]*)\1/g];
 
     for (const pattern of patterns) {
-      let match: RegExpExecArray | null;
-      while ((match = pattern.exec(text)) !== null) {
+      for (let match = pattern.exec(text); match !== null; match = pattern.exec(text)) {
         const value = match[2]?.trim() ?? '';
         if (value && !values.includes(value)) {
           values.push(value);

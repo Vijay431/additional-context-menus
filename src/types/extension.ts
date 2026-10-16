@@ -4,15 +4,15 @@
  * Re-export strongly-typed configuration types
  */
 export type {
+  AccessibilityConfig,
   CopyCodeConfig,
+  ExtensionConfiguration,
+  KeybindingsConfig,
   SaveAllConfig,
   TerminalConfig,
-  KeybindingsConfig,
-  AccessibilityConfig,
-  ExtensionConfiguration,
 } from './config';
 
-export { DEFAULT_CONFIG, CONFIG_KEYS } from './config';
+export { CONFIG_KEYS, DEFAULT_CONFIG } from './config';
 
 /**
  * Legacy ExtensionConfig type for backward compatibility

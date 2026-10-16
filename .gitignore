@@ -3,7 +3,6 @@ node_modules/
 
 # Build output
 dist/
-.out-test/
 out-test/
 coverage/
 *.vsix
@@ -19,6 +18,9 @@ test/**/*.js.map
 .worktrees/
 .auto-claude/
 .automaker/
+.firecrawl/
+.codegraph/
+graphify-out/
 .sisyphus
 .auto-claude-security.json
 

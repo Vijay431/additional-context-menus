@@ -1,10 +1,10 @@
 import { parse } from '@babel/parser';
-import type { Node, File } from '@babel/types';
-import * as vscode from 'vscode';
+import type { File, Node } from '@babel/types';
+import type * as vscode from 'vscode';
 
 import type {
-  ICodeAnalysisService,
   FunctionInfo,
+  ICodeAnalysisService,
   ImportInfo,
 } from '../di/interfaces/ICodeAnalysisService';
 import type { ILogger } from '../di/interfaces/ILogger';
@@ -36,7 +36,8 @@ function parseSource(code: string): File {
   return parse(code, {
     sourceType: 'module',
     strictMode: false,
-    plugins: ['typescript', 'jsx', 'decorators', 'classProperties'],
+    // classProperties is parsed by default as of @babel/parser 8 (class fields are standard JS); no longer a plugin name.
+    plugins: ['typescript', 'jsx', 'decorators'],
     errorRecovery: true,
   });
 }

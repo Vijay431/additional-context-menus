@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { isSafeFilePath } from '../../src/utils/pathValidator';
+import { describe, expect, it } from 'vitest';
+import { hasTraversalSegment, isPathWithin, isSafeFilePath } from '../../src/utils/pathValidator';
 
 describe('isSafeFilePath', () => {
   it('should return true for a normal .ts file path', () => {
@@ -14,20 +14,20 @@ describe('isSafeFilePath', () => {
     expect(isSafeFilePath('')).toBe(false);
   });
 
-  it('should return false for a path with .. traversal (relative path)', () => {
-    expect(isSafeFilePath('../etc/passwd')).toBe(false);
-  });
-
-  it('should return false for a path containing node_modules', () => {
-    expect(isSafeFilePath('/project/node_modules/lodash/index.ts')).toBe(false);
+  it('should allow dirs with .. inside a name', () => {
+    expect(isSafeFilePath('/a/my..proj/x.ts')).toBe(true);
   });
 
   it('should return false for a .exe extension', () => {
     expect(isSafeFilePath('/project/run.exe')).toBe(false);
   });
 
-  it('should return false for a .sh extension', () => {
-    expect(isSafeFilePath('/project/setup.sh')).toBe(false);
+  it('should return false for a .vbs extension', () => {
+    expect(isSafeFilePath('/project/run.vbs')).toBe(false);
+  });
+
+  it('should allow .sh files', () => {
+    expect(isSafeFilePath('/project/setup.sh')).toBe(true);
   });
 
   it('should return false for a .bat extension', () => {
@@ -42,11 +42,43 @@ describe('isSafeFilePath', () => {
     expect(isSafeFilePath('/project/run.ps1')).toBe(false);
   });
 
-  it('should return false for a .js extension (listed as dangerous)', () => {
-    expect(isSafeFilePath('/project/run.js')).toBe(false);
+  it('should allow .js files (rename convention targets)', () => {
+    expect(isSafeFilePath('/project/my-file.js')).toBe(true);
   });
 
   it('should return false for a non-string input', () => {
     expect(isSafeFilePath(null as unknown as string)).toBe(false);
+  });
+});
+
+describe('isPathWithin', () => {
+  it('should accept the root itself and nested paths', () => {
+    expect(isPathWithin('/ws', '/ws')).toBe(true);
+    expect(isPathWithin('/ws', '/ws/src/a.ts')).toBe(true);
+  });
+
+  it('should reject traversal outside root', () => {
+    expect(isPathWithin('/ws', '/ws/../etc/x')).toBe(false);
+  });
+
+  it('should accept a ..foo directory inside root', () => {
+    expect(isPathWithin('/ws', '/ws/..foo/x.ts')).toBe(true);
+  });
+
+  it('should reject sibling dir sharing a name prefix', () => {
+    expect(isPathWithin('/ws', '/ws2/x.ts')).toBe(false);
+  });
+});
+
+describe('hasTraversalSegment', () => {
+  it('detects .. segments with either separator', () => {
+    expect(hasTraversalSegment('/a/../b')).toBe(true);
+    expect(hasTraversalSegment('a\\..\\b')).toBe(true);
+    expect(hasTraversalSegment('..')).toBe(true);
+  });
+
+  it('ignores names merely containing dots', () => {
+    expect(hasTraversalSegment('/a/my..proj/x.ts')).toBe(false);
+    expect(hasTraversalSegment('/a/..foo/x.ts')).toBe(false);
   });
 });

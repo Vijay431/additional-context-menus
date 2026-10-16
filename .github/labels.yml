@@ -1,39 +1,60 @@
 - name: bug
-  color: 'd73a4a'
+  color: d73a4a
   description: Something is not working.
 - name: enhancement
-  color: 'a2eeef'
+  color: a2eeef
   description: New feature or improvement request.
 - name: feature
-  color: '0e8a16'
+  color: 0e8a16
   description: User-facing feature work.
 - name: documentation
-  color: '0075ca'
+  color: 0075ca
   description: Documentation updates.
-- name: dependencies
-  color: '0366d6'
-  description: Dependency updates.
-- name: github-actions
-  color: '000000'
-  description: GitHub Actions workflow updates.
+- name: dependabot
+  color: 0366d6
+  description: Automated dependency updates.
 - name: chore
-  color: 'cfd3d7'
+  color: cfd3d7
   description: Maintenance work.
 - name: security
-  color: 'b60205'
+  color: b60205
   description: Security-related work or reports.
 - name: good first issue
-  color: '7057ff'
+  color: 7057ff
   description: Good for first-time contributors.
 - name: help wanted
-  color: '008672'
+  color: 008672
   description: Extra attention or community help is welcome.
 - name: needs triage
-  color: 'fbca04'
+  color: fbca04
   description: Needs maintainer review.
-- name: stale
-  color: 'e4e669'
-  description: Inactive issue or pull request.
 - name: ignore-for-release
-  color: 'ffffff'
+  color: ffffff
   description: Exclude from generated release notes.
+- name: configuration
+  color: 5319e7
+  description: Settings or configuration problems.
+- name: cross-platform
+  color: 1d76db
+  description: Behavior that differs between operating systems.
+- name: performance
+  color: fef2c0
+  description: Speed or resource-use problems.
+- name: refactoring
+  color: c5def5
+  description: Code cleanup without behavior change.
+- name: github-actions
+  color: 0
+  description: Workflow and automation changes.
+- name: dependencies
+  color: 0366d6
+  description: Dependency updates.
+- name: context-menu
+  color: bfd4f2
+  description: Context menu functionality.
+- name: framework-specific
+  color: fef2c0
+  description: Issue specific to a supported framework (React, Angular, Express, Next.js).
+- name: terminal
+  color: bfdadc
+  description: Terminal integration issue.

@@ -3,15 +3,21 @@ import * as vscode from 'vscode';
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { IConfigurationService } from '../di/interfaces/IConfigurationService';
 import type {
-  IFileSaveService,
   FileSaveResult as IFileSaveResult,
+  IFileSaveService,
 } from '../di/interfaces/IFileSaveService';
 import type { ILogger } from '../di/interfaces/ILogger';
 import { AccessibilityService } from '../services/accessibilityService';
-import { SaveAllResult } from '../types/extension';
 import { Logger } from '../utils/logger';
 
 import { ConfigurationService } from './configurationService';
+
+/** Minimum dirty-file count that triggers the progress notification */
+const PROGRESS_THRESHOLD = 5;
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 /**
  * File Save Service
@@ -25,7 +31,7 @@ import { ConfigurationService } from './configurationService';
  *
  * Key Features:
  * - Save all dirty documents with progress tracking
- * - Visual progress notification for large operations (5+ files)
+ * - Visual progress notification for large operations (>= 5 files)
  * - Read-only file handling (configurable skip)
  * - Configurable success/failure notifications
  * - Detailed error reporting with failure counts
@@ -98,30 +104,12 @@ export class FileSaveService implements IFileSaveService {
   }
 
   public async saveAllFiles(): Promise<IFileSaveResult> {
-    const result = await this.saveAllFilesLegacy();
-    return {
-      savedCount: result.savedFiles,
-      skippedCount: result.skippedFiles.length,
-      failedCount: result.failedFiles.length,
-      savedFiles:
-        result.savedFiles > 0
-          ? Array.from({ length: result.savedFiles }, (_, i) => `file${i}`)
-          : [],
-      skippedFiles: result.skippedFiles,
-      failedFiles: result.failedFiles.map((f) => ({ path: f, error: 'Save failed' })),
-    };
-  }
-
-  /**
-   * Legacy method for backward compatibility
-   */
-  private async saveAllFilesLegacy(): Promise<SaveAllResult> {
     this.logger.info('Save All operation started');
 
     try {
-      const unsavedFiles = await this.getUnsavedFiles();
+      const { documents, skippedFiles } = await this.getUnsavedFiles();
 
-      if (unsavedFiles.length === 0) {
+      if (documents.length === 0) {
         const message = 'No unsaved files found';
         this.logger.info(message);
 
@@ -131,46 +119,13 @@ export class FileSaveService implements IFileSaveService {
           vscode.window.showInformationMessage(message);
         }
 
-        return {
-          totalFiles: 0,
-          savedFiles: 0,
-          failedFiles: [],
-          skippedFiles: [],
-          success: true,
-        };
+        return this.buildResult([], [...skippedFiles], []);
       }
 
-      const result: SaveAllResult = {
-        totalFiles: unsavedFiles.length,
-        savedFiles: 0,
-        failedFiles: [],
-        skippedFiles: [],
-        success: false,
-      };
-
-      // Show progress for large operations
-      if (unsavedFiles.length > 5) {
-        return await this.saveWithProgress(unsavedFiles);
-      }
-
-      // Save files sequentially for better error handling
-      for (const document of unsavedFiles) {
-        try {
-          const saved = await this.saveFileInternal(document);
-          if (saved) {
-            result.savedFiles++;
-            this.logger.debug(`Saved file: ${document.fileName}`);
-          } else {
-            result.skippedFiles.push(document.fileName);
-            this.logger.warn(`Skipped file: ${document.fileName}`);
-          }
-        } catch (error) {
-          result.failedFiles.push(document.fileName);
-          this.logger.error(`Failed to save file: ${document.fileName}`, error);
-        }
-      }
-
-      result.success = result.failedFiles.length === 0;
+      const result =
+        documents.length >= PROGRESS_THRESHOLD
+          ? await this.saveWithProgress(documents, skippedFiles)
+          : await this.saveDocuments(documents, skippedFiles);
 
       this.showCompletionNotification(result);
       this.logger.info('Save All operation completed', result);
@@ -182,31 +137,52 @@ export class FileSaveService implements IFileSaveService {
     }
   }
 
-  private async getUnsavedFiles(): Promise<vscode.TextDocument[]> {
-    const unsavedFiles: vscode.TextDocument[] = [];
+  private buildResult(
+    savedFiles: string[],
+    skippedFiles: string[],
+    failedFiles: { path: string; error: string }[],
+  ): IFileSaveResult {
+    return {
+      savedCount: savedFiles.length,
+      skippedCount: skippedFiles.length,
+      failedCount: failedFiles.length,
+      savedFiles,
+      skippedFiles,
+      failedFiles,
+    };
+  }
 
-    // Get all open text documents
+  private async isReadOnly(uri: vscode.Uri): Promise<boolean> {
+    try {
+      const stat = await vscode.workspace.fs.stat(uri);
+      return ((stat.permissions ?? 0) & vscode.FilePermission.Readonly) !== 0;
+    } catch {
+      // Cannot determine; let the save attempt report any real failure
+      return false;
+    }
+  }
+
+  private async getUnsavedFiles(): Promise<{
+    documents: vscode.TextDocument[];
+    skippedFiles: string[];
+  }> {
+    const documents: vscode.TextDocument[] = [];
+    const skippedFiles: string[] = [];
+    const skipReadOnly = this.configService.getSaveAllConfig().skipReadOnly;
+
     for (const document of vscode.workspace.textDocuments) {
-      if (document.isDirty && !document.isUntitled) {
-        // Skip read-only files if configured to do so
-        if (this.configService.getSaveAllConfig().skipReadOnly) {
-          try {
-            // Check if file is writable by attempting to get its stats
-            const uri = document.uri;
-            if (uri.scheme === 'file') {
-              unsavedFiles.push(document);
-            }
-          } catch {
-            this.logger.warn(`Skipping read-only file: ${document.fileName}`);
-            continue;
-          }
-        } else {
-          unsavedFiles.push(document);
-        }
+      if (!document.isDirty || document.isUntitled) {
+        continue;
       }
+      if (skipReadOnly && (await this.isReadOnly(document.uri))) {
+        this.logger.warn(`Skipping read-only file: ${document.fileName}`);
+        skippedFiles.push(document.fileName);
+        continue;
+      }
+      documents.push(document);
     }
 
-    return unsavedFiles;
+    return { documents, skippedFiles };
   }
 
   private async saveFileInternal(document: vscode.TextDocument): Promise<boolean> {
@@ -220,14 +196,52 @@ export class FileSaveService implements IFileSaveService {
     }
   }
 
-  private async saveWithProgress(files: vscode.TextDocument[]): Promise<SaveAllResult> {
-    const result: SaveAllResult = {
-      totalFiles: files.length,
-      savedFiles: 0,
-      failedFiles: [],
-      skippedFiles: [],
-      success: false,
-    };
+  /**
+   * Save one document, recording the outcome into the supplied accumulators.
+   */
+  private async saveDocumentInto(
+    document: vscode.TextDocument,
+    savedFiles: string[],
+    skippedFiles: string[],
+    failedFiles: { path: string; error: string }[],
+  ): Promise<void> {
+    try {
+      if (await this.saveFileInternal(document)) {
+        savedFiles.push(document.fileName);
+        this.logger.debug(`Saved file: ${document.fileName}`);
+      } else {
+        skippedFiles.push(document.fileName);
+        this.logger.warn(`Skipped file: ${document.fileName}`);
+      }
+    } catch (error) {
+      failedFiles.push({ path: document.fileName, error: errorMessage(error) });
+      this.logger.error(`Failed to save file: ${document.fileName}`, error);
+    }
+  }
+
+  private async saveDocuments(
+    documents: vscode.TextDocument[],
+    preSkipped: string[] = [],
+  ): Promise<IFileSaveResult> {
+    const savedFiles: string[] = [];
+    const skippedFiles = [...preSkipped];
+    const failedFiles: { path: string; error: string }[] = [];
+
+    // Save sequentially for better error handling
+    for (const document of documents) {
+      await this.saveDocumentInto(document, savedFiles, skippedFiles, failedFiles);
+    }
+
+    return this.buildResult(savedFiles, skippedFiles, failedFiles);
+  }
+
+  private async saveWithProgress(
+    files: vscode.TextDocument[],
+    preSkipped: string[] = [],
+  ): Promise<IFileSaveResult> {
+    const savedFiles: string[] = [];
+    const skippedFiles = [...preSkipped];
+    const failedFiles: { path: string; error: string }[] = [];
 
     await vscode.window.withProgress(
       {
@@ -245,63 +259,45 @@ export class FileSaveService implements IFileSaveService {
             continue;
           }
 
-          const fileName = document.fileName;
-          const progressMessage = `Saving ${fileName} (${i + 1} of ${files.length})`;
-
           progress.report({
-            message: progressMessage,
-            increment: i === 0 ? 0 : increment,
+            message: `Saving ${document.fileName} (${i + 1} of ${files.length})`,
           });
 
           // Announce progress for verbose mode
           void this.accessibilityService.announceProgress('Saving files', i + 1, files.length);
 
-          try {
-            const saved = await this.saveFileInternal(document);
-            if (saved) {
-              result.savedFiles++;
-            } else {
-              result.skippedFiles.push(document.fileName);
-            }
-          } catch (error) {
-            result.failedFiles.push(document.fileName);
-            this.logger.error(`Failed to save file: ${document.fileName}`, error);
-          }
-        }
+          await this.saveDocumentInto(document, savedFiles, skippedFiles, failedFiles);
 
-        progress.report({ increment: 100 });
+          progress.report({ increment });
+        }
       },
     );
 
-    result.success = result.failedFiles.length === 0;
-    this.showCompletionNotification(result);
-
-    return result;
+    return this.buildResult(savedFiles, skippedFiles, failedFiles);
   }
 
-  private showCompletionNotification(result: SaveAllResult): void {
+  private showCompletionNotification(result: IFileSaveResult): void {
     const config = this.configService.getSaveAllConfig();
 
     if (!config.showNotification) {
       return;
     }
 
-    if (result.success) {
-      if (result.savedFiles > 0) {
-        const message = `Saved ${result.savedFiles} file${result.savedFiles === 1 ? '' : 's'}`;
+    if (result.failedCount === 0) {
+      if (result.savedCount > 0) {
+        const message = `Saved ${result.savedCount} file${result.savedCount === 1 ? '' : 's'}`;
         vscode.window.showInformationMessage(message);
         void this.accessibilityService.announceSuccess(
           'Save All',
-          `Saved ${result.savedFiles} files`,
+          `Saved ${result.savedCount} files`,
         );
       }
     } else {
-      const message = `Saved ${result.savedFiles}/${result.totalFiles} files. ${
-        result.failedFiles.length
-      } failed.`;
+      const total = result.savedCount + result.skippedCount + result.failedCount;
+      const message = `Saved ${result.savedCount}/${total} files. ${result.failedCount} failed.`;
       void this.accessibilityService.announceError(
         'Save All',
-        `${result.failedFiles.length} files failed to save`,
+        `${result.failedCount} files failed to save`,
       );
       Promise.resolve(vscode.window.showWarningMessage(message, 'Show Details'))
         .then(
@@ -321,28 +317,33 @@ export class FileSaveService implements IFileSaveService {
     }
   }
 
-  private showFailureDetails(result: SaveAllResult): void {
+  private showFailureDetails(result: IFileSaveResult): void {
+    const total = result.savedCount + result.skippedCount + result.failedCount;
     const details = [
       'Save All Results:',
-      `- Total files: ${result.totalFiles}`,
-      `- Saved successfully: ${result.savedFiles}`,
-      `- Failed: ${result.failedFiles.length}`,
-      `- Skipped: ${result.skippedFiles.length}`,
+      `- Total files: ${total}`,
+      `- Saved successfully: ${result.savedCount}`,
+      `- Failed: ${result.failedCount}`,
+      `- Skipped: ${result.skippedCount}`,
       '',
     ];
 
     if (result.failedFiles.length > 0) {
       details.push('Failed files:');
-      result.failedFiles.forEach((file) => details.push(`- ${file}`));
+      for (const file of result.failedFiles) {
+        details.push(`- ${file.path}: ${file.error}`);
+      }
       details.push('');
     }
 
     if (result.skippedFiles.length > 0) {
       details.push('Skipped files:');
-      result.skippedFiles.forEach((file) => details.push(`- ${file}`));
+      for (const file of result.skippedFiles) {
+        details.push(`- ${file}`);
+      }
     }
 
-    this.logger.info('Save All details shown to user');
+    this.logger.info(details.join('\n'));
     this.logger.show();
   }
 
@@ -354,38 +355,43 @@ export class FileSaveService implements IFileSaveService {
     return vscode.workspace.textDocuments.filter((doc) => doc.isDirty && !doc.isUntitled).length;
   }
 
-  public async saveFile(uri: { toString(): string }): Promise<void> {
+  /**
+   * Save a document by URI.
+   *
+   * @returns 'saved' if saved, 'skipped' if not open, not dirty, or VS Code declined to save
+   */
+  private async saveFileStatus(uri: { toString(): string }): Promise<'saved' | 'skipped'> {
     const document = vscode.workspace.textDocuments.find(
       (doc) => doc.uri.toString() === uri.toString(),
     );
-    if (document?.isDirty) {
-      await document.save();
+    if (!document?.isDirty) {
+      return 'skipped';
     }
+    return (await document.save()) ? 'saved' : 'skipped';
+  }
+
+  public async saveFile(uri: { toString(): string }): Promise<void> {
+    await this.saveFileStatus(uri);
   }
 
   public async saveFiles(uris: { toString(): string }[]): Promise<IFileSaveResult> {
-    let savedCount = 0;
+    const savedFiles: string[] = [];
     const skippedFiles: string[] = [];
     const failedFiles: { path: string; error: string }[] = [];
-    const savedFiles: string[] = [];
 
     for (const uri of uris) {
+      const path = uri.toString();
       try {
-        await this.saveFile(uri);
-        savedCount++;
-        savedFiles.push(uri.toString());
+        if ((await this.saveFileStatus(uri)) === 'saved') {
+          savedFiles.push(path);
+        } else {
+          skippedFiles.push(path);
+        }
       } catch (error) {
-        failedFiles.push({ path: uri.toString(), error: String(error) });
+        failedFiles.push({ path, error: errorMessage(error) });
       }
     }
 
-    return {
-      savedCount,
-      skippedCount: skippedFiles.length,
-      failedCount: failedFiles.length,
-      savedFiles,
-      skippedFiles,
-      failedFiles,
-    };
+    return this.buildResult(savedFiles, skippedFiles, failedFiles);
   }
 }

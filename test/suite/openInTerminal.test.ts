@@ -1,8 +1,8 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import * as vscode from 'vscode';
-import * as os from 'os';
-import * as path from 'path';
-import * as fs from 'fs/promises';
 
 async function openTsFile(content: string): Promise<vscode.TextDocument> {
   const tmpFile = path.join(os.tmpdir(), `acm-terminal-test-${Date.now()}.ts`);

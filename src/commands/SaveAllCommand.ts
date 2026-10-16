@@ -1,14 +1,7 @@
 /**
  * Save All Command
  *
- * Saves all open text documents with progress feedback.
- *
- * @description
- * This command handler:
- * - Saves all dirty text documents
- * - Shows progress for large operations
- * - Provides user feedback and error handling
- * - Respects configuration for read-only file handling
+ * Saves all open text documents via the file save service.
  *
  * @category Commands
  * @subcategory File Operations
@@ -17,27 +10,21 @@
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { IFileSaveService } from '../di/interfaces/IFileSaveService';
 import type { ILogger } from '../di/interfaces/ILogger';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import type { ICommandHandler } from './ICommandHandler';
 
 /**
  * Save All Command Handler
- *
- * Saves all open text documents.
  */
 export class SaveAllCommand extends BaseCommandHandler implements ICommandHandler {
   constructor(
-    fileSaveService: IFileSaveService,
+    private readonly fileSaveService: IFileSaveService,
     logger: ILogger,
     accessibilityService: IAccessibilityService,
   ) {
     super('SaveAll', logger, accessibilityService);
-    this.fileSaveService = fileSaveService;
   }
-
-  private readonly fileSaveService: IFileSaveService;
 
   public async execute(): Promise<CommandResult> {
     this.logInfo('Save All command triggered');

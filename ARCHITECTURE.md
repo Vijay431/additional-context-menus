@@ -29,6 +29,20 @@ flowchart TD
     C -.->|"lazy load"| J["CronJobTimerGeneratorService\nGenerate Cron"]
 ```
 
+### Activation
+
+`activate()` in `src/extension.ts` runs these steps in order:
+
+1. `initializeContainer(context)` registers the services in the DI container.
+2. `new ExtensionManager()` takes the logger and configuration service singletons and creates a `ContextMenuManager`.
+3. `ExtensionManager.activate(context)` validates the configuration with `ConfigValidator`.
+4. `initializeComponents()` calls `ContextMenuManager.initialize()`, which registers the commands, then subscribes to configuration changes. Commands are always registered; `when` clauses control menu visibility.
+5. `checkForNodeProject()` warns if the workspace has no `package.json`.
+6. It pushes the collected disposables and a disposal hook onto `context.subscriptions`.
+7. It sets the `additionalContextMenus.enabled` context key from the configuration.
+
+If any step throws, `activate()` logs the error, shows it in an output channel, and displays an error message. `deactivate()` disposes the manager.
+
 ## 2. Codebase Structure & Modules
 
 The repository is structured with separation of concerns in mind:
@@ -73,12 +87,7 @@ No authentication is required as this is a local development tool.
 
 ## 5. Local Development Setup & Configuration
 
-**Setup Instructions:**
-
-1. Clone the repository: `git clone https://github.com/Vijay431/additional-context-menus.git`
-2. Navigate into the directory: `cd additional-context-menus`
-3. Install dependencies: `pnpm install` (requires Node.js 22+ and pnpm)
-4. Launch the extension: Open in VS Code and press `F5` to open the Extension Development Host.
+See [CONTRIBUTING.md](CONTRIBUTING.md#development-setup) for the full clone/install/launch walkthrough.
 
 **Environment Variables:**
 There are no required `.env` variables for general development. GitHub Action workflows require `VSCE_PAT` and `OVSX_PAT` secrets for publishing.
@@ -97,7 +106,7 @@ The extension is bundled using `esbuild` for fast, tree-shaken builds via `pnpm 
 **CI/CD (GitHub Actions):**
 
 - **PRs:** Security checks (`pnpm audit`), linting, unit tests, and integration tests are run against a matrix of Node.js versions.
-- **Releases:** Pushing a `v*` tag triggers the release workflow which runs `vsce package` and `ovsx publish`, releasing the extension to both the VS Code Marketplace and Open VSX Registry.
+- **Releases:** Publishing a GitHub Release (tag `v<version>` on `main`) triggers the release workflow, which validates the tag, then runs `vsce publish` and `ovsx publish`, releasing the extension to both the VS Code Marketplace and Open VSX Registry.
 
 ## 8. Troubleshooting & Edge Cases
 

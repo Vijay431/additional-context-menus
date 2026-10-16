@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { ConfigValidator } from '../../src/utils/configValidator';
+import { describe, expect, it } from 'vitest';
 import type { ILogger } from '../../src/di/interfaces/ILogger';
 import type { ExtensionConfig } from '../../src/types/extension';
+import { ConfigValidator } from '../../src/utils/configValidator';
 
 function makeLogger(): ILogger & { warnings: string[] } {
   const warnings: string[] = [];

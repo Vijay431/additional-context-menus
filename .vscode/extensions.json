@@ -4,9 +4,8 @@
 
   // List of extensions which should be recommended for users of this workspace.
   "recommendations": [
-    "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode",
+    "biomejs.biome",
     "editorconfig.editorconfig",
-    "orta.vscode-jest"
+    "ms-vscode.extension-test-runner"
   ]
 }

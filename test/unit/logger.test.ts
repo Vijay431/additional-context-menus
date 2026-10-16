@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { Logger, LogLevel, LogFormat, LogCategory } from '../../src/utils/logger';
+import { LogCategory, LogFormat, Logger, LogLevel } from '../../src/utils/logger';
 
 function makeChannel() {
   return {

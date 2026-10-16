@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  getAccessibleLabel,
-  formatAccessiblePlaceholder,
-  formatAccessibleInputPrompt,
-  createAccessibleValidationMessage,
   createAccessibleFileDescription,
+  createAccessibleValidationMessage,
+  formatAccessibleInputPrompt,
+  formatAccessiblePlaceholder,
+  getAccessibleLabel,
   truncateForAccessibility,
 } from '../../src/utils/accessibilityHelper';
 

@@ -1,31 +1,30 @@
 ## Summary
 
-Describe the change and why it is needed.
+- <!-- What does this PR do? -->
+- <!-- Why is this change needed? -->
 
 ## Type of change
 
 - [ ] Bug fix
-- [ ] Feature
-- [ ] Documentation
+- [ ] New feature
 - [ ] Refactor
-- [ ] CI/build tooling
-- [ ] Maintenance
+- [ ] Documentation
+- [ ] CI/CD / tooling
 
-## Verification
+## Test plan
 
-- [ ] `pnpm run lint`
-- [ ] `pnpm run build`
-- [ ] `pnpm run test:unit`
-- [ ] `pnpm run test:unit:coverage`
-- [ ] `pnpm run test:integration`
-- [ ] Manual VS Code Extension Development Host check
+- [ ] `pnpm run lint` passes
+- [ ] `pnpm run build` succeeds
+- [ ] `pnpm run test:unit` passes
+- [ ] `pnpm run test:unit:coverage` passes
+- [ ] `pnpm run test:integration` passes
+- [ ] Manually tested the affected commands/features
 
-## Screenshots or recordings
+## Screenshots (if applicable)
 
-Add screenshots or recordings for visible VS Code UI changes.
+<!-- Add screenshots for any visible VS Code UI changes -->
 
 ## Checklist
 
-- [ ] I updated docs or changelog entries when user-facing behavior changed.
-- [ ] I avoided generated output in `dist/`, `out-test/`, and compiled `.js`/`.map` files.
-- [ ] I kept the PR focused and within the repository commit-size guidance.
+- [ ] `CHANGELOG.md` updated under `[Unreleased]`
+- [ ] No secrets, build artifacts, or compiled JS committed

@@ -7,86 +7,63 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to release (e.g., v2.1.2)'
+        description: Existing tag to re-run (restricted to RELEASE_WHITELIST_ACTORS)
         required: true
         type: string
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
-  setup:
-    name: Setup Release
+  gate:
+    name: Release Gate
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      tag: ${{ steps.version.outputs.tag }}
-      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+      version: ${{ steps.gate.outputs.version }}
+      tag: ${{ steps.gate.outputs.tag }}
+      is_prerelease: ${{ steps.gate.outputs.is_prerelease }}
     steps:
-      - name: Check Authorized Actor
-        if: github.event_name == 'workflow_dispatch'
-        shell: bash
-        run: |
-          WHITELIST=$(echo "${{ vars.RELEASE_WHITELIST_ACTORS || secrets.RELEASE_WHITELIST_ACTORS }}" | tr -d ' ')
-          ACTOR="${{ github.actor }}"
-          if [[ -z "$WHITELIST" ]]; then
-            echo "Error: RELEASE_WHITELIST_ACTORS variable is not configured or is empty."
-            exit 1
-          fi
-          if [[ ",$WHITELIST," != *",$ACTOR,"* ]]; then
-            echo "Error: User $ACTOR is not authorized to manually trigger this workflow."
-            exit 1
-          fi
-          echo "User $ACTOR is authorized."
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Extract Version and Tag
-        id: version
-        shell: bash
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.tag }}"
-          else
-            TAG="${GITHUB_REF#refs/tags/}"
-          fi
-          VERSION="${TAG#v}"
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          if echo "$VERSION" | grep -qE '\-(rc|next|beta|alpha)'; then
-            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Validate Release
+        id: gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          ACTOR: ${{ github.actor }}
+          ALLOWLIST: ${{ vars.RELEASE_WHITELIST_ACTORS }}
+        run: bash .github/scripts/release-gate.sh
 
   release-build:
     name: Release Build
     runs-on: ubuntu-latest
-    needs: [setup]
+    needs: [gate]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ needs.setup.outputs.tag }}
+          ref: refs/tags/${{ needs.gate.outputs.tag }}
+          persist-credentials: false
 
       - name: Install PNPM
-        uses: pnpm/action-setup@v6
-        with:
-          standalone: true
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: '22.x'
+          node-version: '24.x'
           cache: pnpm
 
-      - name: Cache node_modules
-        id: cache-node-modules
-        uses: actions/cache@v6
-        with:
-          path: node_modules
-          key: node-modules-${{ runner.os }}-node22.x-${{ hashFiles('pnpm-lock.yaml') }}
-
       - name: Install Dependencies
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Prepare Extension for Publishing
@@ -96,7 +73,7 @@ jobs:
         run: pnpm run package
 
       - name: Upload VSIX Artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: vsix-package
           path: '*.vsix'
@@ -107,7 +84,7 @@ jobs:
     needs: [release-build]
     steps:
       - name: Download VSIX Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: vsix-package
 
@@ -117,33 +94,43 @@ jobs:
           VSIX_FILE=$(ls *.vsix | head -n 1)
           echo "Verifying: ${VSIX_FILE}"
 
+          # Unzip VSIX to a temp directory
           UNZIP_DIR=$(mktemp -d)
           unzip -q "${VSIX_FILE}" -d "${UNZIP_DIR}"
 
+          # 1. Assert no .ts source files (excluding .d.ts)
           TS_FILES=$(find "${UNZIP_DIR}" -name "*.ts" ! -name "*.d.ts" 2>/dev/null)
           if [ -n "${TS_FILES}" ]; then
             echo "ERROR: VSIX contains TypeScript source files:"
             echo "${TS_FILES}"
             exit 1
           fi
+          echo "✓ No .ts source files found"
 
+          # 2. Assert no node_modules directory
           if find "${UNZIP_DIR}" -type d -name "node_modules" | grep -q .; then
             echo "ERROR: VSIX contains node_modules directory"
             exit 1
           fi
+          echo "✓ No node_modules directory found"
 
+          # 3. Assert no test files
           TEST_FILES=$(find "${UNZIP_DIR}" -type f \( -name "*.test.js" -o -name "*.spec.js" -o -name "*.test.ts" -o -name "*.spec.ts" \) 2>/dev/null)
           if [ -n "${TEST_FILES}" ]; then
             echo "ERROR: VSIX contains test files:"
             echo "${TEST_FILES}"
             exit 1
           fi
+          echo "✓ No test files found"
 
+          # 4. Assert dist/extension.js is present
           if [ ! -f "${UNZIP_DIR}/extension/dist/extension.js" ]; then
             echo "ERROR: dist/extension.js is missing from VSIX"
             exit 1
           fi
+          echo "✓ dist/extension.js is present"
 
+          # 5. Validate manifest fields for VS Code Marketplace and Open VSX
           MANIFEST="${UNZIP_DIR}/extension/package.json"
           if [ ! -f "${MANIFEST}" ]; then
             echo "ERROR: extension/package.json not found in VSIX"
@@ -154,7 +141,7 @@ jobs:
             local field="$1"
             local value
             value=$(python3 -c "
-          import json
+          import json, sys
           data = json.load(open('${MANIFEST}'))
           keys = '${field}'.split('.')
           val = data
@@ -168,47 +155,45 @@ jobs:
               echo "ERROR: Required manifest field '${field}' is missing or empty"
               exit 1
             fi
-            echo "Manifest field '${field}' = ${value}"
+            echo "✓ Manifest field '${field}' = ${value}"
           }
 
+          # VS Code Marketplace required fields
           check_field "name"
           check_field "publisher"
           check_field "version"
           check_field "engines.vscode"
+
+          # Open VSX required fields
           check_field "repository"
           check_field "license"
+
+          echo "All VSIX verification checks passed."
 
   publish-vscode:
     name: Publish to VS Code Marketplace
     runs-on: ubuntu-latest
-    needs: [setup, verifier]
+    needs: [gate, verifier]
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.setup.outputs.tag }}
-
       - name: Download VSIX Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: vsix-package
 
       - name: Install PNPM
-        uses: pnpm/action-setup@v6
-        with:
-          standalone: true
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: '22.x'
+          node-version: '24.x'
 
       - name: Publish to VS Code Marketplace
         run: |
-          if [ "${{ needs.setup.outputs.is_prerelease }}" = "true" ]; then
-            pnpm dlx @vscode/vsce publish --packagePath *.vsix --pre-release
+          if [ "${{ needs.gate.outputs.is_prerelease }}" = "true" ]; then
+            pnpm dlx vsce publish --packagePath *.vsix --pre-release --skip-duplicate
           else
-            pnpm dlx @vscode/vsce publish --packagePath *.vsix
+            pnpm dlx vsce publish --packagePath *.vsix --skip-duplicate
           fi
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
@@ -216,49 +201,65 @@ jobs:
   publish-openvsx:
     name: Publish to Open VSX Registry
     runs-on: ubuntu-latest
-    needs: [setup, verifier]
+    needs: [gate, verifier]
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.setup.outputs.tag }}
-
       - name: Download VSIX Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: vsix-package
 
       - name: Install PNPM
-        uses: pnpm/action-setup@v6
-        with:
-          standalone: true
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: '22.x'
+          node-version: '24.x'
 
       - name: Publish to Open VSX Registry
         run: |
-          pnpm dlx ovsx publish *.vsix
+          if [ "${{ needs.gate.outputs.is_prerelease }}" = "true" ]; then
+            pnpm dlx ovsx publish *.vsix --pre-release --skip-duplicate
+          else
+            pnpm dlx ovsx publish *.vsix --skip-duplicate
+          fi
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [setup, publish-vscode, publish-openvsx]
+    needs: [gate, publish-vscode, publish-openvsx]
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
       - name: Download VSIX Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: vsix-package
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+      - name: Attest Build Provenance
+        id: attest
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
-          tag_name: ${{ needs.setup.outputs.tag }}
-          name: Additional Context Menus ${{ needs.setup.outputs.version }}
-          files: '*.vsix'
-          generate_release_notes: true
-          prerelease: ${{ needs.setup.outputs.is_prerelease == 'true' }}
+          subject-path: '*.vsix'
+
+      - name: Create or Update GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.gate.outputs.tag }}
+          IS_PRERELEASE: ${{ needs.gate.outputs.is_prerelease }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          cp "${BUNDLE_PATH}" provenance.intoto.jsonl
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release upload "${TAG}" *.vsix provenance.intoto.jsonl --clobber
+          else
+            flags=(--verify-tag --generate-notes)
+            if [ "${IS_PRERELEASE}" = "true" ]; then flags+=(--prerelease); fi
+            gh release create "${TAG}" *.vsix provenance.intoto.jsonl "${flags[@]}"
+          fi

@@ -5,6 +5,9 @@
 # Additional Context Menus
 
 [![CI](https://github.com/Vijay431/additional-context-menus/actions/workflows/ci.yml/badge.svg)](https://github.com/Vijay431/additional-context-menus/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Vijay431/additional-context-menus/actions/workflows/codeql.yml/badge.svg)](https://github.com/Vijay431/additional-context-menus/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Vijay431/additional-context-menus/badge)](https://scorecard.dev/viewer/?uri=github.com/Vijay431/additional-context-menus)
+[![codecov](https://codecov.io/gh/Vijay431/additional-context-menus/graph/badge.svg)](https://codecov.io/gh/Vijay431/additional-context-menus)
 [![VS Code Marketplace](https://vsmarketplacebadges.dev/version-short/VijayGangatharan.additional-context-menus.svg)](https://marketplace.visualstudio.com/items?itemName=VijayGangatharan.additional-context-menus)
 [![Open VSX Registry](https://img.shields.io/open-vsx/v/VijayGangatharan/additional-context-menus)](https://open-vsx.org/extension/VijayGangatharan/additional-context-menus)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -44,31 +47,31 @@ Additional Context Menus brings those workflows to your right-click menu. With a
 <details>
 <summary>Click to view feature demos (GIFs)</summary>
 
-**Copy Function**
+#### Copy Function
 
 ![Copy Function demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/copy-function.gif)
 
-**Copy Function to File**
+#### Copy Function to File
 
 ![Copy Function to File demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/copy-function-to-file.gif)
 
-**Move Function to File**
+#### Move Function to File
 
 ![Move Function to File demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/move-function-to-file.gif)
 
-**Copy Selection to File**
+#### Copy Selection to File
 
 ![Copy Selection to File demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/copy-selection-to-file.gif)
 
-**Save All**
+#### Save All
 
 ![Save All demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/save-all.gif)
 
-**Open in Terminal**
+#### Open in Terminal
 
 ![Open in Terminal demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/open-in-terminal.gif)
 
-**Rename File to Convention**
+#### Rename File to Convention
 
 ![Rename File to Convention demo](https://raw.githubusercontent.com/Vijay431/additional-context-menus/main/public/demos/rename-file-convention.gif)
 
@@ -96,7 +99,7 @@ Or search **"Additional Context Menus"** in the Extensions view (`Ctrl+Shift+X`)
 **Open VSX** (VS Codium / other open-source VS Code builds):
 [open-vsx.org/extension/VijayGangatharan/additional-context-menus](https://open-vsx.org/extension/VijayGangatharan/additional-context-menus)
 
-**Command line:**
+#### Command line
 
 ```bash
 code --install-extension VijayGangatharan.additional-context-menus
@@ -115,13 +118,13 @@ code --install-extension VijayGangatharan.additional-context-menus
 
 ### Examples
 
-**Extracting a Function**
+#### Extracting a Function
 
 1. Place your cursor inside any function in a `.ts` or `.js` file.
 2. Right-click → **Additional Context Menus** ▶ **Move Function to File**.
 3. Choose the target file. The function is relocated instantly.
 
-**Moving Selected Code with Imports**
+#### Moving Selected Code with Imports
 
 1. Highlight a block of code spanning multiple lines.
 2. Right-click → **Additional Context Menus** ▶ **Move Selection to File**.
@@ -131,7 +134,7 @@ code --install-extension VijayGangatharan.additional-context-menus
 
 All settings live under the `additionalContextMenus.*` namespace in your VS Code `settings.json`:
 
-**Core**
+#### Core
 
 | Setting               | Type     | Default                          | Description                                      |
 | --------------------- | -------- | -------------------------------- | ------------------------------------------------ |
@@ -139,27 +142,35 @@ All settings live under the `additionalContextMenus.*` namespace in your VS Code
 | `autoDetectProjects`  | boolean  | `true`                           | Automatically detect frameworks in the workspace |
 | `supportedExtensions` | string[] | `[".ts", ".tsx", ".js", ".jsx"]` | File extensions where context menus will appear  |
 
-**Code Copy**
+#### Code Copy
 
 | Setting                     | Type    | Default   | Description                                                    |
 | --------------------------- | ------- | --------- | -------------------------------------------------------------- |
 | `copyCode.insertionPoint`   | string  | `"smart"` | Where to insert copied code: `"smart"`, `"end"`, `"beginning"` |
 | `copyCode.preserveComments` | boolean | `true`    | Preserve comments when copying code                            |
 
-**Save All**
+#### Save All
 
 | Setting                    | Type    | Default | Description                                |
 | -------------------------- | ------- | ------- | ------------------------------------------ |
 | `saveAll.showNotification` | boolean | `true`  | Show a notification after saving all files |
 | `saveAll.skipReadOnly`     | boolean | `true`  | Skip read-only files when saving all       |
 
-**Terminal**
+#### Terminal
 
 | Setting                            | Type   | Default              | Description                                                                        |
 | ---------------------------------- | ------ | -------------------- | ---------------------------------------------------------------------------------- |
 | `terminal.type`                    | string | `"integrated"`       | Terminal to open: `"integrated"`, `"external"`, `"system-default"`                 |
 | `terminal.externalTerminalCommand` | string | `""`                 | Custom command for external terminal. Use `{{directory}}` as a placeholder.        |
 | `terminal.openBehavior`            | string | `"parent-directory"` | Directory to open: `"parent-directory"`, `"workspace-root"`, `"current-directory"` |
+
+#### Accessibility
+
+| Setting                            | Type    | Default    | Description                                                             |
+| ---------------------------------- | ------- | ---------- | ----------------------------------------------------------------------- |
+| `accessibility.verbosity`          | string  | `"normal"` | Screen reader announcement detail: `"minimal"`, `"normal"`, `"verbose"` |
+| `accessibility.screenReaderMode`   | boolean | `false`    | Enable enhanced screen reader support                                   |
+| `accessibility.keyboardNavigation` | boolean | `true`     | Show keyboard hints in Quick Pick menus                                 |
 
 ---
 
@@ -206,9 +217,17 @@ The extension currently detects React, Angular, Express, and Next.js projects. S
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines, including how to set up the local development environment. Please open an issue to discuss significant changes before submitting a Pull Request.
 
+### Support
+
+For help, questions, or where to file issues, see [SUPPORT.md](SUPPORT.md).
+
+### Accessibility
+
+Additional Context Menus ships with built-in accessibility support: screen reader announcements for command results, configurable verbosity (`additionalContextMenus.accessibility.verbosity`), and optional keyboard-navigation hints in Quick Pick menus (`additionalContextMenus.accessibility.keyboardNavigation`). See the [Configuration](#configuration) table above for the full settings list.
+
 ### Contact
 
-**Vijay Gangatharan**
+Vijay Gangatharan
 
 - 📧 Email: <vijayanand431@gmail.com>
 - 🐙 [GitHub Repository](https://github.com/Vijay431/additional-context-menus)

@@ -3,12 +3,6 @@
  *
  * Opens a terminal at the appropriate directory for the current file.
  *
- * @description
- * This command handler:
- * - Determines the target directory based on configuration
- * - Opens the appropriate terminal type (integrated, external, system-default)
- * - Provides cross-platform support (Windows, macOS, Linux)
- *
  * @category Commands
  * @subcategory Terminal Operations
  */
@@ -16,27 +10,21 @@
 import type { IAccessibilityService } from '../di/interfaces/IAccessibilityService';
 import type { ILogger } from '../di/interfaces/ILogger';
 import type { ITerminalService } from '../di/interfaces/ITerminalService';
-
-import { BaseCommandHandler } from './BaseCommandHandler';
 import type { CommandResult } from './BaseCommandHandler';
+import { BaseCommandHandler } from './BaseCommandHandler';
 import type { ICommandHandler } from './ICommandHandler';
 
 /**
  * Open in Terminal Command Handler
- *
- * Opens a terminal for the current file.
  */
 export class OpenInTerminalCommand extends BaseCommandHandler implements ICommandHandler {
   constructor(
-    terminalService: ITerminalService,
+    private readonly terminalService: ITerminalService,
     logger: ILogger,
     accessibilityService: IAccessibilityService,
   ) {
     super('OpenInTerminal', logger, accessibilityService);
-    this.terminalService = terminalService;
   }
-
-  private readonly terminalService: ITerminalService;
 
   public async execute(): Promise<CommandResult> {
     this.logInfo('Open in Terminal command triggered');

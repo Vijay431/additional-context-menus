@@ -22,15 +22,15 @@
 import * as path from 'node:path';
 
 import type {
-  ILogger,
+  IAccessibilityService,
+  ICodeAnalysisService,
   IConfigurationService,
   IFileDiscoveryService,
-  ICodeAnalysisService,
-  IFileSaveService,
-  ITerminalService,
-  IProjectDetectionService,
   IFileNamingConventionService,
-  IAccessibilityService,
+  IFileSaveService,
+  ILogger,
+  IProjectDetectionService,
+  ITerminalService,
 } from './interfaces';
 import { TYPES } from './types';
 
