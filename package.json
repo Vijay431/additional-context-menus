@@ -63,7 +63,7 @@
     "Other"
   ],
   "engines": {
-    "node": ">=22",
+    "node": ">=24 <25",
     "vscode": ">=1.111.0"
   },
   "capabilities": {

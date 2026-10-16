@@ -6,7 +6,7 @@
 - **Publisher:** VijayGangatharan
 - **Version:** 2.1.2
 - **VS Code engine:** >=1.111.0
-- **Node.js:** >=22 runtime (22, 24, 26 supported); dev uses Node 24 LTS (`lts/krypton`)
+- **Node.js:** 24 only (`>=24 <25`); `.nvmrc` = `lts/krypton`
 - **Package manager:** pnpm (`pnpm-workspace.yaml` owns `overrides` and `allowBuilds`; do not put them in `package.json`)
 - **Language:** TypeScript (strict mode)
 - **Bundle tool:** esbuild (via `esbuild.config.ts`)
@@ -240,7 +240,7 @@ This project follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html). Pre-re
 
 ### Automation Layout
 
-- `.github/workflows/ci.yml` runs PR/main quality gates: Biome lint, markdownlint, typecheck, commitlint (PR commits and title), unit coverage, integration tests under `xvfb-run -a`, `pnpm audit`, dependency review (PRs), a bundle smoke test, and a build matrix (Ubuntu, Windows, macOS × Node 22/24/26 × VS Code stable/insiders). The unit-coverage job uploads `coverage/lcov.info` to Codecov (`fail_ci_if_error: false`) and needs a `CODECOV_TOKEN` repo secret to publish.
+- `.github/workflows/ci.yml` runs PR/main quality gates: Biome lint, markdownlint, typecheck, commitlint (PR commits and title), unit coverage, integration tests under `xvfb-run -a`, `pnpm audit`, dependency review (PRs), a bundle smoke test, and a build matrix (Ubuntu × Node 24 × VS Code stable/insiders). The unit-coverage job uploads `coverage/lcov.info` to Codecov (`fail_ci_if_error: false`) and needs a `CODECOV_TOKEN` repo secret to publish.
 - `.github/workflows/security-daily.yml` runs daily, on manual dispatch, and on `package.json`/`pnpm-lock.yaml` changes on `main`. It audits with `pnpm audit` and the Dependabot Alerts API (needs `security-events: read`), summarizes outdated packages, uploads artifacts, and opens or updates one triage issue for critical or high findings.
 - `.github/workflows/codeql.yml` runs CodeQL (JavaScript/TypeScript, `security-extended`) on PRs and pushes to `main` and weekly.
 - `.github/workflows/scorecard.yml` runs the OpenSSF Scorecard check on pushes to `main` and weekly, uploading SARIF to the Security tab.
@@ -330,7 +330,7 @@ This is a TypeScript VS Code extension. Source code lives in `src/`: command han
 - `pnpm run test:integration`: compile tests and run VS Code integration tests.
 - `pnpm run package`: create a `.vsix` package.
 
-Use Node.js 22+ and pnpm. Development uses Node 24 LTS (`.nvmrc` = `lts/krypton`). For manual testing, open the repo in VS Code and press `F5`.
+Use Node.js 24 (strictly; `.nvmrc` = `lts/krypton`) and pnpm. For manual testing, open the repo in VS Code and press `F5`.
 
 ## Coding Style & Naming Conventions
 
