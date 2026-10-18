@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI packaging dry-run**: `build` job now runs `pnpm run package` (`vsce package`) after the build step, across the Node 22/24/26 matrix — validates the VSIX packaging pipeline on every PR/main run instead of only at release time. No upload/publish occurs.
 - CI, release, and security workflows plus `.nvmrc` bumped from Node 22.x to Node 24.x (`lts/krypton`) as the single-version baseline (the 22/24/26 test matrix in `ci.yml` is unaffected).
 - `actions/setup-node` bumped v5→v7, `actions/github-script` bumped v7→v9 (fixing an inconsistent leftover in `security-daily.yml`), and `actions/stale` bumped v10→v11, across all workflow files.
+- Dependabot groups `github/codeql-action/*` updates into one PR, so `init`, `analyze`, and `upload-sarif` stay on the same version.
 
 ### Fixed
 
