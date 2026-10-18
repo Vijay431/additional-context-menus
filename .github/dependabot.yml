@@ -33,3 +33,8 @@ updates:
       - 'dependabot'
     commit-message:
       prefix: 'ci'
+    groups:
+      # CodeQL fails when init/analyze/upload-sarif run different versions.
+      codeql-action:
+        patterns:
+          - 'github/codeql-action/*'
