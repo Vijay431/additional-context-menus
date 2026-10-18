@@ -1,25 +1,18 @@
 import * as assert from 'node:assert';
 import * as fs from 'node:fs/promises';
-import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import { useTempDir } from './tempDir';
 
-const createdTmpFiles: string[] = [];
+const tmpDir = useTempDir();
 
 async function openTsFile(content: string): Promise<vscode.TextDocument> {
-  const tmpFile = path.join(os.tmpdir(), `acm-fn-test-${Date.now()}.ts`);
+  const tmpFile = path.join(tmpDir(), `acm-fn-test-${Date.now()}.ts`);
   await fs.writeFile(tmpFile, content, 'utf-8');
-  createdTmpFiles.push(tmpFile);
   const doc = await vscode.workspace.openTextDocument(tmpFile);
   await vscode.window.showTextDocument(doc);
   return doc;
 }
-
-suiteTeardown(async () => {
-  for (const f of createdTmpFiles) {
-    await fs.unlink(f).catch(() => {});
-  }
-});
 
 suite('Copy Function to File', () => {
   test('should register the copyFunctionToFile command', async () => {

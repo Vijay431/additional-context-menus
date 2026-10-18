@@ -1,13 +1,14 @@
 import * as assert from 'node:assert';
 import * as fs from 'node:fs/promises';
-import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import { useTempDir } from './tempDir';
+
+const tmpDir = useTempDir();
 
 async function openTsFile(content: string): Promise<vscode.TextDocument> {
   // Write to a real .ts temp file so TypeScript parser recognises the extension
-  const tmpDir = os.tmpdir();
-  const tmpFile = path.join(tmpDir, `acm-test-${Date.now()}.ts`);
+  const tmpFile = path.join(tmpDir(), `acm-test-${Date.now()}.ts`);
   await fs.writeFile(tmpFile, content, 'utf-8');
   const doc = await vscode.workspace.openTextDocument(tmpFile);
   await vscode.window.showTextDocument(doc);

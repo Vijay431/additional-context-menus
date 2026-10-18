@@ -1,13 +1,15 @@
 import * as assert from 'node:assert';
 import * as fs from 'node:fs/promises';
-import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import { useTempDir } from './tempDir';
+
+const tmpDir = useTempDir();
 
 async function openTsFile(
   content: string,
 ): Promise<{ doc: vscode.TextDocument; filePath: string }> {
-  const filePath = path.join(os.tmpdir(), `acm-save-test-${Date.now()}.ts`);
+  const filePath = path.join(tmpDir(), `acm-save-test-${Date.now()}.ts`);
   await fs.writeFile(filePath, content, 'utf-8');
   const doc = await vscode.workspace.openTextDocument(filePath);
   await vscode.window.showTextDocument(doc);

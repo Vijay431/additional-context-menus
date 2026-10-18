@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security audit remediation**: Tightened the `fast-uri` override again (`>=4.1.2` → `>=4.1.3` — `4.1.2` was itself vulnerable to four newly-published high-severity advisories) and added a `nanoid: '>=3.3.18'` override (previously unpinned, resolving to vulnerable `3.3.16` via `vitest`→`vite`→`postcss`). `pnpm audit --audit-level=high` now reports zero high/critical findings.
 - **`scorecard.yml` permissions fix**: top-level workflow `permissions` changed to `read-all` (job-level `analysis.permissions` already grants the writes the Scorecard action needs) — a workflow-level write permission was rejected by the action's `publish_results: true` requirement.
 - Fixed `src/services/codeAnalysisService.ts` parser plugin list for the `@babel/parser` 8.x bump: `classProperties` is parsed by default as of `@babel/parser` 8 (class fields are standard JS) and is no longer a valid plugin name.
+- Integration tests now create their files in private `fs.mkdtemp` directories (removed at suite teardown) instead of predictable paths in the shared OS temp directory, resolving CodeQL `js/insecure-temporary-file` alerts.
 
 ### Removed
 
