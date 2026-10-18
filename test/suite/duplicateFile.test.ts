@@ -1,8 +1,10 @@
 import * as assert from 'node:assert';
 import * as fs from 'node:fs/promises';
-import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import { useTempDir } from './tempDir';
+
+const tmpDir = useTempDir();
 
 suite('Duplicate File', () => {
   test('should register the command', async () => {
@@ -16,14 +18,14 @@ suite('Duplicate File', () => {
   test('should create a duplicate file with -duplicate suffix', async () => {
     const content = 'const x = 1;\n';
     const fileName = `acm-dup-${Date.now()}.ts`;
-    const filePath = path.join(os.tmpdir(), fileName);
+    const filePath = path.join(tmpDir(), fileName);
     await fs.writeFile(filePath, content, 'utf-8');
 
     const uri = vscode.Uri.file(filePath);
     await vscode.commands.executeCommand('additionalContextMenus.duplicateFile', uri);
 
     const nameWithoutExt = path.basename(fileName, '.ts');
-    const duplicatePath = path.join(os.tmpdir(), `${nameWithoutExt}-duplicate.ts`);
+    const duplicatePath = path.join(tmpDir(), `${nameWithoutExt}-duplicate.ts`);
 
     const duplicateContent = await fs.readFile(duplicatePath, 'utf-8');
     assert.strictEqual(
@@ -31,20 +33,17 @@ suite('Duplicate File', () => {
       content,
       'Duplicate file should have same content as original',
     );
-
-    await fs.unlink(filePath);
-    await fs.unlink(duplicatePath);
   });
 
   test('should auto-increment when duplicate already exists', async () => {
     const content = 'const x = 1;\n';
     const fileName = `acm-dup-inc-${Date.now()}.ts`;
-    const filePath = path.join(os.tmpdir(), fileName);
+    const filePath = path.join(tmpDir(), fileName);
     await fs.writeFile(filePath, content, 'utf-8');
 
     const nameWithoutExt = path.basename(fileName, '.ts');
-    const duplicatePath = path.join(os.tmpdir(), `${nameWithoutExt}-duplicate.ts`);
-    const duplicate1Path = path.join(os.tmpdir(), `${nameWithoutExt}-duplicate-1.ts`);
+    const duplicatePath = path.join(tmpDir(), `${nameWithoutExt}-duplicate.ts`);
+    const duplicate1Path = path.join(tmpDir(), `${nameWithoutExt}-duplicate-1.ts`);
 
     const uri = vscode.Uri.file(filePath);
 
@@ -67,16 +66,12 @@ suite('Duplicate File', () => {
       content,
       'Second duplicate should have same content as original',
     );
-
-    await fs.unlink(filePath);
-    await fs.unlink(duplicatePath);
-    await fs.unlink(duplicate1Path);
   });
 
   test('should not modify the original file', async () => {
     const content = 'const x = 1;\n';
     const fileName = `acm-dup-orig-${Date.now()}.ts`;
-    const filePath = path.join(os.tmpdir(), fileName);
+    const filePath = path.join(tmpDir(), fileName);
     await fs.writeFile(filePath, content, 'utf-8');
 
     const uri = vscode.Uri.file(filePath);
@@ -86,14 +81,11 @@ suite('Duplicate File', () => {
     assert.strictEqual(originalContent, content, 'Original file contents should be unchanged');
 
     const nameWithoutExt = path.basename(fileName, '.ts');
-    const duplicatePath = path.join(os.tmpdir(), `${nameWithoutExt}-duplicate.ts`);
-
-    await fs.unlink(filePath);
-    await fs.unlink(duplicatePath);
+    const duplicatePath = path.join(tmpDir(), `${nameWithoutExt}-duplicate.ts`);
   });
 
   test('should not throw when called on a non-existent file', async () => {
-    const uri = vscode.Uri.file(path.join(os.tmpdir(), 'acm-nonexistent-duplicate.ts'));
+    const uri = vscode.Uri.file(path.join(tmpDir(), 'acm-nonexistent-duplicate.ts'));
     await assert.doesNotReject(
       Promise.resolve(vscode.commands.executeCommand('additionalContextMenus.duplicateFile', uri)),
     );
