@@ -627,7 +627,7 @@
     "@vscode/test-cli": "0.0.15",
     "@vscode/test-electron": "3.1.0",
     "@vscode/vsce": "^3.9.2",
-    "all-contributors-cli": "^6.26.1",
+    "all-contributors-cli": "^7.0.0",
     "concurrently": "^10.0.6",
     "esbuild": "^0.28.2",
     "husky": "^9.1.7",
