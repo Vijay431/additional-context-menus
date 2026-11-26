@@ -149,7 +149,10 @@ export class FileDiscoveryService implements IFileDiscoveryService {
 
     const cacheKey = `${workspaceFolder.uri.fsPath}:${sourceExtension}`;
     if (this.fileCache.has(cacheKey)) {
-      return this.fileCache.get(cacheKey)!;
+      const cached = this.fileCache.get(cacheKey);
+      if (cached !== undefined) {
+        return cached;
+      }
     }
 
     try {

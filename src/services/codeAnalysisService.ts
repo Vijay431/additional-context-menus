@@ -1,4 +1,4 @@
-import { parse } from '@babel/parser';
+import { type ParseResult, parse } from '@babel/parser';
 import type { File, Node } from '@babel/types';
 import type * as vscode from 'vscode';
 
@@ -32,7 +32,7 @@ type FunctionLikeType =
  * Parse TS/TSX/JS/JSX source into a Babel AST File node.
  * Errors are intentionally allowed to propagate so callers can catch them.
  */
-function parseSource(code: string): File {
+function parseSource(code: string): ParseResult<File> {
   return parse(code, {
     sourceType: 'module',
     strictMode: false,
@@ -284,7 +284,7 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     if (name.startsWith('use')) return 'hook';
 
     // React component detection (PascalCase)
-    const firstChar = name[0]!;
+    const firstChar = name.charAt(0);
     if (firstChar === firstChar.toUpperCase() && firstChar >= 'A' && firstChar <= 'Z') {
       return 'component';
     }

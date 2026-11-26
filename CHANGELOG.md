@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI, release, and security workflows plus `.nvmrc` bumped from Node 22.x to Node 24.x (`lts/krypton`) as the single-version baseline (the 22/24/26 test matrix in `ci.yml` is unaffected).
 - `actions/setup-node` bumped v5→v7, `actions/github-script` bumped v7→v9 (fixing an inconsistent leftover in `security-daily.yml`), and `actions/stale` bumped v10→v11, across all workflow files.
 - Dependabot groups `github/codeql-action/*` updates into one PR, so `init`, `analyze`, and `upload-sarif` stay on the same version.
+- Dev dependencies bumped: `@biomejs/biome` 2.6.7 (config migrated; the new YAML formatter keeps single quotes), `@babel/parser` and `@babel/types` 8.1, `vitest` and `@vitest/coverage-v8` 5.1.2, `ovsx` 1.4.0, `markdownlint-cli2` 0.24.0, `@commitlint/*` 21.2.4, `concurrently` 10.0.7, `rimraf` 6.1.4.
+- Pinned actions bumped: `actions/dependency-review-action`, `peter-evans/create-pull-request` 8.1.3, `pnpm/action-setup` 6.1.1, `github/codeql-action` 4.39.1.
+- **Security audit remediation**: Raised pnpm override floors for `vite` (8.1.6), `markdown-it` (15.0.3), `undici` (8.12.2), `serialize-javascript` (7.1.3) and `fast-uri` (4.2.3), and added overrides for `re2js` (2.8.7), `@azure/identity` (^4.14.1, pulling `@azure/msal-node` 7), `glob` (^14.0.2) and `minimatch` (^11.0.1). `pnpm audit` reports 0 vulnerabilities.
 
 ### Fixed
 
@@ -45,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - ESLint, Prettier, the `openai` dev dependency, the automated vulnerability-remediation agent, and the `pr-commit-size`, `stale`, `security-pr`, and `pr-title` workflows. Contributors listing moved from `CONTRIBUTORS.md` to `.all-contributorsrc`; `CLAUDE.md` and `.github/copilot-instructions.md` removed in favor of `AGENTS.md`.
+- Codecov coverage upload: the CI upload step, `codecov.yml` and the README badge. `pnpm run test:unit:coverage` still writes `coverage/lcov.info` locally.
 
 ## [2.1.3] - 2026-07-20
 

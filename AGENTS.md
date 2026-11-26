@@ -240,7 +240,7 @@ This project follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html). Pre-re
 
 ### Automation Layout
 
-- `.github/workflows/ci.yml` runs PR/main quality gates: Biome lint, markdownlint, typecheck, commitlint (PR commits and title), unit coverage, integration tests under `xvfb-run -a`, `pnpm audit`, dependency review (PRs), a bundle smoke test, and a build matrix (Ubuntu × Node 24 × VS Code stable/insiders). The unit-coverage job uploads `coverage/lcov.info` to Codecov (`fail_ci_if_error: false`) and needs a `CODECOV_TOKEN` repo secret to publish.
+- `.github/workflows/ci.yml` runs PR/main quality gates: Biome lint, markdownlint, typecheck, commitlint (PR commits and title), unit coverage, integration tests under `xvfb-run -a`, `pnpm audit`, dependency review (PRs), a bundle smoke test, and a build matrix (Ubuntu × Node 24 × VS Code stable/insiders). The unit-coverage job writes `coverage/lcov.info` locally; it is not uploaded.
 - `.github/workflows/security-daily.yml` runs daily, on manual dispatch, and on `package.json`/`pnpm-lock.yaml` changes on `main`. It audits with `pnpm audit` and the Dependabot Alerts API (needs `security-events: read`), summarizes outdated packages, uploads artifacts, and opens or updates one triage issue for critical or high findings.
 - `.github/workflows/codeql.yml` runs CodeQL (JavaScript/TypeScript, `security-extended`) on PRs and pushes to `main` and weekly.
 - `.github/workflows/scorecard.yml` runs the OpenSSF Scorecard check on pushes to `main` and weekly, uploading SARIF to the Security tab.

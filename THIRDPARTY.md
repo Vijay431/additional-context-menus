@@ -10,8 +10,8 @@ pnpm licenses list --json
 
 | Package                 | Version(s)      | License    | Project                                                                    |
 | ----------------------- | --------------- | ---------- | -------------------------------------------------------------------------- |
-| `@vitest/coverage-v8`   | 4.1.7           | MIT        | <https://github.com/vitest-dev/vitest/tree/main/packages/coverage-v8#readme> |
-| `@biomejs/biome`        | 2.5.15          | MIT OR Apache-2.0 | <https://biomejs.dev> |
+| `@vitest/coverage-v8`   | 5.1.2           | MIT        | <https://github.com/vitest-dev/vitest/tree/main/packages/coverage-v8#readme> |
+| `@biomejs/biome`        | 2.6.7           | MIT OR Apache-2.0 | <https://biomejs.dev> |
 | `@vscode/test-cli`      | 0.0.15          | MIT        | <https://github.com/microsoft/vscode-test-cli#readme> |
 | `@vscode/test-electron` | 2.5.2           | MIT        | <https://github.com/Microsoft/vscode-test#readme>                            |
 | `@vscode/vsce`          | 3.9.1           | MIT        | <https://code.visualstudio.com>                                              |
@@ -19,10 +19,10 @@ pnpm licenses list --json
 | `esbuild`               | 0.25.12, 0.28.0 | MIT        | <https://github.com/evanw/esbuild#readme>                                    |
 | `husky`                 | 9.1.7           | MIT        | <https://github.com/typicode/husky#readme>                                   |
 | `lint-staged`           | 17.0.5          | MIT        | <https://github.com/lint-staged/lint-staged#readme>                          |
-| `ovsx`                  | 0.10.12         | EPL-2.0    | <https://open-vsx.org>                                                       |
+| `ovsx`                  | 1.4.0           | EPL-2.0    | <https://open-vsx.org>                                                       |
 | `tsx`                   | 4.22.3          | MIT        | <https://tsx.is>                                                             |
 | `typescript`            | 5.9.3           | Apache-2.0 | <https://www.typescriptlang.org/>                                            |
-| `vitest`                | 4.1.7           | MIT        | <https://github.com/vitest-dev/vitest#readme>                                |
+| `vitest`                | 5.1.2           | MIT        | <https://github.com/vitest-dev/vitest#readme>                                |
 
 This file is informational and does not replace individual package license texts.
 
