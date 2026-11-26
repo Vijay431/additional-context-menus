@@ -284,7 +284,7 @@ export class CodeAnalysisService implements ICodeAnalysisService {
     if (name.startsWith('use')) return 'hook';
 
     // React component detection (PascalCase)
-    const firstChar = name[0]!;
+    const firstChar = name.charAt(0);
     if (firstChar === firstChar.toUpperCase() && firstChar >= 'A' && firstChar <= 'Z') {
       return 'component';
     }
