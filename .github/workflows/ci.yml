@@ -98,13 +98,6 @@ jobs:
       - name: Run Unit Tests with Coverage
         run: pnpm run test:unit:coverage
 
-      - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
-        with:
-          files: coverage/lcov.info
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
-
   test-integration:
     name: Integration Tests
     runs-on: ubuntu-latest
